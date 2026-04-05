@@ -1,10 +1,12 @@
 <?php
+namespace MoolMail\ESP;
+
 defined( 'ABSPATH' ) || exit;
 
-interface Starter_SMTP_ESP_Interface {
-	public function connect( $config );
-	public function send( $params );
-	public function get_name();
-	public function get_label();
-	public function get_fields();
+interface Provider {
+	public function connect( array $config ): bool;
+	public function send( array $params ): Result;
+	public function get_name(): string;
+	public function get_label(): string;
+	public function get_fields(): array;
 }

@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * MoolMail design tokens — Warm Teal on oat.
+ * Scoped to #moolmail-admin, also sets Shadcn CSS vars.
+ */
+@layer base {
+  :root {
+    /* ── Primary — Warm Teal ── */
+    --mm-accent: #0D9488;
+    --mm-accent-hover: #0F766E;
+    --mm-accent-light: #F0FDFA;
+    --mm-accent-muted: #0D948814;
+    --mm-accent-soft: #CCFBF1;
+
+    /* ── Warm Backgrounds (shared Mool palette) ── */
+    --mm-bg: #F8F6F1;
+    --mm-surface: #FEFCF9;
+    --mm-surface-alt: #F3F0EA;
+    --mm-surface-hover: #EDEAE3;
+
+    /* ── Borders ── */
+    --mm-border: #E3DED6;
+    --mm-border-light: #ECE8E1;
+    --mm-border-focus: #0D9488;
+
+    /* ── Typography ── */
+    --mm-text: #1A1815;
+    --mm-text-secondary: #7C766D;
+    --mm-text-muted: #ADA69B;
+
+    /* ── Status ── */
+    --mm-success: #16A34A;
+    --mm-success-bg: #ECFDF5;
+    --mm-warning: #CA8A04;
+    --mm-warning-bg: #FEF9EC;
+    --mm-danger: #DC2626;
+    --mm-danger-bg: #FEF2F2;
+
+    /* ── Radius ── */
+    --mm-r: 8px;
+    --mm-r-sm: 6px;
+    --mm-r-lg: 12px;
+
+    /* ── Shadcn semantic mappings ── */
+    --background: 38 30% 96%;        /* --mm-bg */
+    --foreground: 30 10% 9%;         /* --mm-text */
+    --card: 36 50% 99%;              /* --mm-surface */
+    --card-foreground: 30 10% 9%;
+    --popover: 36 50% 99%;
+    --popover-foreground: 30 10% 9%;
+    --primary: 174 85% 29%;          /* --mm-accent */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 35 18% 93%;         /* --mm-surface-alt */
+    --secondary-foreground: 30 8% 22%;
+    --muted: 38 30% 96%;             /* --mm-bg */
+    --muted-foreground: 30 6% 45%;   /* --mm-text-secondary */
+    --accent: 166 76% 97%;           /* --mm-accent-light */
+    --accent-foreground: 174 82% 24%;
+    --destructive: 0 72% 51%;        /* --mm-danger */
+    --destructive-foreground: 0 0% 100%;
+    --border: 33 14% 87%;            /* --mm-border */
+    --input: 33 14% 87%;
+    --ring: 174 85% 29%;
+    --chart-1: 174 85% 29%;
+    --chart-2: 142 72% 29%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 30 6% 45%;
+    --radius: 0.5rem;
+
+    --sidebar: 38 30% 96%;
+    --sidebar-foreground: 30 10% 9%;
+    --sidebar-primary: 174 85% 29%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 166 76% 97%;
+    --sidebar-accent-foreground: 174 82% 24%;
+    --sidebar-border: 33 14% 87%;
+    --sidebar-ring: 174 85% 29%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--mm-border);
+  }
+}
+
+/* Remove WP admin left padding on our page */
+.settings_page_moolmail #wpcontent {
+  padding-left: 0;
+}
+
+#moolmail-admin {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mm-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#moolmail-admin *,
+#moolmail-admin *::before,
+#moolmail-admin *::after {
+  box-sizing: border-box;
+}
+
+#moolmail-admin button {
+  font-family: inherit;
+}
+
+/* ── Sonner toast overrides ── */
+[data-sonner-toaster] {
+  --normal-bg: var(--mm-surface);
+  --normal-border: var(--mm-border);
+  --normal-text: var(--mm-text);
+  --success-bg: var(--mm-success-bg);
+  --success-border: var(--mm-accent-soft);
+  --success-text: var(--mm-accent);
+  --error-bg: var(--mm-danger-bg);
+  --error-border: #FECACA;
+  --error-text: var(--mm-danger);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+[data-sonner-toast] {
+  box-shadow: none !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  background: var(--mm-accent-light) !important;
+  border-color: var(--mm-accent-soft) !important;
+  color: var(--mm-accent) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] svg {
+  color: var(--mm-accent) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background: var(--mm-danger-bg) !important;
+  border-color: #FECACA !important;
+  color: var(--mm-danger) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] svg {
+  color: var(--mm-danger) !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 500 !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: var(--mm-text-secondary) !important;
+  font-size: 12px !important;
+}
+
+/* ── Animations ── */
+@keyframes smtp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.smtp-spin {
+  animation: smtp-spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 0.7s linear infinite;
+}
+
+#moolmail-admin [class*="border-t"] {
+  animation: fadeSlideIn 150ms ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: popIn 150ms ease-out;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

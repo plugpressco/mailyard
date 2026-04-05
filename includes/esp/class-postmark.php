@@ -1,29 +1,20 @@
 <?php
+namespace MoolMail\ESP;
+
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Postmark provider.
- *
- * Uses the transactional (outbound) stream since Starter SMTP handles
- * WordPress transactional emails, not marketing campaigns.
- */
-class Starter_SMTP_Postmark implements Starter_SMTP_ESP_Interface {
+class Postmark implements Provider {
 
-	/** @var string */
 	private $api_key = '';
+	private $stream  = 'outbound';
 
-	/** @var string */
-	private $stream = 'outbound';
-
-	/** @inheritDoc */
-	public function connect( $config ) {
-		$this->api_key = isset( $config['api_key'] ) ? sanitize_text_field( $config['api_key'] ) : '';
-		$this->stream  = isset( $config['stream'] ) ? sanitize_text_field( $config['stream'] ) : 'outbound';
+	public function connect( array $config ): bool {
+		$this->api_key = sanitize_text_field( $config['api_key'] ?? '' );
+		$this->stream  = sanitize_text_field( $config['stream'] ?? 'outbound' );
 		return ! empty( $this->api_key );
 	}
 
-	/** @inheritDoc */
-	public function send( $params ) {
+	public function send( array $params ): Result {
 		$from = ! empty( $params['from_name'] )
 			? sanitize_text_field( $params['from_name'] ) . ' <' . sanitize_email( $params['from_email'] ) . '>'
 			: sanitize_email( $params['from_email'] );
@@ -51,48 +42,30 @@ class Starter_SMTP_Postmark implements Starter_SMTP_ESP_Interface {
 		) );
 
 		if ( is_wp_error( $response ) ) {
-			return Starter_SMTP_Result::failure( $response->get_error_message() );
+			return Result::failure( $response->get_error_message() );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( 200 !== (int) $code ) {
-			$message = isset( $body['Message'] ) ? $body['Message'] : __( 'Unknown Postmark error.', 'starter-smtp' );
-			return Starter_SMTP_Result::failure( $message );
+		if ( ! is_array( $body ) ) {
+			return Result::failure( __( 'Invalid response from Postmark.', 'moolmail' ) );
 		}
 
-		return Starter_SMTP_Result::success( isset( $body['MessageID'] ) ? $body['MessageID'] : '' );
+		if ( 200 !== (int) $code ) {
+			return Result::failure( sanitize_text_field( $body['Message'] ?? __( 'Unknown Postmark error.', 'moolmail' ) ) );
+		}
+
+		return Result::success( $body['MessageID'] ?? '' );
 	}
 
-	/** @inheritDoc */
-	public function get_name() {
-		return 'postmark';
-	}
+	public function get_name(): string { return 'postmark'; }
+	public function get_label(): string { return __( 'Postmark', 'moolmail' ); }
 
-	/** @inheritDoc */
-	public function get_label() {
-		return __( 'Postmark', 'starter-smtp' );
-	}
-
-	/** @inheritDoc */
-	public function get_fields() {
+	public function get_fields(): array {
 		return array(
-			array(
-				'key'      => 'api_key',
-				'label'    => __( 'Server Token', 'starter-smtp' ),
-				'type'     => 'password',
-				'required' => true,
-			),
-			array(
-				'key'     => 'stream',
-				'label'   => __( 'Message Stream', 'starter-smtp' ),
-				'type'    => 'select',
-				'options' => array(
-					'outbound'  => 'Transactional',
-					'broadcast' => 'Broadcast',
-				),
-			),
+			array( 'key' => 'api_key', 'label' => __( 'Server Token', 'moolmail' ), 'type' => 'password', 'required' => true ),
+			array( 'key' => 'stream', 'label' => __( 'Message Stream', 'moolmail' ), 'type' => 'select', 'options' => array( 'outbound' => 'Transactional', 'broadcast' => 'Broadcast' ) ),
 		);
 	}
 }

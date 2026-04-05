@@ -1,18 +1,16 @@
 <?php
+namespace MoolMail\ESP;
+
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Default provider — uses wp_mail() directly without modification.
- */
-class Starter_SMTP_PHPMailer implements Starter_SMTP_ESP_Interface {
+// Default provider — uses wp_mail() without modification.
+class PHPMailer implements Provider {
 
-	/** @inheritDoc */
-	public function connect( $config ) {
+	public function connect( array $config ): bool {
 		return true;
 	}
 
-	/** @inheritDoc */
-	public function send( $params ) {
+	public function send( array $params ): Result {
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . sanitize_text_field( $params['from_name'] ) . ' <' . sanitize_email( $params['from_email'] ) . '>',
@@ -31,28 +29,14 @@ class Starter_SMTP_PHPMailer implements Starter_SMTP_ESP_Interface {
 
 		if ( ! $sent ) {
 			global $phpmailer;
-			$error = '';
-			if ( isset( $phpmailer ) && is_object( $phpmailer ) && ! empty( $phpmailer->ErrorInfo ) ) {
-				$error = $phpmailer->ErrorInfo;
-			}
-			return Starter_SMTP_Result::failure( $error ? $error : __( 'wp_mail() failed.', 'starter-smtp' ) );
+			$error = isset( $phpmailer->ErrorInfo ) ? $phpmailer->ErrorInfo : '';
+			return Result::failure( $error ?: __( 'wp_mail() failed.', 'moolmail' ) );
 		}
 
-		return Starter_SMTP_Result::success();
+		return Result::success();
 	}
 
-	/** @inheritDoc */
-	public function get_name() {
-		return 'phpmailer';
-	}
-
-	/** @inheritDoc */
-	public function get_label() {
-		return __( 'Default (PHP)', 'starter-smtp' );
-	}
-
-	/** @inheritDoc */
-	public function get_fields() {
-		return array();
-	}
+	public function get_name(): string { return 'phpmailer'; }
+	public function get_label(): string { return __( 'Default (PHP)', 'moolmail' ); }
+	public function get_fields(): array { return array(); }
 }

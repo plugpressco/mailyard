@@ -1,65 +1,66 @@
 <?php
+namespace MoolMail;
+
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Overrides wp_mail() via the pre_wp_mail filter to route emails
- * through the active ESP provider.
- */
-class Starter_SMTP_Override {
+// Intercepts wp_mail() to route emails through the active ESP.
+class Override {
 
-	/**
-	 * Hook into WordPress if a non-default provider is active.
-	 */
 	public function init() {
-		$settings = get_option( 'starter_smtp_settings', array() );
-		$active   = isset( $settings['active'] ) ? $settings['active'] : 'phpmailer';
+		$settings   = get_option( 'moolmail_settings', array() );
+		$active     = $settings['active'] ?? 'phpmailer';
+		$from_email = $settings['from_email'] ?? '';
+		$from_name  = $settings['from_name'] ?? '';
 
-		// Only override when using an external provider.
-		// phpmailer = default wp_mail, no override needed.
-		// smtp uses phpmailer_init hook internally, so it also goes through wp_mail.
-		if ( 'phpmailer' === $active || 'smtp' === $active ) {
+		// Always set a valid From email — WP defaults to wordpress@localhost.
+		if ( empty( $from_email ) ) {
+			$from_email = get_option( 'admin_email' );
+		}
+		add_filter( 'wp_mail_from', function () use ( $from_email ) { return $from_email; } );
+
+		if ( ! empty( $from_name ) ) {
+			add_filter( 'wp_mail_from_name', function () use ( $from_name ) { return $from_name; } );
+		}
+
+		// SMTP: configure PHPMailer directly.
+		if ( 'smtp' === $active ) {
+			$esp = Manager::instance()->active_provider();
+			if ( $esp ) {
+				add_action( 'phpmailer_init', array( $esp, 'configure_phpmailer' ) );
+			}
 			return;
 		}
 
-		add_filter( 'pre_wp_mail', array( $this, 'handle_mail' ), 10, 2 );
-	}
-
-	/**
-	 * Intercept wp_mail and send via the active ESP.
-	 *
-	 * @param null|bool $null Short-circuit return value. Null to continue with wp_mail.
-	 * @param array     $atts {
-	 *     @type string|string[] $to          Recipients.
-	 *     @type string          $subject     Subject.
-	 *     @type string          $message     Body.
-	 *     @type string|string[] $headers     Headers.
-	 *     @type string|string[] $attachments Attachments.
-	 * }
-	 * @return bool|null True on success, null to fall through to default wp_mail.
-	 */
-	public function handle_mail( $null, $atts ) {
-		$esp = Starter_SMTP_Manager::get_instance()->get_active_esp();
-
-		if ( ! $esp ) {
-			// Provider unavailable — fall through to default wp_mail.
-			return null;
+		// PHPMailer: default wp_mail, no override needed.
+		if ( 'phpmailer' === $active ) {
+			return;
 		}
 
-		// Parse headers for From and Reply-To.
+		// API providers (SES, Postmark, Resend): intercept wp_mail entirely.
+		add_filter( 'pre_wp_mail', array( $this, 'intercept' ), 10, 2 );
+	}
+
+	// Replaces wp_mail for API-based providers.
+	public function intercept( $null, $atts ) {
+		$esp = Manager::instance()->active_provider();
+		if ( ! $esp ) {
+			return null; // Fall through to default wp_mail.
+		}
+
+		// Parse headers.
 		$from_name  = '';
 		$from_email = '';
 		$reply_to   = '';
+		$headers    = $atts['headers'] ?? '';
 
-		$headers = isset( $atts['headers'] ) ? $atts['headers'] : '';
 		if ( ! is_array( $headers ) ) {
 			$headers = array_filter( explode( "\n", str_replace( "\r\n", "\n", $headers ) ) );
 		}
 
 		foreach ( $headers as $header ) {
 			$parts = explode( ':', $header, 2 );
-			if ( count( $parts ) < 2 ) {
-				continue;
-			}
+			if ( count( $parts ) < 2 ) continue;
+
 			$name  = strtolower( trim( $parts[0] ) );
 			$value = trim( $parts[1] );
 
@@ -76,34 +77,51 @@ class Starter_SMTP_Override {
 		}
 
 		// Fallback from settings.
+		$settings = get_option( 'moolmail_settings', array() );
 		if ( empty( $from_email ) ) {
-			$settings   = get_option( 'starter_smtp_settings', array() );
-			$from_name  = isset( $settings['from_name'] ) ? $settings['from_name'] : get_bloginfo( 'name' );
-			$from_email = isset( $settings['from_email'] ) ? $settings['from_email'] : get_option( 'admin_email' );
+			$from_name  = $settings['from_name'] ?? get_bloginfo( 'name' );
+			$from_email = $settings['from_email'] ?? get_option( 'admin_email' );
 		}
 
-		// Handle multiple recipients.
-		$to_list = is_array( $atts['to'] ) ? $atts['to'] : explode( ',', $atts['to'] );
+		$to_list  = is_array( $atts['to'] ) ? $atts['to'] : explode( ',', $atts['to'] );
+		$logger   = Logger::instance();
+		$provider = $settings['active'] ?? 'phpmailer';
 
 		$all_sent = true;
 		foreach ( $to_list as $to ) {
 			$to = trim( $to );
-			if ( empty( $to ) ) {
+			if ( empty( $to ) ) continue;
+
+			// Validate email format.
+			if ( ! is_email( $to ) ) {
+				$all_sent = false;
+				$logger->log( array( 'to' => $to, 'subject' => $atts['subject'], 'body' => $atts['message'], 'headers' => $atts['headers'] ?? '', 'provider' => $provider, 'status' => 'failed', 'error' => 'Invalid email address.' ) );
 				continue;
 			}
 
+			// Validate domain has mail server (skip in environments where DNS is unavailable).
+			if ( function_exists( 'checkdnsrr' ) && ! defined( 'PHP_WASM' ) ) {
+				$domain = substr( $to, strrpos( $to, '@' ) + 1 );
+				if ( ! @checkdnsrr( $domain, 'MX' ) && ! @checkdnsrr( $domain, 'A' ) ) { // phpcs:ignore
+					$all_sent = false;
+					$logger->log( array( 'to' => $to, 'subject' => $atts['subject'], 'body' => $atts['message'], 'headers' => $atts['headers'] ?? '', 'provider' => $provider, 'status' => 'failed', 'error' => "Invalid domain: $domain has no mail server." ) );
+					continue;
+				}
+			}
+
 			$result = $esp->send( array(
-				'to'         => $to,
-				'subject'    => $atts['subject'],
-				'html'       => $atts['message'],
-				'from_name'  => $from_name,
-				'from_email' => $from_email,
-				'reply_to'   => $reply_to,
+				'to' => $to, 'subject' => $atts['subject'], 'html' => $atts['message'],
+				'from_name' => $from_name, 'from_email' => $from_email, 'reply_to' => $reply_to,
 			) );
 
-			if ( ! $result->is_success() ) {
+			$log_base = array( 'to' => $to, 'subject' => $atts['subject'], 'body' => $atts['message'], 'headers' => $atts['headers'] ?? '', 'provider' => $provider );
+
+			if ( $result->is_success() ) {
+				$logger->log( array_merge( $log_base, array( 'status' => 'sent' ) ) );
+			} else {
 				$all_sent = false;
-				do_action( 'starter_smtp_send_failed', $to, $result->get_error() );
+				$logger->log( array_merge( $log_base, array( 'status' => 'failed', 'error' => $result->get_error() ) ) );
+				do_action( 'moolmail_send_failed', $to, $result->get_error() );
 			}
 		}
 

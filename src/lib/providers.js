@@ -1,0 +1,115 @@
+export const LIVE_PROVIDERS = [
+	{
+		id: 'ses',
+		name: 'Amazon SES',
+		desc: 'Scalable cloud delivery',
+		dashboard: 'https://console.aws.amazon.com/ses/',
+		fields: [
+			{ key: 'access_key', label: 'Access Key ID', type: 'text', required: true, placeholder: 'AKIAIOSFODNN7EXAMPLE', hint: 'Create an IAM user with ses:SendEmail and ses:SendRawEmail permissions.' },
+			{ key: 'secret_key', label: 'Secret Access Key', type: 'password', required: true, placeholder: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLE' },
+			{
+				key: 'region', label: 'Region', type: 'select', required: true,
+				hint: 'Must match the region where your SES identity is verified.',
+				options: [
+					{ value: 'us-east-1', label: 'US East (N. Virginia)' },
+					{ value: 'us-east-2', label: 'US East (Ohio)' },
+					{ value: 'us-west-1', label: 'US West (N. California)' },
+					{ value: 'us-west-2', label: 'US West (Oregon)' },
+					{ value: 'af-south-1', label: 'Africa (Cape Town)' },
+					{ value: 'ap-south-1', label: 'Asia Pacific (Mumbai)' },
+					{ value: 'ap-northeast-1', label: 'Asia Pacific (Tokyo)' },
+					{ value: 'ap-northeast-2', label: 'Asia Pacific (Seoul)' },
+					{ value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+					{ value: 'ap-southeast-2', label: 'Asia Pacific (Sydney)' },
+					{ value: 'ca-central-1', label: 'Canada (Central)' },
+					{ value: 'eu-central-1', label: 'Europe (Frankfurt)' },
+					{ value: 'eu-west-1', label: 'Europe (Ireland)' },
+					{ value: 'eu-west-2', label: 'Europe (London)' },
+					{ value: 'eu-west-3', label: 'Europe (Paris)' },
+					{ value: 'eu-north-1', label: 'Europe (Stockholm)' },
+					{ value: 'eu-south-1', label: 'Europe (Milan)' },
+					{ value: 'me-south-1', label: 'Middle East (Bahrain)' },
+					{ value: 'sa-east-1', label: 'South America (São Paulo)' },
+					{ value: 'il-central-1', label: 'Israel (Tel Aviv)' },
+				],
+			},
+		],
+	},
+	{
+		id: 'postmark',
+		name: 'Postmark',
+		desc: 'Fast transactional',
+		dashboard: 'https://account.postmarkapp.com/servers',
+		fields: [
+			{ key: 'api_key', label: 'Server API Token', type: 'password', required: true, placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', hint: 'Found in Server → API Tokens. Use the Server token, not Account token.' },
+			{
+				key: 'stream', label: 'Message Stream', type: 'select', required: false,
+				options: [
+					{ value: 'outbound', label: 'Transactional (outbound)' },
+					{ value: 'broadcast', label: 'Broadcast' },
+				],
+				hint: 'Use "outbound" for password resets, receipts, notifications.',
+			},
+		],
+	},
+	{
+		id: 'resend',
+		name: 'Resend',
+		desc: 'Modern email API',
+		dashboard: 'https://resend.com/api-keys',
+		fields: [
+			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 're_xxxxxxxxxx', hint: 'Found in Resend dashboard → API Keys.' },
+		],
+	},
+	{
+		id: 'smtp',
+		name: 'Custom SMTP',
+		desc: 'Any SMTP server',
+		dashboard: null,
+		fields: [
+			{ key: 'host', label: 'SMTP Host', type: 'text', required: true, placeholder: 'smtp.example.com', hint: 'e.g. smtp.gmail.com, smtp.office365.com, mail.yourdomain.com' },
+			{
+				key: 'port', label: 'Port', type: 'select', required: true,
+				hint: 'If unsure, try 587 with TLS first.',
+				options: [
+					{ value: '587', label: '587 — recommended' },
+					{ value: '465', label: '465 — legacy SSL' },
+					{ value: '2525', label: '2525 — alternative' },
+					{ value: '25', label: '25 — unencrypted' },
+				],
+			},
+			{
+				key: 'encryption', label: 'Encryption', type: 'select', required: true,
+				options: [
+					{ value: 'tls', label: 'TLS (STARTTLS)' },
+					{ value: 'ssl', label: 'SSL' },
+					{ value: 'none', label: 'None' },
+				],
+			},
+			{ key: 'username', label: 'Username', type: 'text', placeholder: 'user@example.com', hint: 'Usually your full email address. Leave blank if your server has no auth.' },
+			{ key: 'password', label: 'Password', type: 'password', placeholder: 'App password or SMTP password', hint: 'For Gmail/Microsoft, use an app-specific password.' },
+		],
+	},
+	{
+		id: 'php',
+		name: 'PHP Mail',
+		desc: 'Server default — no config needed',
+		dashboard: null,
+		fields: [],
+	},
+];
+
+export const PLANNED_PROVIDERS = [
+	'Brevo',
+	'Mailgun',
+	'SendGrid',
+	'Mailjet',
+	'MailerSend',
+	'SparkPost',
+	'Elastic Email',
+	'SMTP2GO',
+	'Zoho Mail',
+	'Google Workspace',
+	'Microsoft 365',
+	'Netcore',
+];

@@ -1,88 +1,58 @@
 <?php
+namespace MoolMail;
+
+use MoolMail\ESP\Provider;
+
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Manages all registered ESP providers and resolves the active one.
- */
-class Starter_SMTP_Manager {
+// Registers ESP providers and resolves the active one from settings.
+class Manager {
 
-	/** @var Starter_SMTP_Manager|null */
 	private static $instance = null;
-
-	/** @var Starter_SMTP_ESP_Interface[] */
 	private $providers = array();
 
-	private function __construct() {
-		$this->register_providers();
-	}
-
-	/**
-	 * @return Starter_SMTP_Manager
-	 */
-	public static function get_instance() {
+	public static function instance(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$instance;
 	}
 
-	/**
-	 * Register built-in providers.
-	 */
-	private function register_providers() {
-		$this->providers['phpmailer'] = new Starter_SMTP_PHPMailer();
-		$this->providers['ses']       = new Starter_SMTP_SES();
-		$this->providers['postmark']  = new Starter_SMTP_Postmark();
-		$this->providers['resend']    = new Starter_SMTP_Resend();
-		$this->providers['smtp']      = new Starter_SMTP_SMTP();
+	private function __construct() {
+		$this->providers = array(
+			'phpmailer' => new ESP\PHPMailer(),
+			'ses'       => new ESP\SES(),
+			'postmark'  => new ESP\Postmark(),
+			'resend'    => new ESP\Resend(),
+			'smtp'      => new ESP\SMTP(),
+		);
 
-		/**
-		 * Allow third-party plugins to register additional providers.
-		 *
-		 * @param Starter_SMTP_ESP_Interface[] $providers Registered providers keyed by slug.
-		 */
-		$this->providers = apply_filters( 'starter_smtp_providers', $this->providers );
+		// Allow third-party providers.
+		$this->providers = apply_filters( 'moolmail_providers', $this->providers );
 	}
 
-	/**
-	 * Get the active ESP, connected with its saved config.
-	 *
-	 * @return Starter_SMTP_ESP_Interface|null Null if provider not found or connect fails.
-	 */
-	public function get_active_esp() {
-		$settings = get_option( 'starter_smtp_settings', array() );
-		$active   = isset( $settings['active'] ) ? $settings['active'] : 'phpmailer';
+	// Get the active ESP with its config applied.
+	public function active_provider(): ?Provider {
+		$settings = get_option( 'moolmail_settings', array() );
+		$active   = $settings['active'] ?? 'phpmailer';
 
 		if ( ! isset( $this->providers[ $active ] ) ) {
 			return null;
 		}
 
 		$esp    = $this->providers[ $active ];
-		$config = isset( $settings[ $active ] ) ? $settings[ $active ] : array();
+		$prefix = $active . '_';
+		$config = array();
 
-		if ( ! $esp->connect( $config ) ) {
-			return null;
+		foreach ( $settings as $key => $value ) {
+			if ( 0 === strpos( $key, $prefix ) ) {
+				$config[ substr( $key, strlen( $prefix ) ) ] = $value;
+			}
 		}
 
-		return $esp;
+		return $esp->connect( $config ) ? $esp : null;
 	}
 
-	/**
-	 * Get all registered providers.
-	 *
-	 * @return Starter_SMTP_ESP_Interface[]
-	 */
-	public function get_providers() {
-		return $this->providers;
-	}
-
-	/**
-	 * Get a single provider by slug.
-	 *
-	 * @param string $slug Provider slug (e.g. 'ses', 'postmark').
-	 * @return Starter_SMTP_ESP_Interface|null
-	 */
-	public function get_provider( $slug ) {
-		return isset( $this->providers[ $slug ] ) ? $this->providers[ $slug ] : null;
-	}
+	public function all(): array { return $this->providers; }
+	public function get( string $slug ): ?Provider { return $this->providers[ $slug ] ?? null; }
 }
