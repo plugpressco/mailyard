@@ -48,6 +48,11 @@ class Conflicts {
 			return;
 		}
 
+		$screen = get_current_screen();
+		if ( $screen && ! in_array( $screen->id, array( 'settings_page_mailyard', 'plugins' ), true ) ) {
+			return;
+		}
+
 		$found = $this->detected();
 		if ( empty( $found ) ) {
 			return;

@@ -43,7 +43,7 @@ Set up in under two minutes. No bloated dashboards, no upsells, no fake premium 
 
 = Privacy =
 
-Mailyard makes outbound HTTP requests only to the email provider you configure (e.g. `api.postmarkapp.com`, `api.resend.com`). It does not phone home, collect analytics, or contact any third-party server on its own.
+Mailyard makes outbound HTTP requests only to the email provider you configure (e.g. `api.postmarkapp.com`, `api.resend.com`). It does not phone home, collect analytics, or contact any third-party server on its own. The Deliverability checker queries your domain's DNS records locally; if your server's PHP DNS resolver fails, it falls back to Cloudflare's public DNS-over-HTTPS endpoint (`cloudflare-dns.com`) to retrieve the records — no domain data is stored or tracked by Cloudflare beyond the normal DNS query.
 
 When you send a test email through the admin, the email's recipient, subject, and body are stored in your WordPress database log table (if logging is enabled, which is the default). You can disable logging in Settings.
 
