@@ -53,10 +53,13 @@ class SMTP implements Provider {
 		$this->pending_attachments = is_array( $params['attachments'] ?? null ) ? $params['attachments'] : array();
 		add_action( 'phpmailer_init', array( $this, 'configure_phpmailer' ) );
 
-		$content_type = $is_html ? 'text/html' : 'text/plain';
-		$headers      = array(
-			'Content-Type: ' . $content_type . '; charset=UTF-8',
-			'From: ' . sanitize_text_field( $params['from_name'] ) . ' <' . sanitize_email( $params['from_email'] ) . '>',
+		$from    = ! empty( $params['from_name'] )
+			? sanitize_text_field( $params['from_name'] ) . ' <' . sanitize_email( $params['from_email'] ) . '>'
+			: sanitize_email( $params['from_email'] );
+
+		$headers = array(
+			'Content-Type: ' . ( $is_html ? 'text/html' : 'text/plain' ) . '; charset=UTF-8',
+			'From: ' . $from,
 		);
 
 		if ( ! empty( $params['reply_to'] ) ) {

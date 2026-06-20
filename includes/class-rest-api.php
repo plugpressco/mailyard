@@ -279,8 +279,8 @@ class REST_API {
 		$recent = $logger->query( array( 'page' => 1, 'per_page' => 7 ) );
 
 		return rest_ensure_response( array(
-			'sent_7d'      => $stats['sent_7d'] ?? $stats['sent'],
-			'failed_7d'    => $stats['failed_7d'] ?? $stats['failed'],
+			'sent_7d'      => $stats['sent_7d'] ?? 0,
+			'failed_7d'    => $stats['failed_7d'] ?? 0,
 			'chain'        => $chain_view,
 			'health'       => $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ),
 			'series'       => $logger->daily_stats( 14 ),

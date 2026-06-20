@@ -95,7 +95,7 @@ function ActivityFeed( { items, onNavigate } ) {
 	);
 }
 
-function SendTestPanel( { onClose } ) {
+function SendTestPanel( { onClose, onSent } ) {
 	const [ to, setTo ] = useState( '' );
 	const [ state, setState ] = useState( null );
 	const [ msg, setMsg ] = useState( '' );
@@ -107,6 +107,7 @@ function SendTestPanel( { onClose } ) {
 			.then( ( data ) => {
 				setState( data.success ? 'success' : 'error' );
 				setMsg( data.message || ( data.success ? 'Sent.' : 'Failed.' ) );
+				if ( data.success ) onSent?.();
 			} )
 			.catch( ( err ) => { setState( 'error' ); setMsg( err.message || 'Request failed.' ); } );
 	};
@@ -173,7 +174,7 @@ export default function Dashboard( { onNavigate } ) {
 				}
 			/>
 
-			{ testOpen && <SendTestPanel onClose={ () => setTestOpen( false ) } /> }
+			{ testOpen && <SendTestPanel onClose={ () => setTestOpen( false ) } onSent={ refresh } /> }
 
 			<div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
 				<Kpi label="Sent · 7d" value={ sent7 } sub="delivered emails" />

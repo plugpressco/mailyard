@@ -11,9 +11,16 @@ class PHPMailer implements Provider {
 	}
 
 	public function send( array $params ): Result {
+		$is_html = ! empty( $params['html'] );
+		$body    = $is_html ? $params['html'] : ( $params['text'] ?? '' );
+
+		$from    = ! empty( $params['from_name'] )
+			? sanitize_text_field( $params['from_name'] ) . ' <' . sanitize_email( $params['from_email'] ) . '>'
+			: sanitize_email( $params['from_email'] );
+
 		$headers = array(
-			'Content-Type: text/html; charset=UTF-8',
-			'From: ' . sanitize_text_field( $params['from_name'] ) . ' <' . sanitize_email( $params['from_email'] ) . '>',
+			'Content-Type: ' . ( $is_html ? 'text/html' : 'text/plain' ) . '; charset=UTF-8',
+			'From: ' . $from,
 		);
 
 		if ( ! empty( $params['reply_to'] ) ) {
@@ -23,7 +30,7 @@ class PHPMailer implements Provider {
 		$sent = wp_mail(
 			sanitize_email( $params['to'] ),
 			sanitize_text_field( $params['subject'] ),
-			$params['html'],
+			$body,
 			$headers
 		);
 
