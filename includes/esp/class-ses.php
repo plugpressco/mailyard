@@ -53,7 +53,10 @@ class SES implements Provider {
 			return Result::success( is_array( $body ) ? ( $body['MessageId'] ?? '' ) : '' );
 		}
 
-		$error = is_array( $body ) && isset( $body['message'] ) ? sanitize_text_field( $body['message'] ) : "SES error (HTTP $code)";
+		$error = is_array( $body ) && isset( $body['message'] )
+			? sanitize_text_field( $body['message'] )
+			/* translators: %d: HTTP status code returned by the Amazon SES API. */
+			: sprintf( __( 'SES error (HTTP %d)', 'mailyard' ), (int) $code );
 		return Result::failure( $error );
 	}
 

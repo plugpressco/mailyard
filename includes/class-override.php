@@ -115,7 +115,7 @@ class Override {
 			);
 
 			if ( 0 === $i && ! is_email( $to ) ) {
-				$logger->log( array_merge( $log_base, array( 'status' => 'failed', 'error' => 'Invalid email address.' ) ) );
+				$logger->log( array_merge( $log_base, array( 'status' => 'failed', 'error' => __( 'Invalid email address.', 'mailyard' ) ) ) );
 				return false;
 			}
 
@@ -123,7 +123,8 @@ class Override {
 				$domain = substr( $to, strrpos( $to, '@' ) + 1 );
 				$logger->log( array_merge( $log_base, array(
 					'status' => 'failed',
-					'error'  => "Invalid domain: $domain has no mail server.",
+					/* translators: %s: recipient email domain. */
+					'error'  => sprintf( __( 'Invalid domain: %s has no mail server.', 'mailyard' ), $domain ),
 				) ) );
 				return false;
 			}

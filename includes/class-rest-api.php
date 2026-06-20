@@ -95,7 +95,7 @@ class REST_API {
 		$provider = sanitize_key( $input['provider'] ?? '' );
 
 		if ( ! in_array( $provider, Options::providers(), true ) ) {
-			return new \WP_Error( 'invalid_provider', 'Unknown provider.', array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_provider', __( 'Unknown provider.', 'mailyard' ), array( 'status' => 400 ) );
 		}
 
 		$conns = $this->connections();
@@ -134,20 +134,34 @@ class REST_API {
 			if ( $c['id'] !== $id ) {
 				continue;
 			}
-			if ( isset( $input['enabled'] ) )    $c['enabled']    = (bool) $input['enabled'];
-			if ( isset( $input['name'] ) )       $c['name']       = sanitize_text_field( $input['name'] );
-			if ( isset( $input['from_email'] ) ) $c['from_email'] = sanitize_email( $input['from_email'] );
-			if ( isset( $input['from_name'] ) )  $c['from_name']  = sanitize_text_field( $input['from_name'] );
-			if ( isset( $input['config'] ) )     $c['config']     = $this->sanitize_config( $input['config'] );
-			if ( isset( $input['from_match'] ) ) $c['from_match'] = $this->sanitize_from_match( $input['from_match'] );
-			if ( isset( $input['purpose'] ) )    $c['purpose']    = $this->sanitize_purpose( $input['purpose'] );
+			if ( isset( $input['enabled'] ) ) {
+				$c['enabled'] = (bool) $input['enabled'];
+			}
+			if ( isset( $input['name'] ) ) {
+				$c['name'] = sanitize_text_field( $input['name'] );
+			}
+			if ( isset( $input['from_email'] ) ) {
+				$c['from_email'] = sanitize_email( $input['from_email'] );
+			}
+			if ( isset( $input['from_name'] ) ) {
+				$c['from_name'] = sanitize_text_field( $input['from_name'] );
+			}
+			if ( isset( $input['config'] ) ) {
+				$c['config'] = $this->sanitize_config( $input['config'] );
+			}
+			if ( isset( $input['from_match'] ) ) {
+				$c['from_match'] = $this->sanitize_from_match( $input['from_match'] );
+			}
+			if ( isset( $input['purpose'] ) ) {
+				$c['purpose'] = $this->sanitize_purpose( $input['purpose'] );
+			}
 			$found = $c;
 			break;
 		}
 		unset( $c );
 
 		if ( ! $found ) {
-			return new \WP_Error( 'not_found', 'Connection not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'mailyard' ), array( 'status' => 404 ) );
 		}
 
 		$this->save_connections( $conns );
@@ -206,7 +220,7 @@ class REST_API {
 			}
 		}
 		if ( ! $conn ) {
-			return new \WP_Error( 'not_found', 'Connection not found.', array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'mailyard' ), array( 'status' => 404 ) );
 		}
 
 		$esp = Manager::instance()->get( $conn['provider'] );
@@ -233,6 +247,7 @@ class REST_API {
 			$this->record_test_result( $id, 'sent', '' );
 			return rest_ensure_response( array(
 				'success' => true,
+				/* translators: %s: recipient email address. */
 				'message' => sprintf( __( 'Test email sent to %s', 'mailyard' ), $to ),
 			) );
 		}
@@ -316,6 +331,7 @@ class REST_API {
 		if ( $result ) {
 			return rest_ensure_response( array(
 				'success' => true,
+				/* translators: %s: recipient email address. */
 				'message' => sprintf( __( 'Test email sent to %s', 'mailyard' ), $to ),
 			) );
 		}
@@ -342,7 +358,7 @@ class REST_API {
 		$provider = sanitize_key( $input['provider'] ?? '' );
 
 		if ( ! in_array( $provider, Options::providers(), true ) ) {
-			return new \WP_Error( 'invalid_provider', 'Unknown provider.', array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_provider', __( 'Unknown provider.', 'mailyard' ), array( 'status' => 400 ) );
 		}
 
 		$conns    = $this->connections();

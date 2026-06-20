@@ -79,6 +79,7 @@ class Brevo implements Provider {
 		if ( 201 !== $code ) {
 			$error = is_array( $decoded ) && isset( $decoded['message'] )
 				? sanitize_text_field( $decoded['message'] )
+				/* translators: %d: HTTP status code returned by the Brevo API. */
 				: sprintf( __( 'Brevo error (HTTP %d)', 'mailyard' ), $code );
 			return Result::failure( $error );
 		}

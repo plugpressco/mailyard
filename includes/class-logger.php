@@ -245,6 +245,6 @@ class Logger {
 
 	private function insert( array $data ) {
 		global $wpdb;
-		$wpdb->insert( self::table(), $data ); // phpcs:ignore
+		$wpdb->insert( self::table(), $data ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 }

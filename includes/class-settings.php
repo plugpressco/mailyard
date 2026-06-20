@@ -45,10 +45,13 @@ class Settings {
 		wp_enqueue_script( 'mailyard-admin', plugins_url( 'build/admin.js', dirname( __FILE__ ) ), $asset['dependencies'], $asset['version'], true );
 		wp_script_add_data( 'mailyard-admin', 'strategy', 'defer' );
 
+		// The React app talks to the plugin over the REST API via @wordpress/api-fetch,
+		// which supplies its own X-WP-Nonce (wp_rest) middleware. We expose the REST
+		// root + nonce so the client can authenticate, plus the onboarding flag.
 		wp_localize_script( 'mailyard-admin', 'mailyard', array(
 			'onboarded' => (bool) get_option( Options::ONBOARDED, false ),
-			'ajaxUrl'   => esc_url( admin_url( 'admin-ajax.php' ) ),
-			'testNonce' => wp_create_nonce( 'mailyard_test' ),
+			'restUrl'   => esc_url_raw( rest_url( Options::REST_NS ) ),
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
 		) );
 	}
 

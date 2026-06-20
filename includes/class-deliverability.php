@@ -18,32 +18,36 @@ class Deliverability {
 			'postmark' => array(
 				'include'        => '',
 				'dkim_selectors' => array( 'pm' ),
-				'setup'          => 'Postmark → Sender Signatures → add the DKIM and Return-Path (pm-bounces) records shown there.',
-				'spf_ok'         => 'Postmark aligns via its Return-Path and DKIM, so no SPF change is needed.',
+				'setup'          => __( 'Postmark → Sender Signatures → add the DKIM and Return-Path (pm-bounces) records shown there.', 'mailyard' ),
+				'spf_ok'         => __( 'Postmark aligns via its Return-Path and DKIM, so no SPF change is needed.', 'mailyard' ),
 			),
 			'ses' => array(
 				'include'        => 'amazonses.com',
 				'dkim_selectors' => array(),
-				'setup'          => 'AWS SES → Verified identities → enable Easy DKIM and add the 3 CNAME records.',
+				'setup'          => __( 'AWS SES → Verified identities → enable Easy DKIM and add the 3 CNAME records.', 'mailyard' ),
 			),
 			'resend' => array(
 				'include'        => 'amazonses.com',
 				'dkim_selectors' => array( 'resend' ),
-				'setup'          => 'Resend → Domains → add the SPF, DKIM and DMARC records shown for your domain.',
+				'setup'          => __( 'Resend → Domains → add the SPF, DKIM and DMARC records shown for your domain.', 'mailyard' ),
 			),
 			'brevo' => array(
 				'include'        => 'spf.brevo.com',
 				'dkim_selectors' => array( 'mail', 'brevo' ),
-				'setup'          => 'Brevo → Senders & Domains → authenticate your domain and add the DKIM record.',
+				'setup'          => __( 'Brevo → Senders & Domains → authenticate your domain and add the DKIM record.', 'mailyard' ),
 			),
 			'smtp' => array(
 				'include'        => '',
 				'dkim_selectors' => array(),
-				'setup'          => 'Add the SPF include and DKIM record your SMTP host provides.',
+				'setup'          => __( 'Add the SPF include and DKIM record your SMTP host provides.', 'mailyard' ),
 			),
 		);
 
-		return $map[ $provider ] ?? array( 'include' => '', 'dkim_selectors' => array(), 'setup' => 'Add the SPF and DKIM records your email provider provides.' );
+		return $map[ $provider ] ?? array(
+			'include'        => '',
+			'dkim_selectors' => array(),
+			'setup'          => __( 'Add the SPF and DKIM records your email provider provides.', 'mailyard' ),
+		);
 	}
 
 	// Selectors probed for every domain regardless of provider — covers the
@@ -137,10 +141,11 @@ class Deliverability {
 		if ( '' === $spf ) {
 			return $base + array(
 				'status'  => 'fail',
-				'message' => 'No SPF record found. Receivers can\'t confirm your server is allowed to send for this domain.',
+				'message' => __( 'No SPF record found. Receivers can\'t confirm your server is allowed to send for this domain.', 'mailyard' ),
 				'fix'     => $hints['include']
-					? 'Add a TXT record at the domain root: v=spf1 include:' . $hints['include'] . ' ~all'
-					: 'Add a TXT record at the domain root starting with: v=spf1 … ~all (include your provider\'s mechanism).',
+					/* translators: %s: SPF include mechanism, e.g. amazonses.com. */
+					? sprintf( __( 'Add a TXT record at the domain root: v=spf1 include:%s ~all', 'mailyard' ), $hints['include'] )
+					: __( 'Add a TXT record at the domain root starting with: v=spf1 … ~all (include your provider\'s mechanism).', 'mailyard' ),
 			);
 		}
 
@@ -152,7 +157,8 @@ class Deliverability {
 
 			return $base + array(
 				'status'  => 'warn',
-				'message' => 'SPF exists but doesn\'t include your provider (' . $hints['include'] . '), so its mail may fail SPF.',
+				/* translators: %s: SPF include mechanism, e.g. amazonses.com. */
+				'message' => sprintf( __( 'SPF exists but doesn\'t include your provider (%s), so its mail may fail SPF.', 'mailyard' ), $hints['include'] ),
 				'fix'     => $fixed,
 			);
 		}
@@ -160,7 +166,7 @@ class Deliverability {
 		$note = ! empty( $hints['spf_ok'] ) ? ' ' . $hints['spf_ok'] : '';
 		return $base + array(
 			'status'  => 'pass',
-			'message' => 'SPF record found and valid.' . $note,
+			'message' => __( 'SPF record found and valid.', 'mailyard' ) . $note,
 			'fix'     => '',
 		);
 	}
@@ -185,14 +191,15 @@ class Deliverability {
 		if ( $found ) {
 			return $base + array(
 				'status'  => 'pass',
-				'message' => 'DKIM signing record detected (selector "' . $found . '").',
+				/* translators: %s: DKIM selector name. */
+				'message' => sprintf( __( 'DKIM signing record detected (selector "%s").', 'mailyard' ), $found ),
 				'fix'     => '',
 			);
 		}
 
 		return $base + array(
 			'status'  => 'warn',
-			'message' => 'No DKIM record auto-detected. It may use a custom selector — verify it\'s set up with your provider.',
+			'message' => __( 'No DKIM record auto-detected. It may use a custom selector — verify it\'s set up with your provider.', 'mailyard' ),
 			'fix'     => $hints['setup'],
 		);
 	}
@@ -212,8 +219,9 @@ class Deliverability {
 		if ( '' === $dmarc ) {
 			return $base + array(
 				'status'  => 'fail',
-				'message' => 'No DMARC record. Without it, spoofed mail from your domain isn\'t reported or blocked.',
-				'fix'     => 'Add a TXT record at _dmarc.' . $domain . ': v=DMARC1; p=none; rua=mailto:dmarc@' . $domain,
+				'message' => __( 'No DMARC record. Without it, spoofed mail from your domain isn\'t reported or blocked.', 'mailyard' ),
+				/* translators: 1: domain name (DMARC host), 2: domain name (reporting address). */
+				'fix'     => sprintf( __( 'Add a TXT record at _dmarc.%1$s: v=DMARC1; p=none; rua=mailto:dmarc@%2$s', 'mailyard' ), $domain, $domain ),
 			);
 		}
 
@@ -225,14 +233,15 @@ class Deliverability {
 		if ( 'none' === $policy ) {
 			return $base + array(
 				'status'  => 'warn',
-				'message' => 'DMARC is set to monitor-only (p=none). Once SPF/DKIM look stable in your reports, tighten to quarantine, then reject. Replace your DMARC record with:',
+				'message' => __( 'DMARC is set to monitor-only (p=none). Once SPF/DKIM look stable in your reports, tighten to quarantine, then reject. Replace your DMARC record with:', 'mailyard' ),
 				'fix'     => preg_replace( '/p\s*=\s*none/i', 'p=quarantine', $dmarc ),
 			);
 		}
 
 		return $base + array(
 			'status'  => 'pass',
-			'message' => 'DMARC is enforced (p=' . $policy . ').',
+			/* translators: %s: DMARC policy, e.g. quarantine or reject. */
+			'message' => sprintf( __( 'DMARC is enforced (p=%s).', 'mailyard' ), $policy ),
 			'fix'     => '',
 		);
 	}
@@ -249,9 +258,9 @@ class Deliverability {
 			'value'   => '',
 			'status'  => $has ? 'pass' : 'warn',
 			'message' => $has
-				? 'Domain has mail-exchange records.'
-				: 'No MX records. Replies to your mail may bounce, which can hurt reputation.',
-			'fix'     => $has ? '' : 'Add MX records (or use your provider/host\'s) so the domain can receive mail.',
+				? __( 'Domain has mail-exchange records.', 'mailyard' )
+				: __( 'No MX records. Replies to your mail may bounce, which can hurt reputation.', 'mailyard' ),
+			'fix'     => $has ? '' : __( 'Add MX records (or use your provider/host\'s) so the domain can receive mail.', 'mailyard' ),
 		);
 	}
 

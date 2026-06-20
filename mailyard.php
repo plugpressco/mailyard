@@ -9,9 +9,10 @@
  * Requires PHP:      7.4
  * Author:            PlugPress
  * Author URI:        https://plugpress.co
- * License:           GPL-2.0+
+ * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       mailyard
+ * Domain Path:       /languages
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -25,11 +26,21 @@ require_once MAILYARD_DIR . 'includes/class-plugin.php';
 
 Mailyard\Plugin::instance()->boot();
 
-function mailyard_is_active(): bool {
-	$settings = get_option( Mailyard\Options::SETTINGS, array() );
-	return ( $settings['active'] ?? Mailyard\Options::DEFAULT_PROVIDER ) !== Mailyard\Options::DEFAULT_PROVIDER;
+if ( ! function_exists( 'mailyard_is_active' ) ) {
+	/**
+	 * Whether Mailyard is actively routing mail (a non-default provider is configured).
+	 */
+	function mailyard_is_active(): bool {
+		$settings = get_option( Mailyard\Options::SETTINGS, array() );
+		return ( $settings['active'] ?? Mailyard\Options::DEFAULT_PROVIDER ) !== Mailyard\Options::DEFAULT_PROVIDER;
+	}
 }
 
-function mailyard_active_provider(): ?Mailyard\ESP\Provider {
-	return Mailyard\Manager::instance()->active_provider();
+if ( ! function_exists( 'mailyard_active_provider' ) ) {
+	/**
+	 * The active ESP provider instance, or null when none is configured.
+	 */
+	function mailyard_active_provider(): ?Mailyard\ESP\Provider {
+		return Mailyard\Manager::instance()->active_provider();
+	}
 }

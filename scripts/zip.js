@@ -30,6 +30,7 @@ const exclude = [
 	'.prettierrc*',
 	'**/.DS_Store',
 	'.DS_Store',
+	'*.zip',
 ];
 
 // Build first.
