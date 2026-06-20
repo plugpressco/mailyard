@@ -1,9 +1,9 @@
 import { cn } from '@/lib/utils';
 
 const variants = {
-	primary: 'bg-brand text-white hover:opacity-90',
-	secondary: 'border border-warm-200 bg-white text-warm-700 hover:bg-warm-50 hover:border-warm-300',
-	ghost: 'bg-transparent text-warm-500 hover:bg-warm-100 hover:text-warm-700',
+	primary: 'bg-ink-900 text-white hover:bg-ink-800',
+	secondary: 'border border-ink-200 bg-white text-ink-800 hover:bg-ink-50 hover:border-ink-300',
+	ghost: 'bg-transparent text-ink-500 hover:bg-ink-100 hover:text-ink-900',
 	danger: 'bg-danger text-white hover:opacity-90',
 	link: 'bg-transparent text-brand hover:underline p-0 h-auto',
 };
@@ -27,7 +27,7 @@ export default function Button( {
 		<button
 			disabled={ disabled }
 			className={ cn(
-				'inline-flex items-center font-medium cursor-pointer border-none transition-all duration-150 disabled:opacity-40 disabled:cursor-default',
+				'inline-flex items-center justify-center whitespace-nowrap font-medium cursor-pointer border-none transition-all duration-150 disabled:opacity-40 disabled:cursor-default',
 				variants[ variant ],
 				sizes[ size ],
 				className

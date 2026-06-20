@@ -1,6 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 
-const API_NAMESPACE = 'moolmail/v1';
+const API_NAMESPACE = 'mailyard/v1';
 
 export function get( endpoint, params = {} ) {
 	const query = new URLSearchParams( params ).toString();

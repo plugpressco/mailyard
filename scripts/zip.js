@@ -4,7 +4,7 @@ const fs = require( 'fs' );
 
 const root = path.resolve( __dirname, '..' );
 const pkg = require( path.join( root, 'package.json' ) );
-const name = pkg.name || 'moolmail';
+const name = pkg.name || 'mailyard';
 const version = pkg.version || '1.0.0';
 const outFile = path.join( root, `${ name }-${ version }.zip` );
 
@@ -12,6 +12,8 @@ const outFile = path.join( root, `${ name }-${ version }.zip` );
 const exclude = [
 	'node_modules/*',
 	'.git/*',
+	'.claude/*',
+	'.claude',
 	'src/*',
 	'scripts/*',
 	'package.json',
@@ -20,13 +22,14 @@ const exclude = [
 	'tailwind.config.js',
 	'postcss.config.js',
 	'components.json',
-	'smtp-plugin-ui.jsx',
 	'*.webp',
 	'*.md',
 	'.gitignore',
 	'.editorconfig',
 	'.eslintrc*',
 	'.prettierrc*',
+	'**/.DS_Store',
+	'.DS_Store',
 ];
 
 // Build first.
@@ -38,7 +41,7 @@ if ( fs.existsSync( outFile ) ) {
 	fs.unlinkSync( outFile );
 }
 
-// Create zip from parent directory so the zip contains `moolmail/` as root folder.
+// Create zip from parent directory so the zip contains `mailyard/` as root folder.
 const parent = path.dirname( root );
 const folder = path.basename( root );
 const excludeFlags = exclude.map( ( e ) => `-x "${ folder }/${ e }"` ).join( ' ' );

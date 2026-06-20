@@ -4,8 +4,8 @@ export default function Card( { children, className, hover, ...props } ) {
 	return (
 		<div
 			className={ cn(
-				'rounded-xl border border-warm-200/70 bg-surface',
-				hover && 'transition-colors duration-150 hover:border-warm-300',
+				'rounded-xl border border-ink-200 bg-surface',
+				hover && 'transition-colors duration-150 hover:border-ink-300',
 				className
 			) }
 			{ ...props }

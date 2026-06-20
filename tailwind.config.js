@@ -6,38 +6,42 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Interactive accent — trust blue. Links, focus rings, selected/active
+        // states. Primary actions use slate-900 (ink-900) for structure.
         brand: {
-          DEFAULT: '#0D9488',
-          hover: '#0F766E',
-          light: '#F0FDFA',
-          dark: '#0F766E',
-          mint: '#CCFBF1',
-          muted: '#0D948814',
+          DEFAULT: '#2563EB',
+          hover: '#1D4ED8',
+          dark: '#1E40AF',
+          light: '#EFF6FF',
+          soft: '#BFDBFE',
+          muted: '#2563EB14',
         },
-        warm: {
-          50: '#F8F6F1',
-          100: '#F3F0EA',
-          200: '#E3DED6',
-          300: '#D5D1CC',
-          400: '#ADA69B',
-          500: '#7C766D',
-          600: '#57534E',
-          700: '#44403C',
-          800: '#292524',
-          900: '#1A1815',
+        // Slate neutral scale — cool, professional. 900 is the near-black
+        // foreground used for text and primary buttons.
+        ink: {
+          50:  '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A',
         },
         surface: {
-          DEFAULT: '#FEFCF9',
-          alt: '#F3F0EA',
-          hover: '#EDEAE3',
+          DEFAULT: '#FFFFFF',
+          alt: '#F8FAFC',
+          hover: '#F1F5F9',
         },
         success: {
-          light: '#ECFDF5',
+          light: '#F0FDF4',
           DEFAULT: '#16A34A',
         },
         warning: {
-          light: '#FEF9EC',
-          DEFAULT: '#CA8A04',
+          light: '#FFFBEB',
+          DEFAULT: '#F59E0B',
         },
         danger: {
           light: '#FEF2F2',
@@ -46,15 +50,21 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          '"Fira Sans"',
           '-apple-system',
           'BlinkMacSystemFont',
           '"Segoe UI"',
           'Roboto',
-          'Oxygen-Sans',
-          'Ubuntu',
-          'Cantarell',
           '"Helvetica Neue"',
           'sans-serif',
+        ],
+        mono: [
+          '"Fira Code"',
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Consolas',
+          'monospace',
         ],
       },
       fontSize: {

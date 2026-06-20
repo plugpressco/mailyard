@@ -5,7 +5,7 @@ const variants = {
 	warn: 'bg-warning-light text-warning',
 	bad: 'bg-danger-light text-danger',
 	accent: 'bg-brand-light text-brand-dark',
-	default: 'bg-warm-100 text-warm-600',
+	default: 'bg-ink-100 text-ink-600',
 };
 
 const statusMap = {

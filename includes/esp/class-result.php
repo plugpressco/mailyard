@@ -1,5 +1,5 @@
 <?php
-namespace MoolMail\ESP;
+namespace Mailyard\ESP;
 
 defined( 'ABSPATH' ) || exit;
 

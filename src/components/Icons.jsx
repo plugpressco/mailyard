@@ -7,7 +7,6 @@
  * All icons accept className for Tailwind sizing (e.g. "h-4 w-4").
  */
 
-// ── Outline (24px, stroke-based) — primary UI icons ──
 export {
 	EnvelopeIcon as MailIcon,
 	PaperAirplaneIcon as SendIcon,
@@ -15,6 +14,9 @@ export {
 	ShieldCheckIcon as ShieldIcon,
 	ArrowPathIcon as RetryIcon,
 	BoltIcon,
+	Squares2X2Icon as GridIcon,
+	QueueListIcon as ListIcon,
+	ArrowsRightLeftIcon as RouteIcon,
 	DocumentTextIcon as LogIcon,
 	LinkIcon,
 	PlusIcon,
@@ -27,9 +29,11 @@ export {
 	ChevronUpIcon as UpIcon,
 } from '@heroicons/react/24/outline';
 
-// ── Solid (20px) — small indicators and check marks ──
 export {
 	CheckIcon,
+	CheckCircleIcon,
+	ExclamationCircleIcon as AlertIcon,
+	XCircleIcon,
 } from '@heroicons/react/20/solid';
 
 /**

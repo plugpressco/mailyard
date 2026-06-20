@@ -3,126 +3,133 @@
 @tailwind utilities;
 
 /*
- * MoolMail design tokens — Warm Teal on oat.
- * Scoped to #moolmail-admin, also sets Shadcn CSS vars.
+ * Mailyard design tokens — Violet on cool ink.
+ * Scoped to #mailyard-admin, also sets Shadcn CSS vars.
  */
 @layer base {
   :root {
-    /* ── Primary — Warm Teal ── */
-    --mm-accent: #0D9488;
-    --mm-accent-hover: #0F766E;
-    --mm-accent-light: #F0FDFA;
-    --mm-accent-muted: #0D948814;
-    --mm-accent-soft: #CCFBF1;
+    /* ── Accent — trust blue (interactive; primary actions are slate-900) ── */
+    --my-accent: #2563EB;
+    --my-accent-hover: #1D4ED8;
+    --my-accent-light: #EFF6FF;
+    --my-accent-muted: #2563EB14;
+    --my-accent-soft: #BFDBFE;
 
-    /* ── Warm Backgrounds (shared Mool palette) ── */
-    --mm-bg: #F8F6F1;
-    --mm-surface: #FEFCF9;
-    --mm-surface-alt: #F3F0EA;
-    --mm-surface-hover: #EDEAE3;
+    /* ── Surfaces (slate) ── */
+    --my-bg: #F8FAFC;
+    --my-surface: #FFFFFF;
+    --my-surface-alt: #F8FAFC;
+    --my-surface-hover: #F1F5F9;
 
     /* ── Borders ── */
-    --mm-border: #E3DED6;
-    --mm-border-light: #ECE8E1;
-    --mm-border-focus: #0D9488;
+    --my-border: #E2E8F0;
+    --my-border-light: #F1F5F9;
+    --my-border-focus: #2563EB;
 
-    /* ── Typography ── */
-    --mm-text: #1A1815;
-    --mm-text-secondary: #7C766D;
-    --mm-text-muted: #ADA69B;
+    /* ── Typography (slate foreground) ── */
+    --my-text: #0F172A;
+    --my-text-secondary: #475569;
+    --my-text-muted: #94A3B8;
 
     /* ── Status ── */
-    --mm-success: #16A34A;
-    --mm-success-bg: #ECFDF5;
-    --mm-warning: #CA8A04;
-    --mm-warning-bg: #FEF9EC;
-    --mm-danger: #DC2626;
-    --mm-danger-bg: #FEF2F2;
+    --my-success: #16A34A;
+    --my-success-bg: #F0FDF4;
+    --my-warning: #F59E0B;
+    --my-warning-bg: #FFFBEB;
+    --my-danger: #DC2626;
+    --my-danger-bg: #FEF2F2;
 
     /* ── Radius ── */
-    --mm-r: 8px;
-    --mm-r-sm: 6px;
-    --mm-r-lg: 12px;
+    --my-r: 8px;
+    --my-r-sm: 6px;
+    --my-r-lg: 12px;
 
     /* ── Shadcn semantic mappings ── */
-    --background: 38 30% 96%;        /* --mm-bg */
-    --foreground: 30 10% 9%;         /* --mm-text */
-    --card: 36 50% 99%;              /* --mm-surface */
-    --card-foreground: 30 10% 9%;
-    --popover: 36 50% 99%;
-    --popover-foreground: 30 10% 9%;
-    --primary: 174 85% 29%;          /* --mm-accent */
+    --background: 210 40% 98%;       /* --my-bg #F8FAFC */
+    --foreground: 222 47% 11%;       /* --my-text #0F172A */
+    --card: 0 0% 100%;               /* --my-surface */
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 11%;          /* slate-900 primary */
     --primary-foreground: 0 0% 100%;
-    --secondary: 35 18% 93%;         /* --mm-surface-alt */
-    --secondary-foreground: 30 8% 22%;
-    --muted: 38 30% 96%;             /* --mm-bg */
-    --muted-foreground: 30 6% 45%;   /* --mm-text-secondary */
-    --accent: 166 76% 97%;           /* --mm-accent-light */
-    --accent-foreground: 174 82% 24%;
-    --destructive: 0 72% 51%;        /* --mm-danger */
+    --secondary: 210 40% 96%;        /* slate-100 */
+    --secondary-foreground: 222 30% 20%;
+    --muted: 210 40% 98%;            /* --my-bg */
+    --muted-foreground: 215 19% 35%; /* slate-600 */
+    --accent: 214 100% 97%;          /* --my-accent-light #EFF6FF */
+    --accent-foreground: 221 83% 45%;
+    --destructive: 0 72% 51%;        /* --my-danger #DC2626 */
     --destructive-foreground: 0 0% 100%;
-    --border: 33 14% 87%;            /* --mm-border */
-    --input: 33 14% 87%;
-    --ring: 174 85% 29%;
-    --chart-1: 174 85% 29%;
-    --chart-2: 142 72% 29%;
-    --chart-3: 45 93% 47%;
-    --chart-4: 0 72% 51%;
-    --chart-5: 30 6% 45%;
+    --border: 214 32% 91%;           /* --my-border #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;             /* --my-accent #2563EB */
+    --chart-1: 251 33% 58%;
+    --chart-2: 160 84% 39%;          /* success */
+    --chart-3: 38 92% 50%;           /* warning */
+    --chart-4: 0 84% 60%;            /* danger */
+    --chart-5: 240 8% 47%;
     --radius: 0.5rem;
 
-    --sidebar: 38 30% 96%;
-    --sidebar-foreground: 30 10% 9%;
-    --sidebar-primary: 174 85% 29%;
+    --sidebar: 240 20% 98%;
+    --sidebar-foreground: 240 14% 8%;
+    --sidebar-primary: 251 33% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 166 76% 97%;
-    --sidebar-accent-foreground: 174 82% 24%;
-    --sidebar-border: 33 14% 87%;
-    --sidebar-ring: 174 85% 29%;
+    --sidebar-accent: 252 38% 96%;
+    --sidebar-accent-foreground: 251 30% 45%;
+    --sidebar-border: 240 18% 92%;
+    --sidebar-ring: 251 33% 58%;
   }
 }
 
 @layer base {
   * {
-    border-color: var(--mm-border);
+    border-color: var(--my-border);
   }
 }
 
 /* Remove WP admin left padding on our page */
-.settings_page_moolmail #wpcontent {
+.settings_page_mailyard #wpcontent {
   padding-left: 0;
 }
 
-#moolmail-admin {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+#mailyard-admin {
+  font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--mm-text);
+  color: var(--my-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#moolmail-admin *,
-#moolmail-admin *::before,
-#moolmail-admin *::after {
+/* Tighter tracking on headings — the Geist look. */
+#mailyard-admin h1,
+#mailyard-admin h2,
+#mailyard-admin h3 {
+  letter-spacing: -0.02em;
+}
+
+#mailyard-admin *,
+#mailyard-admin *::before,
+#mailyard-admin *::after {
   box-sizing: border-box;
 }
 
-#moolmail-admin button {
+#mailyard-admin button {
   font-family: inherit;
 }
 
 /* ── Sonner toast overrides ── */
 [data-sonner-toaster] {
-  --normal-bg: var(--mm-surface);
-  --normal-border: var(--mm-border);
-  --normal-text: var(--mm-text);
-  --success-bg: var(--mm-success-bg);
-  --success-border: var(--mm-accent-soft);
-  --success-text: var(--mm-accent);
-  --error-bg: var(--mm-danger-bg);
+  --normal-bg: var(--my-surface);
+  --normal-border: var(--my-border);
+  --normal-text: var(--my-text);
+  --success-bg: var(--my-success-bg);
+  --success-border: var(--my-accent-soft);
+  --success-text: var(--my-accent);
+  --error-bg: var(--my-danger-bg);
   --error-border: #FECACA;
-  --error-text: var(--mm-danger);
+  --error-text: var(--my-danger);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
@@ -131,23 +138,23 @@
 }
 
 [data-sonner-toast][data-type="success"] {
-  background: var(--mm-accent-light) !important;
-  border-color: var(--mm-accent-soft) !important;
-  color: var(--mm-accent) !important;
+  background: var(--my-accent-light) !important;
+  border-color: var(--my-accent-soft) !important;
+  color: var(--my-accent) !important;
 }
 
 [data-sonner-toast][data-type="success"] [data-icon] svg {
-  color: var(--mm-accent) !important;
+  color: var(--my-accent) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
-  background: var(--mm-danger-bg) !important;
+  background: var(--my-danger-bg) !important;
   border-color: #FECACA !important;
-  color: var(--mm-danger) !important;
+  color: var(--my-danger) !important;
 }
 
 [data-sonner-toast][data-type="error"] [data-icon] svg {
-  color: var(--mm-danger) !important;
+  color: var(--my-danger) !important;
 }
 
 [data-sonner-toast] [data-title] {
@@ -155,7 +162,7 @@
 }
 
 [data-sonner-toast] [data-description] {
-  color: var(--mm-text-secondary) !important;
+  color: var(--my-text-secondary) !important;
   font-size: 12px !important;
 }
 
@@ -176,7 +183,7 @@
   animation: spin 0.7s linear infinite;
 }
 
-#moolmail-admin [class*="border-t"] {
+#mailyard-admin [class*="border-t"] {
   animation: fadeSlideIn 150ms ease-out;
 }
 

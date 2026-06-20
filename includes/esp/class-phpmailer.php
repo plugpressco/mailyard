@@ -1,5 +1,5 @@
 <?php
-namespace MoolMail\ESP;
+namespace Mailyard\ESP;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -30,13 +30,13 @@ class PHPMailer implements Provider {
 		if ( ! $sent ) {
 			global $phpmailer;
 			$error = isset( $phpmailer->ErrorInfo ) ? $phpmailer->ErrorInfo : '';
-			return Result::failure( $error ?: __( 'wp_mail() failed.', 'moolmail' ) );
+			return Result::failure( $error ?: __( 'wp_mail() failed.', 'mailyard' ) );
 		}
 
 		return Result::success();
 	}
 
 	public function get_name(): string { return 'phpmailer'; }
-	public function get_label(): string { return __( 'Default (PHP)', 'moolmail' ); }
+	public function get_label(): string { return __( 'Default (PHP)', 'mailyard' ); }
 	public function get_fields(): array { return array(); }
 }

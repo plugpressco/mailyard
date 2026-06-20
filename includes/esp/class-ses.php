@@ -1,5 +1,5 @@
 <?php
-namespace MoolMail\ESP;
+namespace Mailyard\ESP;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -20,12 +20,17 @@ class SES implements Provider {
 	public function send( array $params ): Result {
 		$to         = sanitize_email( $params['to'] );
 		$subject    = sanitize_text_field( $params['subject'] );
-		$html       = $params['html'];
+		$html       = (string) ( $params['html'] ?? '' );
+		$text       = (string) ( $params['text'] ?? '' );
 		$from_name  = sanitize_text_field( $params['from_name'] );
 		$from_email = sanitize_email( $params['from_email'] );
 		$from       = $from_name ? '=?UTF-8?B?' . base64_encode( $from_name ) . "?= <$from_email>" : $from_email;
 
-		$raw = $this->build_mime( $from, $to, $subject, $html, $params['reply_to'] ?? '' );
+		if ( '' === $html && '' === $text ) {
+			return Result::failure( __( 'Empty email body.', 'mailyard' ) );
+		}
+
+		$raw = $this->build_mime( $from, $to, $subject, $html, $text, $params );
 
 		$payload  = wp_json_encode( array( 'Content' => array( 'Raw' => array( 'Data' => base64_encode( $raw ) ) ) ) );
 		$host     = "email.{$this->region}.amazonaws.com";
@@ -52,27 +57,65 @@ class SES implements Provider {
 		return Result::failure( $error );
 	}
 
-	// Build multipart MIME with plain text + HTML.
-	private function build_mime( string $from, string $to, string $subject, string $html, string $reply_to ): string {
-		$boundary = wp_generate_password( 16, false );
+	// Build raw MIME.
+	// - HTML only:          multipart/alternative (text auto-derived from html)
+	// - Plain only:         text/plain
+	// - Either + attachments: multipart/mixed wrapping the above
+	private function build_mime( string $from, string $to, string $subject, string $html, string $text, array $params ): string {
+		$reply_to    = $params['reply_to'] ?? '';
+		$cc          = $params['cc'] ?? array();
+		$bcc         = $params['bcc'] ?? array();
+		$attachments = $params['attachments'] ?? array();
 
-		$raw = '';
+		$alt_boundary = wp_generate_password( 16, false );
+		$mix_boundary = wp_generate_password( 16, false );
+
+		// Common headers.
+		$headers = "From: $from\r\nTo: $to\r\n";
+		if ( ! empty( $cc ) ) {
+			$headers .= 'Cc: ' . implode( ', ', array_map( 'sanitize_email', $cc ) ) . "\r\n";
+		}
+		if ( ! empty( $bcc ) ) {
+			$headers .= 'Bcc: ' . implode( ', ', array_map( 'sanitize_email', $bcc ) ) . "\r\n";
+		}
 		if ( $reply_to ) {
-			$raw .= 'Reply-To: ' . sanitize_email( $reply_to ) . "\r\n";
+			$headers .= 'Reply-To: ' . sanitize_email( $reply_to ) . "\r\n";
+		}
+		$headers .= 'Subject: =?UTF-8?B?' . base64_encode( $subject ) . "?=\r\nMIME-Version: 1.0\r\n";
+
+		// Body (no attachments yet — that wrapping happens below).
+		if ( '' !== $html ) {
+			$body_type    = "multipart/alternative; boundary=\"$alt_boundary\"";
+			$body_content = "--$alt_boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n"
+				. wp_strip_all_tags( $html ) . "\r\n\r\n"
+				. "--$alt_boundary\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n"
+				. $html . "\r\n\r\n"
+				. "--$alt_boundary--";
+		} else {
+			$body_type    = 'text/plain; charset=UTF-8';
+			$body_content = $text;
 		}
 
-		$raw .= "From: $from\r\n"
-			. "To: $to\r\n"
-			. 'Subject: =?UTF-8?B?' . base64_encode( $subject ) . "?=\r\n"
-			. "MIME-Version: 1.0\r\n"
-			. "Content-Type: multipart/alternative; boundary=\"$boundary\"\r\n\r\n"
-			. "--$boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n"
-			. wp_strip_all_tags( $html ) . "\r\n\r\n"
-			. "--$boundary\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n"
-			. $html . "\r\n\r\n"
-			. "--$boundary--";
+		if ( empty( $attachments ) ) {
+			return $headers . "Content-Type: $body_type\r\n\r\n" . $body_content;
+		}
 
-		return $raw;
+		// Wrap whatever body we built in multipart/mixed and append attachments.
+		$wrapped = "--$mix_boundary\r\nContent-Type: $body_type\r\n\r\n"
+			. $body_content . "\r\n\r\n";
+
+		foreach ( $attachments as $a ) {
+			$wrapped .= "--$mix_boundary\r\n"
+				. 'Content-Type: ' . $a['mime'] . '; name="' . $a['filename'] . "\"\r\n"
+				. "Content-Transfer-Encoding: base64\r\n"
+				. 'Content-Disposition: attachment; filename="' . $a['filename'] . "\"\r\n\r\n"
+				. chunk_split( $a['content_base64'] ) . "\r\n";
+		}
+		$wrapped .= "--$mix_boundary--";
+
+		return $headers
+			. "Content-Type: multipart/mixed; boundary=\"$mix_boundary\"\r\n\r\n"
+			. $wrapped;
 	}
 
 	// AWS Signature Version 4.
@@ -111,13 +154,13 @@ class SES implements Provider {
 	}
 
 	public function get_name(): string { return 'ses'; }
-	public function get_label(): string { return __( 'Amazon SES', 'moolmail' ); }
+	public function get_label(): string { return __( 'Amazon SES', 'mailyard' ); }
 
 	public function get_fields(): array {
 		return array(
-			array( 'key' => 'access_key', 'label' => __( 'Access Key ID', 'moolmail' ), 'type' => 'text', 'required' => true ),
-			array( 'key' => 'secret_key', 'label' => __( 'Secret Access Key', 'moolmail' ), 'type' => 'password', 'required' => true ),
-			array( 'key' => 'region', 'label' => __( 'Region', 'moolmail' ), 'type' => 'select', 'required' => true, 'options' => array(
+			array( 'key' => 'access_key', 'label' => __( 'Access Key ID', 'mailyard' ), 'type' => 'text', 'required' => true ),
+			array( 'key' => 'secret_key', 'label' => __( 'Secret Access Key', 'mailyard' ), 'type' => 'password', 'required' => true ),
+			array( 'key' => 'region', 'label' => __( 'Region', 'mailyard' ), 'type' => 'select', 'required' => true, 'options' => array(
 				'us-east-1' => 'US East (N. Virginia)', 'us-east-2' => 'US East (Ohio)', 'us-west-2' => 'US West (Oregon)',
 				'eu-west-1' => 'Europe (Ireland)', 'eu-central-1' => 'Europe (Frankfurt)', 'ap-south-1' => 'Asia Pacific (Mumbai)',
 				'ap-southeast-1' => 'Asia Pacific (Singapore)', 'ap-northeast-1' => 'Asia Pacific (Tokyo)',

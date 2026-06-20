@@ -1,67 +1,72 @@
 import { cn } from '@/lib/utils';
+import useId from '@/lib/useId';
+import Field, { controlClass } from './Field';
 
-let selectId = 0;
-function useId( prefix = 'mm-select' ) {
-	const [ id ] = [ `${ prefix }-${ ++selectId }` ];
-	return id;
+// Custom chevron so the control looks identical across browsers/OSes.
+function Chevron( { className } ) {
+	return (
+		<svg className={ className } viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<path d="M6 8l4 4 4-4" />
+		</svg>
+	);
 }
 
 export default function Select( {
 	label,
 	hint,
 	required,
+	error,
+	size = 'md',
 	options = [],
 	className,
 	id: propId,
 	...props
 } ) {
-	const id = propId || useId();
+	const id = propId || useId( 'my-select' );
 
 	return (
-		<div className="flex flex-col gap-1">
-			{ label && (
-				<label htmlFor={ id } className="text-[12px] font-medium text-warm-500">
-					{ label }
-					{ required && <span className="ml-0.5 text-danger">*</span> }
-				</label>
-			) }
-			<select
-				id={ id }
-				name={ id }
-				className={ cn(
-					'h-9 w-full cursor-pointer appearance-auto rounded-lg border border-warm-200 bg-white px-2.5 text-sm text-warm-900 outline-none transition-colors focus:border-brand',
-					className
-				) }
-				{ ...props }
-			>
-				{ options.map( ( o ) => (
-					<option key={ o.value } value={ o.value }>{ o.label }</option>
-				) ) }
-			</select>
-			{ hint && <span className="text-[11px] leading-snug text-warm-400">{ hint }</span> }
-		</div>
+		<Field label={ label } hint={ hint } error={ error } required={ required } htmlFor={ id }>
+			<div className="relative">
+				<select
+					id={ id }
+					name={ id }
+					className={ cn(
+						controlClass( { size, error: !! error } ),
+						'cursor-pointer appearance-none pl-3 pr-9',
+						className
+					) }
+					{ ...props }
+				>
+					{ options.map( ( o ) => (
+						<option key={ o.value } value={ o.value }>{ o.label }</option>
+					) ) }
+				</select>
+				<Chevron className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+			</div>
+		</Field>
 	);
 }
 
-/**
- * Inline variant — label left, select right, for settings rows.
- */
-export function InlineSelect( { label, options = [], ...props } ) {
-	const id = props.id || useId( 'mm-iselect' );
+// Inline variant — label left, select right, for settings rows.
+export function InlineSelect( { label, options = [], className, ...props } ) {
+	const id = props.id || useId( 'my-iselect' );
 
 	return (
 		<div className="flex items-center justify-between py-2.5">
-			<label htmlFor={ id } className="text-[13px] text-warm-600">{ label }</label>
-			<select
-				id={ id }
-				name={ id }
-				className="h-8 cursor-pointer appearance-auto rounded-lg border border-warm-200 bg-white px-2.5 text-[12.5px] text-warm-900 outline-none transition-colors focus:border-brand"
-				{ ...props }
-			>
-				{ options.map( ( o ) => (
-					<option key={ o.value } value={ o.value }>{ o.label }</option>
-				) ) }
-			</select>
+			<label htmlFor={ id } className="text-[13px] text-ink-700">{ label }</label>
+			<div className="relative">
+				<select
+					id={ id }
+					name={ id }
+					className={ cn( controlClass( { size: 'sm' } ), 'w-auto cursor-pointer appearance-none pl-3 pr-8', className ) }
+					{ ...props }
+				>
+					{ options.map( ( o ) => (
+						<option key={ o.value } value={ o.value }>{ o.label }</option>
+					) ) }
+				</select>
+				<Chevron className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
+			</div>
 		</div>
 	);
 }

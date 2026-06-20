@@ -1,5 +1,5 @@
 <?php
-namespace MoolMail\ESP;
+namespace Mailyard\ESP;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -21,12 +21,36 @@ class Resend implements Provider {
 			'from'    => $from,
 			'to'      => array( sanitize_email( $params['to'] ) ),
 			'subject' => sanitize_text_field( $params['subject'] ),
-			'html'    => $params['html'],
 			'tags'    => array( array( 'name' => 'category', 'value' => 'transactional' ) ),
 		);
 
+		if ( ! empty( $params['html'] ) ) {
+			$body['html'] = $params['html'];
+		}
+		if ( ! empty( $params['text'] ) ) {
+			$body['text'] = $params['text'];
+		}
+		if ( empty( $body['html'] ) && empty( $body['text'] ) ) {
+			return Result::failure( __( 'Empty email body.', 'mailyard' ) );
+		}
+
 		if ( ! empty( $params['reply_to'] ) ) {
 			$body['reply_to'] = array( sanitize_email( $params['reply_to'] ) );
+		}
+		if ( ! empty( $params['cc'] ) ) {
+			$body['cc'] = $params['cc'];
+		}
+		if ( ! empty( $params['bcc'] ) ) {
+			$body['bcc'] = $params['bcc'];
+		}
+		if ( ! empty( $params['attachments'] ) ) {
+			$body['attachments'] = array_map( function ( $a ) {
+				return array(
+					'filename'     => $a['filename'],
+					'content'      => $a['content_base64'],
+					'content_type' => $a['mime'],
+				);
+			}, $params['attachments'] );
 		}
 
 		$response = wp_remote_post( 'https://api.resend.com/emails', array(
@@ -46,22 +70,22 @@ class Resend implements Provider {
 		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( ! is_array( $decoded ) ) {
-			return Result::failure( __( 'Invalid response from Resend.', 'moolmail' ) );
+			return Result::failure( __( 'Invalid response from Resend.', 'mailyard' ) );
 		}
 
 		if ( 200 !== (int) $code ) {
-			return Result::failure( sanitize_text_field( $decoded['message'] ?? __( 'Unknown Resend error.', 'moolmail' ) ) );
+			return Result::failure( sanitize_text_field( $decoded['message'] ?? __( 'Unknown Resend error.', 'mailyard' ) ) );
 		}
 
 		return Result::success( $decoded['id'] ?? '' );
 	}
 
 	public function get_name(): string { return 'resend'; }
-	public function get_label(): string { return __( 'Resend', 'moolmail' ); }
+	public function get_label(): string { return __( 'Resend', 'mailyard' ); }
 
 	public function get_fields(): array {
 		return array(
-			array( 'key' => 'api_key', 'label' => __( 'API Key', 'moolmail' ), 'type' => 'password', 'required' => true ),
+			array( 'key' => 'api_key', 'label' => __( 'API Key', 'mailyard' ), 'type' => 'password', 'required' => true ),
 		);
 	}
 }

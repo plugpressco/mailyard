@@ -1,42 +1,41 @@
 import { cn } from '@/lib/utils';
-
-let inputId = 0;
-function useId( prefix = 'mm-input' ) {
-	const [ id ] = [ `${ prefix }-${ ++inputId }` ];
-	return id;
-}
+import useId from '@/lib/useId';
+import Field, { controlClass } from './Field';
 
 export default function Input( {
 	label,
 	hint,
 	required,
 	error,
+	size = 'md',
+	icon,
 	className,
 	id: propId,
 	...props
 } ) {
-	const id = propId || useId();
+	const id = propId || useId( 'my-input' );
+
+	const input = (
+		<input
+			id={ id }
+			name={ id }
+			className={ cn(
+				controlClass( { size, error: !! error } ),
+				icon ? 'pl-8 pr-3' : 'px-3',
+				className
+			) }
+			{ ...props }
+		/>
+	);
 
 	return (
-		<div className="flex flex-col gap-1">
-			{ label && (
-				<label htmlFor={ id } className="text-[12px] font-medium text-warm-500">
-					{ label }
-					{ required && <span className="ml-0.5 text-danger">*</span> }
-				</label>
-			) }
-			<input
-				id={ id }
-				name={ id }
-				className={ cn(
-					'h-9 w-full rounded-lg border bg-white px-3 text-sm text-warm-900 outline-none transition-colors',
-					error ? 'border-danger focus:border-danger' : 'border-warm-200 focus:border-brand',
-					className
-				) }
-				{ ...props }
-			/>
-			{ hint && ! error && <span className="text-[11px] leading-snug text-warm-400">{ hint }</span> }
-			{ error && <span className="text-[11px] leading-snug text-danger">{ error }</span> }
-		</div>
+		<Field label={ label } hint={ hint } error={ error } required={ required } htmlFor={ id }>
+			{ icon ? (
+				<div className="relative">
+					<span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400">{ icon }</span>
+					{ input }
+				</div>
+			) : input }
+		</Field>
 	);
 }

@@ -1,5 +1,5 @@
 <?php
-namespace MoolMail;
+namespace Mailyard;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,7 +19,7 @@ class Logger {
 
 	public static function table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'moolmail_logs';
+		return $wpdb->prefix . Options::TABLE_LOGS;
 	}
 
 	// Create or upgrade the log table. Safe to call multiple times.
@@ -44,7 +44,7 @@ class Logger {
 			KEY created_at (created_at)
 		) {$charset};" );
 
-		update_option( 'moolmail_log_table_version', self::TABLE_VERSION );
+		update_option( Options::TABLE_VERSION, self::TABLE_VERSION );
 	}
 
 	// Hook into WP mail events for SMTP/PHPMailer providers.
@@ -61,51 +61,47 @@ class Logger {
 		if ( ! $this->is_enabled() ) {
 			return;
 		}
-
-		$to      = is_array( $args['to'] ?? '' ) ? implode( ', ', $args['to'] ) : ( $args['to'] ?? '' );
-		$headers = is_array( $args['headers'] ?? '' ) ? implode( "\n", $args['headers'] ) : ( $args['headers'] ?? '' );
-
-		$this->insert( array(
-			'to_email'      => sanitize_text_field( $to ),
-			'subject'       => sanitize_text_field( $args['subject'] ?? '' ),
-			'body'          => $args['body'] ?? '',
-			'headers'       => sanitize_textarea_field( $headers ),
-			'provider'      => sanitize_key( $args['provider'] ?? '' ),
-			'status'        => sanitize_key( $args['status'] ?? 'sent' ),
-			'error_message' => sanitize_text_field( $args['error'] ?? '' ),
+		$this->insert( $this->build_row(
+			$args['to'] ?? '',
+			$args['subject'] ?? '',
+			$args['body'] ?? '',
+			$args['headers'] ?? '',
+			sanitize_key( $args['provider'] ?? '' ),
+			sanitize_key( $args['status'] ?? 'sent' ),
+			$args['error'] ?? ''
 		) );
 	}
 
 	public function on_success( $data ) {
-		$settings = get_option( 'moolmail_settings', array() );
-		$to       = is_array( $data['to'] ) ? implode( ', ', $data['to'] ) : $data['to'];
-		$headers  = is_array( $data['headers'] ?? '' ) ? implode( "\n", $data['headers'] ) : ( $data['headers'] ?? '' );
-
-		$this->insert( array(
-			'to_email'      => sanitize_text_field( $to ),
-			'subject'       => sanitize_text_field( $data['subject'] ?? '' ),
-			'body'          => $data['message'] ?? '',
-			'headers'       => sanitize_textarea_field( $headers ),
-			'provider'      => sanitize_key( $settings['active'] ?? 'phpmailer' ),
-			'status'        => 'sent',
-			'error_message' => '',
+		// Override already logs each chain attempt; its SMTP sends fire this hook too.
+		if ( Override::is_sending() ) {
+			return;
+		}
+		$this->insert( $this->build_row(
+			$data['to'] ?? '',
+			$data['subject'] ?? '',
+			$data['message'] ?? '',
+			$data['headers'] ?? '',
+			$this->active_provider(),
+			'sent',
+			''
 		) );
 	}
 
 	public function on_failure( $error ) {
-		$data     = $error->get_error_data();
-		$settings = get_option( 'moolmail_settings', array() );
-		$to       = is_array( $data['to'] ?? '' ) ? implode( ', ', $data['to'] ) : ( $data['to'] ?? '' );
-		$headers  = is_array( $data['headers'] ?? '' ) ? implode( "\n", $data['headers'] ) : ( $data['headers'] ?? '' );
-
-		$this->insert( array(
-			'to_email'      => sanitize_text_field( $to ),
-			'subject'       => sanitize_text_field( $data['subject'] ?? '' ),
-			'body'          => $data['message'] ?? '',
-			'headers'       => sanitize_textarea_field( $headers ),
-			'provider'      => sanitize_key( $settings['active'] ?? 'phpmailer' ),
-			'status'        => 'failed',
-			'error_message' => sanitize_text_field( $error->get_error_message() ),
+		// Override already logs each chain attempt; its SMTP sends fire this hook too.
+		if ( Override::is_sending() ) {
+			return;
+		}
+		$data = $error->get_error_data();
+		$this->insert( $this->build_row(
+			$data['to'] ?? '',
+			$data['subject'] ?? '',
+			$data['message'] ?? '',
+			$data['headers'] ?? '',
+			$this->active_provider(),
+			'failed',
+			$error->get_error_message()
 		) );
 	}
 
@@ -133,38 +129,24 @@ class Logger {
 
 		$where_sql = $where ? 'WHERE ' . implode( ' AND ', $where ) : '';
 
-		// Total.
+		// Table name comes from self::table() = $wpdb->prefix . hardcoded suffix.
+		// $where_sql is composed of static strings and %s placeholders only.
+		// Values are bound via $wpdb->prepare. Safe to interpolate.
 		$count_sql = "SELECT COUNT(*) FROM {$table} {$where_sql}";
 		$total     = (int) ( $values
-			? $wpdb->get_var( $wpdb->prepare( $count_sql, $values ) ) // phpcs:ignore
-			: $wpdb->get_var( $count_sql ) ); // phpcs:ignore
+			? $wpdb->get_var( $wpdb->prepare( $count_sql, $values ) ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
+			: $wpdb->get_var( $count_sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
 
-		// Rows.
-		$rows = $wpdb->get_results( // phpcs:ignore
-			$wpdb->prepare(
-				"SELECT * FROM {$table} {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-				array_merge( $values, array( $per_page, $offset ) )
-			),
+		$rows_sql = "SELECT * FROM {$table} {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+		$rows     = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->prepare( $rows_sql, array_merge( $values, array( $per_page, $offset ) ) ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			ARRAY_A
 		);
 
-		$items = array();
-		foreach ( ( $rows ?: array() ) as $row ) {
-			$items[] = array(
-				'id'         => (int) $row['id'],
-				'to'         => $row['to_email'],
-				'subject'    => $row['subject'],
-				'body'       => $row['body'],
-				'headers'    => $row['headers'],
-				'provider'   => $row['provider'],
-				'status'     => $row['status'],
-				'error'      => $row['error_message'],
-				'time'       => human_time_diff( strtotime( $row['created_at'] ), current_time( 'timestamp' ) ) . ' ago', // phpcs:ignore
-				'created_at' => $row['created_at'],
-			);
-		}
-
-		return array( 'items' => $items, 'total' => $total );
+		return array(
+			'items' => array_map( array( $this, 'shape_row' ), $rows ?: array() ),
+			'total' => $total,
+		);
 	}
 
 	// Dashboard stats.
@@ -172,48 +154,93 @@ class Logger {
 		global $wpdb;
 		$t = self::table();
 
-		$total  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t}" ); // phpcs:ignore
-		$sent   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE status = 'sent'" ); // phpcs:ignore
-		$failed = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE status = 'failed'" ); // phpcs:ignore
-
-		// 14-day chart.
-		$chart_rows = $wpdb->get_results( // phpcs:ignore
-			"SELECT DATE(created_at) as day, COUNT(*) as cnt FROM {$t}
-			 WHERE created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY) AND status = 'sent'
-			 GROUP BY DATE(created_at) ORDER BY day ASC", ARRAY_A
-		);
-		$day_map = array();
-		foreach ( ( $chart_rows ?: array() ) as $row ) {
-			$day_map[ $row['day'] ] = (int) $row['cnt'];
-		}
-		$chart = array();
-		for ( $i = 13; $i >= 0; $i-- ) {
-			$chart[] = $day_map[ gmdate( 'Y-m-d', strtotime( "-{$i} days" ) ) ] ?? 0;
-		}
-
-		$recent = $this->query( array( 'page' => 1, 'per_page' => 5 ) );
+		// Table name from self::table(); no user input in the SQL.
+		$sent_7d   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE status = 'sent'   AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$failed_7d = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE status = 'failed' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 		return array(
-			'sent'          => $sent,
-			'failed'        => $failed,
-			'total'         => $total,
-			'delivery_rate' => $total > 0 ? round( ( $sent / $total ) * 100 ) . '%' : '0%',
-			'chart_data'    => $chart,
-			'recent_logs'   => $recent['items'],
+			'sent_7d'   => $sent_7d,
+			'failed_7d' => $failed_7d,
 		);
+	}
+
+	// Per-day sent/failed counts for the last N days (oldest first), gaps filled
+	// with zeros. Powers the dashboard send-volume chart.
+	public function daily_stats( int $days = 14 ): array {
+		global $wpdb;
+		$t    = self::table();
+		$days = max( 1, min( 90, $days ) );
+
+		$rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
+			"SELECT DATE(created_at) AS d,
+			        SUM(status = 'sent')   AS sent,
+			        SUM(status = 'failed') AS failed
+			 FROM {$t}
+			 WHERE created_at >= DATE_SUB( UTC_DATE(), INTERVAL %d DAY )
+			 GROUP BY DATE(created_at)",
+			$days - 1
+		), ARRAY_A );
+
+		$map = array();
+		foreach ( (array) $rows as $r ) {
+			$map[ $r['d'] ] = array( 'sent' => (int) $r['sent'], 'failed' => (int) $r['failed'] );
+		}
+
+		$out = array();
+		for ( $i = $days - 1; $i >= 0; $i-- ) {
+			$date  = gmdate( 'Y-m-d', time() - $i * DAY_IN_SECONDS );
+			$out[] = array(
+				'date'   => $date,
+				'sent'   => $map[ $date ]['sent'] ?? 0,
+				'failed' => $map[ $date ]['failed'] ?? 0,
+			);
+		}
+		return $out;
 	}
 
 	// Delete logs older than N days.
 	public function cleanup( int $days = 30 ): int {
 		global $wpdb;
-		return (int) $wpdb->query( $wpdb->prepare( // phpcs:ignore
-			"DELETE FROM " . self::table() . " WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)", $days
-		) );
+		$table = self::table();
+		$sql   = "DELETE FROM {$table} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)";
+		return (int) $wpdb->query( $wpdb->prepare( $sql, $days ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
 	}
 
 	private function is_enabled(): bool {
-		$settings = get_option( 'moolmail_settings', array() );
+		$settings = Options::settings();
 		return ! isset( $settings['logging'] ) || $settings['logging'];
+	}
+
+	private function active_provider(): string {
+		$settings = Options::settings();
+		return sanitize_key( $settings['active'] ?? Options::DEFAULT_PROVIDER );
+	}
+
+	private function build_row( $to, $subject, $body, $headers, string $provider, string $status, string $error ): array {
+		return array(
+			'to_email'      => sanitize_text_field( is_array( $to ) ? implode( ', ', $to ) : (string) $to ),
+			'subject'       => sanitize_text_field( (string) $subject ),
+			'body'          => (string) $body,
+			'headers'       => sanitize_textarea_field( is_array( $headers ) ? implode( "\n", $headers ) : (string) $headers ),
+			'provider'      => $provider,
+			'status'        => $status,
+			'error_message' => sanitize_text_field( $error ),
+		);
+	}
+
+	private function shape_row( array $row ): array {
+		return array(
+			'id'         => (int) $row['id'],
+			'to'         => $row['to_email'],
+			'subject'    => $row['subject'],
+			'body'       => $row['body'],
+			'headers'    => $row['headers'],
+			'provider'   => $row['provider'],
+			'status'     => $row['status'],
+			'error'      => $row['error_message'],
+			'time'       => human_time_diff( strtotime( $row['created_at'] ), current_time( 'U' ) ) . ' ago',
+			'created_at' => $row['created_at'],
+		);
 	}
 
 	private function insert( array $data ) {

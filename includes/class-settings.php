@@ -1,9 +1,9 @@
 <?php
-namespace MoolMail;
+namespace Mailyard;
 
 defined( 'ABSPATH' ) || exit;
 
-// Admin page and asset loading for the MoolMail React UI.
+// Admin page and asset loading for the Mailyard React UI.
 class Settings {
 
 	private static $instance = null;
@@ -22,37 +22,37 @@ class Settings {
 
 	public function add_menu() {
 		add_options_page(
-			__( 'MoolMail', 'moolmail' ),
-			__( 'MoolMail', 'moolmail' ),
+			__( 'Mailyard', 'mailyard' ),
+			__( 'Mailyard', 'mailyard' ),
 			'manage_options',
-			'moolmail',
+			'mailyard',
 			array( $this, 'render' )
 		);
 	}
 
 	public function enqueue( $hook ) {
-		if ( 'settings_page_moolmail' !== $hook ) {
+		if ( 'settings_page_mailyard' !== $hook ) {
 			return;
 		}
 
-		$asset_file = MOOLMAIL_DIR . 'build/admin.asset.php';
+		$asset_file = MAILYARD_DIR . 'build/admin.asset.php';
 		$asset      = file_exists( $asset_file ) ? require $asset_file : array(
 			'dependencies' => array(),
-			'version'      => MOOLMAIL_VERSION,
+			'version'      => MAILYARD_VERSION,
 		);
 
-		wp_enqueue_style( 'moolmail-admin', plugins_url( 'build/admin.css', dirname( __FILE__ ) ), array(), $asset['version'] );
-		wp_enqueue_script( 'moolmail-admin', plugins_url( 'build/admin.js', dirname( __FILE__ ) ), $asset['dependencies'], $asset['version'], true );
-		wp_script_add_data( 'moolmail-admin', 'strategy', 'defer' );
+		wp_enqueue_style( 'mailyard-admin', plugins_url( 'build/admin.css', dirname( __FILE__ ) ), array(), $asset['version'] );
+		wp_enqueue_script( 'mailyard-admin', plugins_url( 'build/admin.js', dirname( __FILE__ ) ), $asset['dependencies'], $asset['version'], true );
+		wp_script_add_data( 'mailyard-admin', 'strategy', 'defer' );
 
-		wp_localize_script( 'moolmail-admin', 'moolMail', array(
-			'onboarded' => (bool) get_option( 'moolmail_onboarded', false ),
+		wp_localize_script( 'mailyard-admin', 'mailyard', array(
+			'onboarded' => (bool) get_option( Options::ONBOARDED, false ),
 			'ajaxUrl'   => esc_url( admin_url( 'admin-ajax.php' ) ),
-			'testNonce' => wp_create_nonce( 'moolmail_test' ),
+			'testNonce' => wp_create_nonce( 'mailyard_test' ),
 		) );
 	}
 
 	public function render() {
-		echo '<div id="moolmail-admin"></div>';
+		echo '<div id="mailyard-admin"></div>';
 	}
 }

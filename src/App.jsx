@@ -1,29 +1,27 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
-import TopBar from './components/TopBar';
+import Sidebar from './components/Sidebar';
 import { DashboardSkeleton, ConnectionsSkeleton, TableSkeleton, SettingsSkeleton } from './components/ui';
 
 const LazyToaster = lazy( () => import( 'sonner' ).then( ( m ) => ( { default: m.Toaster } ) ) );
 const Setup = lazy( () => import( './views/Setup' ) );
-const Overview = lazy( () => import( './views/Overview' ) );
+const Dashboard = lazy( () => import( './views/Dashboard' ) );
 const Connections = lazy( () => import( './views/Connections' ) );
+const Deliverability = lazy( () => import( './views/Deliverability' ) );
 const Logs = lazy( () => import( './views/Logs' ) );
 const Settings = lazy( () => import( './views/Settings' ) );
-const SendTest = lazy( () => import( './views/SendTest' ) );
 
-const VALID_VIEWS = [ 'dashboard', 'connections', 'logs', 'send-test', 'settings' ];
+const VALID_VIEWS = [ 'dashboard', 'connections', 'deliverability', 'logs', 'settings' ];
 
 function getHashView() {
 	const hash = window.location.hash.replace( '#/', '' ).replace( '#', '' );
 	return VALID_VIEWS.includes( hash ) ? hash : 'dashboard';
 }
 
-// Match the right skeleton to the current view.
 const SKELETONS = {
-	dashboard: DashboardSkeleton,
+	dashboard:   DashboardSkeleton,
 	connections: ConnectionsSkeleton,
-	logs: () => <div className="px-6 py-[22px]"><TableSkeleton /></div>,
-	settings: SettingsSkeleton,
-	'send-test': () => <div className="px-6 py-[22px]"><SettingsSkeleton /></div>,
+	logs:        TableSkeleton,
+	settings:    SettingsSkeleton,
 };
 
 function ViewFallback( { view } ) {
@@ -40,11 +38,11 @@ function ToasterWrapper() {
 					style: {
 						fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
 						fontSize: '13px',
-						borderRadius: 'var(--mm-r)',
-						border: '1px solid var(--mm-border)',
+						borderRadius: 'var(--my-r)',
+						border: '1px solid var(--my-border)',
 						boxShadow: 'none',
-						background: 'var(--mm-surface)',
-						color: 'var(--mm-text)',
+						background: 'var(--my-surface)',
+						color: 'var(--my-text)',
 						padding: '12px 14px',
 					},
 				} }
@@ -55,7 +53,7 @@ function ToasterWrapper() {
 
 export default function App() {
 	const [ onboarded, setOnboarded ] = useState(
-		() => window.moolMail?.onboarded ?? false
+		() => window.mailyard?.onboarded ?? false
 	);
 	const [ view, setView ] = useState( getHashView );
 
@@ -83,22 +81,20 @@ export default function App() {
 	}
 
 	return (
-		<div className="min-h-screen bg-warm-50 font-sans">
+		<div className="flex min-h-screen bg-ink-50 font-sans">
 			<ToasterWrapper />
-			<TopBar view={ view } onNavigate={ navigate } />
-			<Suspense fallback={ <ViewFallback view={ view } /> }>
-				<div className="px-6 py-[22px]">
-					{ view === 'dashboard' && <Overview onNavigate={ navigate } /> }
-					{ view === 'connections' && <Connections /> }
-					{ view === 'logs' && <Logs /> }
-					{ view === 'send-test' && <SendTest /> }
-					{ view === 'settings' && (
-						<div className="mx-auto max-w-[680px]">
-							<Settings />
-						</div>
-					) }
+			<Sidebar view={ view } onNavigate={ navigate } />
+			<main className="min-w-0 flex-1">
+				<div className="mx-auto max-w-[1180px] px-8 py-7">
+					<Suspense fallback={ <ViewFallback view={ view } /> }>
+						{ view === 'dashboard' && <Dashboard onNavigate={ navigate } /> }
+						{ view === 'connections' && <Connections /> }
+						{ view === 'deliverability' && <Deliverability /> }
+						{ view === 'logs' && <Logs /> }
+						{ view === 'settings' && <Settings /> }
+					</Suspense>
 				</div>
-			</Suspense>
+			</main>
 		</div>
 	);
 }

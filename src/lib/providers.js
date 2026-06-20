@@ -1,3 +1,11 @@
+// Routing purpose options for the connection editor. Mirrors the values the REST
+// API whitelists in sanitize_purpose().
+export const PURPOSES = [
+	{ value: 'any', label: 'Any' },
+	{ value: 'transactional', label: 'Transactional' },
+	{ value: 'marketing', label: 'Marketing' },
+];
+
 export const LIVE_PROVIDERS = [
 	{
 		id: 'ses',
@@ -42,14 +50,6 @@ export const LIVE_PROVIDERS = [
 		dashboard: 'https://account.postmarkapp.com/servers',
 		fields: [
 			{ key: 'api_key', label: 'Server API Token', type: 'password', required: true, placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', hint: 'Found in Server → API Tokens. Use the Server token, not Account token.' },
-			{
-				key: 'stream', label: 'Message Stream', type: 'select', required: false,
-				options: [
-					{ value: 'outbound', label: 'Transactional (outbound)' },
-					{ value: 'broadcast', label: 'Broadcast' },
-				],
-				hint: 'Use "outbound" for password resets, receipts, notifications.',
-			},
 		],
 	},
 	{
@@ -59,6 +59,15 @@ export const LIVE_PROVIDERS = [
 		dashboard: 'https://resend.com/api-keys',
 		fields: [
 			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 're_xxxxxxxxxx', hint: 'Found in Resend dashboard → API Keys.' },
+		],
+	},
+	{
+		id: 'brevo',
+		name: 'Brevo',
+		desc: 'Free 300/day',
+		dashboard: 'https://app.brevo.com/settings/keys/api',
+		fields: [
+			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 'xkeysib-xxxxxxxxxxxxxxxxxxxx', hint: 'Found in Brevo dashboard → SMTP & API → API Keys. Use a v3 key.' },
 		],
 	},
 	{
@@ -99,17 +108,3 @@ export const LIVE_PROVIDERS = [
 	},
 ];
 
-export const PLANNED_PROVIDERS = [
-	'Brevo',
-	'Mailgun',
-	'SendGrid',
-	'Mailjet',
-	'MailerSend',
-	'SparkPost',
-	'Elastic Email',
-	'SMTP2GO',
-	'Zoho Mail',
-	'Google Workspace',
-	'Microsoft 365',
-	'Netcore',
-];
