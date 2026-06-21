@@ -4,7 +4,7 @@ namespace Mailyard\ESP;
 defined( 'ABSPATH' ) || exit;
 
 // Default provider — uses wp_mail() without modification.
-class PHPMailer implements Provider {
+class Default_Mail implements Provider {
 
 	public function connect( array $config ): bool {
 		return true;

@@ -20,7 +20,7 @@ class Manager {
 
 	private function __construct() {
 		$this->providers = array(
-			Options::DEFAULT_PROVIDER => new ESP\PHPMailer(),
+			Options::DEFAULT_PROVIDER => new ESP\Default_Mail(),
 			'ses'                     => new ESP\SES(),
 			'postmark'                => new ESP\Postmark(),
 			'resend'                  => new ESP\Resend(),

@@ -2,44 +2,48 @@
 Contributors: badhonrocks
 Tags: smtp, wp-mail, email-log, mail, transactional
 Requires at least: 5.8
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Route WordPress email through Amazon SES, Postmark, Resend, Brevo, or any SMTP server. Smart failover, full logging, zero clutter.
+WordPress not sending emails? Fix it in 2 minutes. Connect a real email service and every email your site sends will actually arrive.
 
 == Description ==
 
-Mailyard makes `wp_mail()` reliable. Pick a transactional email provider, paste your API key, and every email WordPress sends — password resets, WooCommerce receipts, form submissions, plugin notifications — is delivered through that provider's infrastructure instead of your web host's unreliable PHP mail.
+**Is your WordPress site not sending emails?** Password resets not arriving. WooCommerce order emails going to spam. Contact form messages disappearing. This is the most common WordPress problem — and Mailyard fixes it.
 
-Set up in under two minutes. No bloated dashboards, no upsells, no fake premium features.
+By default, WordPress tries to send email through your web host's mail server. Most hosts either block it, or deliver it so poorly that it lands in spam. Mailyard replaces that with a proper email service — the same kind of infrastructure that real companies use to send millions of emails.
 
-= Supported providers =
+= How it works =
 
-* **Amazon SES** — scalable cloud delivery, very low cost at volume
-* **Postmark** — fast transactional, premium deliverability
-* **Resend** — modern email API, generous free tier
-* **Brevo** (formerly Sendinblue) — free 300 emails/day
-* **Custom SMTP** — any SMTP server, including Gmail, Microsoft 365 with app passwords, or your own mail server
-* **PHP Mail** — server default (no configuration)
+You connect Mailyard to an email service (like Resend, Postmark, or Amazon SES), and from that moment every email your WordPress site sends — password resets, order confirmations, contact form replies, admin alerts — goes through that service instead of your host's broken mail server.
 
-= Key features =
+No coding. No complicated setup. Pick a provider, paste your API key, and it works.
 
-* **Real failover.** Configure multiple connections, drag to set priority. If the primary provider returns an error, Mailyard automatically retries through the next enabled provider — within the same `wp_mail()` call, no queue required.
-* **Full email logging.** Every outgoing email is saved to a custom database table with subject, recipient, provider used, status, and any error message. Search and filter from the Logs tab.
-* **Attachments, CC, and BCC.** Properly forwarded to every provider's API, including file-path attachments from WooCommerce invoices and Gravity Forms uploads.
-* **Inline test sender.** Send a test email from the Dashboard to verify delivery without leaving the admin.
-* **Conflict warnings.** If another SMTP plugin (WP Mail SMTP, Easy WP SMTP, FluentSMTP, Post SMTP, etc.) is also active, Mailyard surfaces a dismissible warning before silent breakage.
-* **Automatic log cleanup.** Logs older than 30 days are pruned daily via WP-Cron — your database doesn't grow unbounded.
-* **Clean uninstall.** Removing the plugin drops the log table and all options. No orphan data left behind.
+= Supported email services =
 
-= What Mailyard is *not* =
+* **Resend** — Free for 3,000 emails/month. Great starting point.
+* **Brevo** (formerly Sendinblue) — Free for 300 emails/day. Easy to set up.
+* **Postmark** — Best deliverability. Used by serious businesses.
+* **Amazon SES** — Very cheap at volume. Good if you already use AWS.
+* **Custom SMTP** — Works with any SMTP server including Gmail app passwords.
+* **Default (PHP mail)** — Your host's mail server. No config needed, but unreliable.
 
-* Not a marketing email tool. Use Mailchimp, Brevo's marketing side, or similar for newsletters and bulk sends.
-* Not a queue-based sender. Failover and delivery are synchronous within `wp_mail()`. For high-volume scheduled sends, pair with a queue plugin like Action Scheduler.
-* Not a paid plugin with locked features. Everything described above is in the free codebase. There is no Pro version that disables features.
+= What you get =
+
+* **It actually works.** Emails land in the inbox, not spam.
+* **Backup providers.** Add a second email service as a fallback. If the first one fails, Mailyard tries the next one automatically, on the same send.
+* **Email log.** See every email your site sent — who it went to, what the subject was, whether it delivered or failed.
+* **Send a test.** Click one button from the dashboard to send a test email and confirm everything is working.
+* **Conflict detection.** If you have another SMTP plugin installed at the same time, Mailyard warns you so you can remove it.
+* **Automatic cleanup.** Old email logs are deleted after 30 days so your database stays tidy.
+* **Clean removal.** Uninstalling the plugin removes everything — no leftover data in your database.
+
+= Is it free? =
+
+Yes. Everything listed above is free. There is no paid version, no locked features, no upsells inside the plugin.
 
 = Source code =
 
@@ -47,90 +51,98 @@ The admin UI is built with React and bundled via `@wordpress/scripts`. The full 
 
 = Privacy =
 
-Mailyard makes outbound HTTP requests only to the email provider you configure (e.g. `api.postmarkapp.com`, `api.resend.com`). It does not phone home, collect analytics, or contact any third-party server on its own. The Deliverability checker queries your domain's DNS records locally; if your server's PHP DNS resolver fails, it falls back to Cloudflare's public DNS-over-HTTPS endpoint (`cloudflare-dns.com`) to retrieve the records — no domain data is stored or tracked by Cloudflare beyond the normal DNS query.
+Mailyard only contacts the email service you configure. It does not phone home, track you, or send your data anywhere else.
 
-When you send a test email through the admin, the email's recipient, subject, and body are stored in your WordPress database log table (if logging is enabled, which is the default). You can disable logging in Settings.
+The Deliverability checker looks up your domain's DNS records to check your email setup. It does this using your server's DNS resolver. If that fails, it falls back to Cloudflare's public DNS service (`cloudflare-dns.com`) — Cloudflare sees only the domain name, same as any normal DNS lookup.
+
+If you have email logging turned on (it's on by default), the recipient address, subject line, and body of each email are saved in your WordPress database. You can turn logging off in Settings at any time.
 
 == Installation ==
 
-1. Upload the `mailyard` folder to `/wp-content/plugins/` or install via the Plugins screen in WordPress.
+1. Go to **Plugins → Add New** in your WordPress admin and search for "Mailyard", or upload the zip file.
 2. Activate the plugin.
 3. Go to **Settings → Mailyard**.
-4. Pick a provider, paste your API credentials, set your sender email, and click **Save and start sending**.
-5. From the Dashboard, click **Send test** to verify everything works.
+4. Follow the setup steps: pick an email service, enter your API key, and set the email address you want to send from.
+5. Click **Send test** from the Dashboard to make sure it's working.
 
-= Adding backup providers (failover) =
+That's it. Your site's emails will now go through the service you chose.
 
-After the first provider is configured, visit the **Connections** tab and click **Add**. Configure a second provider, enable it, and drag it below your primary. If the primary fails on a send, Mailyard will automatically try the backup.
+= Adding a backup email service =
 
-= Removing other SMTP plugins =
+After setting up your main provider, go to the **Connections** tab and click **Add**. Set up a second provider, enable it, and drag it below your primary. Now if your main provider ever fails, Mailyard automatically tries the backup.
 
-If you previously used WP Mail SMTP, FluentSMTP, or a similar plugin, deactivate it before activating Mailyard. Running two mail-routing plugins at once produces unpredictable results — Mailyard will show a dismissible admin notice when this is detected.
+= Switching from another SMTP plugin =
+
+If you're already using WP Mail SMTP, FluentSMTP, Post SMTP, or similar — deactivate that plugin first, then activate Mailyard. Running two mail plugins at once causes conflicts. Mailyard will warn you if it detects another mail plugin is active.
 
 == Frequently Asked Questions ==
 
-= Does Mailyard work with WooCommerce, Contact Form 7, Gravity Forms, Easy Digital Downloads, etc.? =
+= Will this fix my WordPress emails not sending? =
 
-Yes. Any plugin that uses WordPress's standard `wp_mail()` function (which is essentially all of them) will route through Mailyard automatically. Attachments and CC/BCC are properly forwarded.
+Yes, that's exactly what it's for. Install Mailyard, connect an email service (Resend is free and easy), send a test email, and you're done.
 
-= My sender domain needs to be verified with the provider. Where do I do that? =
+= Will this work with WooCommerce, Contact Form 7, Gravity Forms, and other plugins? =
 
-In the email provider's own dashboard. Click the **Get your keys →** link next to the credentials form during setup — it opens the provider's verification page in a new tab. Mailyard cannot verify domains for you; that has to happen with the provider directly.
+Yes. Any plugin that uses WordPress's built-in email system (which is all of them) automatically routes through Mailyard. Order emails, form notifications, password resets — all of it.
 
-= What happens if my primary provider is down? =
+= Which email service should I pick? =
 
-If you've configured a backup connection in **Connections**, Mailyard will automatically retry through the backup within the same `wp_mail()` call. The Logs tab will show both attempts — the failed primary and the successful backup. If you have only one connection configured, the send fails normally.
+If you're just starting out, use **Resend** — free for 3,000 emails/month and the easiest to set up. For a WooCommerce store or any serious volume, **Postmark** has the best inbox placement. **Brevo** is a solid free option if you send under 300 emails a day.
 
-= Does this work with Gmail or Google Workspace? =
+= Do I need to verify my domain? =
 
-Personal `@gmail.com` accounts work via SMTP with an app password (set up at [Google Account → App Passwords](https://myaccount.google.com/apppasswords)). Google Workspace accounts no longer support app passwords as of May 2025 — for those, use Resend, Brevo, Postmark, or another provider.
+Yes, with most providers you need to add a couple of DNS records to your domain to prove you own it. The provider walks you through this during signup. Click the **Get your keys →** link in Mailyard's setup screen to jump straight to your provider's dashboard.
 
-= Does this work with Microsoft 365 / Outlook? =
+= What happens if my email service goes down? =
 
-Microsoft has deprecated SMTP basic auth. For Microsoft 365 mailboxes, use a transactional provider (Resend, Postmark, etc.) sending from your domain.
+If you've set up a backup provider in the **Connections** tab, Mailyard automatically tries it when the main one fails — on the same send, no emails lost. If you only have one provider, the email fails like it normally would.
 
-= Why don't I see a "Cloudflare" provider option? =
+= Does it work with Gmail? =
 
-Cloudflare Email Sending requires your domain's DNS to be on Cloudflare and a CLI onboarding step (`wrangler email sending enable`), which is hostile to typical WordPress users. We may add it once Cloudflare offers a dashboard-only onboarding flow.
+Gmail personal accounts (`@gmail.com`) work via the Custom SMTP option using an app password (generate one at Google Account → Security → App Passwords). Note: Google Workspace accounts no longer support app passwords — use Resend or Postmark instead.
+
+= Does it work with Microsoft 365 or Outlook? =
+
+Microsoft turned off basic SMTP authentication for most accounts. For Microsoft 365 mailboxes, use Resend or Postmark instead.
 
 = How long are email logs kept? =
 
-30 days. Older logs are pruned daily by WP-Cron.
+30 days. Older logs are deleted automatically every day.
 
-= Can I disable email logging? =
+= Can I turn off email logging? =
 
-Yes, in **Settings**. Toggle off "Email logging" and Mailyard will stop writing to the log table. Existing logs are kept until they age out (or until you uninstall the plugin, at which point the entire table is dropped).
+Yes. Go to **Settings** and toggle off "Email logging". Existing logs stay until they age out or you uninstall the plugin.
 
-= Does Mailyard work on WordPress Multisite? =
+= Does it work on WordPress Multisite? =
 
-Single-site activation is fully supported. Network-wide activation has not been extensively tested in 1.0; please activate per-site for now.
+Activating per-site works fine. Network-wide activation hasn't been fully tested in this version — activate per-site for now.
 
-= I uninstalled the plugin. Is my data deleted? =
+= Does uninstalling remove all my data? =
 
-Yes. The `uninstall.php` script drops the log table and removes all four `mailyard_*` options. Nothing is left behind in the database.
+Yes. The email log table and all plugin settings are permanently deleted when you remove the plugin.
 
-= Is this plugin free? Will there be a Pro version? =
+= Is this plugin free? =
 
-Mailyard is GPL-licensed and free. Everything documented here is in the free code — there are no disabled features waiting behind a paywall. If a paid edition is ever offered, it will be additive (new providers, advanced features) and the existing free plugin will continue to receive updates.
+Yes. Everything described here is in the free version. There is no Pro version, no locked features, nothing behind a paywall.
 
 == Screenshots ==
 
-1. Onboarding — pick a provider, paste your API key, set your sender, done.
-2. Dashboard — active connection, 14-day send volume, inline test email, and recent activity.
-3. Connections — drag-to-reorder failover chain with primary and backup providers.
-4. Email Logs — searchable, filterable list of every email Mailyard has sent.
-5. Settings — two real controls: default sender identity and email logging toggle.
+1. Setup screen — pick your email provider, paste your API key, set your sender address.
+2. Dashboard — see your sending health, email volume over the last 14 days, and recent activity.
+3. Connections — add multiple providers and drag to set which one is primary.
+4. Email Logs — every email your site has sent, with status, recipient, and error details if it failed.
+5. Settings — set your default From address and toggle email logging on or off.
 
 == Changelog ==
 
 = 1.0.0 =
 * Initial release.
 * Six providers: Amazon SES, Postmark, Resend, Brevo, Custom SMTP, PHP Mail.
-* Synchronous failover across enabled connections.
+* Automatic failover across backup providers.
 * Full email logging with 30-day automatic cleanup.
-* Attachments, CC, and BCC support across all API providers.
+* Attachments, CC, and BCC work with all providers.
 * Conflict detection for other SMTP plugins.
-* Clean uninstall (drops table and options).
+* Clean uninstall.
 
 == Upgrade Notice ==
 

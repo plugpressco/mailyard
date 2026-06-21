@@ -6,8 +6,8 @@ global $wpdb;
 // Table name is built from the trusted $wpdb->prefix and a hardcoded suffix —
 // no user input is involved. Identifiers can't be bound via prepare(), so it is
 // interpolated directly after sanitizing with esc_sql().
-$table = esc_sql( $wpdb->prefix . 'mailyard_logs' );
-$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+$mailyard_table = esc_sql( $wpdb->prefix . 'mailyard_logs' );
+$wpdb->query( "DROP TABLE IF EXISTS `{$mailyard_table}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 
 delete_option( 'mailyard_settings' );
 delete_option( 'mailyard_connections' );

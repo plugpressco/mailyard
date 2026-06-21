@@ -24,7 +24,6 @@ class Plugin {
 		register_activation_hook( MAILYARD_FILE, array( $this, 'on_activate' ) );
 		register_deactivation_hook( MAILYARD_FILE, array( $this, 'on_deactivate' ) );
 
-		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'init', array( $this, 'on_init' ) );
 		add_action( self::CRON_CLEANUP, array( $this, 'run_cleanup' ) );
 
@@ -88,10 +87,6 @@ class Plugin {
 		( new Override() )->init();
 	}
 
-	public function load_textdomain(): void {
-		load_plugin_textdomain( 'mailyard', false, dirname( MAILYARD_BASENAME ) . '/languages' );
-	}
-
 	public function run_cleanup(): void {
 		Logger::instance()->cleanup( self::LOG_RETAIN_DAYS );
 	}
@@ -109,7 +104,7 @@ class Plugin {
 		require_once $includes . 'esp/interface-esp.php';
 		require_once $includes . 'esp/class-result.php';
 		require_once $includes . 'esp/class-attachment.php';
-		require_once $includes . 'esp/class-phpmailer.php';
+		require_once $includes . 'esp/class-default.php';
 		require_once $includes . 'esp/class-ses.php';
 		require_once $includes . 'esp/class-postmark.php';
 		require_once $includes . 'esp/class-resend.php';

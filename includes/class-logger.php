@@ -25,7 +25,7 @@ class Logger {
 	// Create or upgrade the log table. Safe to call multiple times.
 	public static function create_table() {
 		global $wpdb;
-		$table   = self::table();
+		$table   = esc_sql( self::table() );
 		$charset = $wpdb->get_charset_collate();
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -108,7 +108,7 @@ class Logger {
 	// Query logs with filters and pagination.
 	public function query( array $args = array() ): array {
 		global $wpdb;
-		$table    = self::table();
+		$table    = esc_sql( self::table() );
 		$page     = max( 1, absint( $args['page'] ?? 1 ) );
 		$per_page = min( 100, max( 1, absint( $args['per_page'] ?? 20 ) ) );
 		$offset   = ( $page - 1 ) * $per_page;
@@ -152,7 +152,7 @@ class Logger {
 	// Dashboard stats.
 	public function stats(): array {
 		global $wpdb;
-		$t = self::table();
+		$t = esc_sql( self::table() );
 
 		// Table name from self::table(); no user input in the SQL.
 		$sent_7d   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t} WHERE status = 'sent'   AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -168,7 +168,7 @@ class Logger {
 	// with zeros. Powers the dashboard send-volume chart.
 	public function daily_stats( int $days = 14 ): array {
 		global $wpdb;
-		$t    = self::table();
+		$t    = esc_sql( self::table() );
 		$days = max( 1, min( 90, $days ) );
 
 		$rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -201,7 +201,7 @@ class Logger {
 	// Delete logs older than N days.
 	public function cleanup( int $days = 30 ): int {
 		global $wpdb;
-		$table = self::table();
+		$table = esc_sql( self::table() );
 		$sql   = "DELETE FROM {$table} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)";
 		return (int) $wpdb->query( $wpdb->prepare( $sql, $days ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
 	}

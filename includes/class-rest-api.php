@@ -404,7 +404,7 @@ class REST_API {
 	// Surface plugin runtime state to debug delivery issues.
 	public function get_diagnostics() {
 		global $wpdb;
-		$table = Logger::table();
+		$table = esc_sql( Logger::table() );
 
 		$table_exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$row_count    = $table_exists ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ) : 0; // phpcs:ignore WordPress.DB
