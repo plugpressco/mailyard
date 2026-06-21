@@ -1,5 +1,5 @@
 === Mailyard ===
-Contributors: plugpress
+Contributors: badhonrocks
 Tags: smtp, wp-mail, email-log, mail, transactional
 Requires at least: 5.8
 Tested up to: 6.8
