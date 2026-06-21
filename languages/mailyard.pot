@@ -1,0 +1,149 @@
+# Copyright (C) 2026 PlugPress
+# This file is distributed under the GPLv2 or later license.
+msgid ""
+msgstr ""
+"Project-Id-Version: Mailyard 1.0.0\n"
+"Report-Msgid-Bugs-To: https://mailyard.co\n"
+"POT-Creation-Date: 2026-05-27 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Manual extraction\n"
+"X-Domain: mailyard\n"
+
+#: includes/class-settings.php
+msgid "Mailyard"
+msgstr ""
+
+#: includes/class-plugin.php
+msgid "Settings"
+msgstr ""
+
+#. translators: %s = comma-separated list of conflicting plugin names (wrapped in <strong>)
+#: includes/class-conflicts.php
+msgid "Mailyard detected another SMTP / mail-routing plugin: %s. Running multiple at once causes unpredictable email delivery. Deactivate the other one before sending from this site."
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Invalid email address."
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Mailyard — Test Email"
+msgstr ""
+
+#. translators: %s = recipient email address
+#: includes/class-rest-api.php
+msgid "Test email sent to %s"
+msgstr ""
+
+#: includes/class-rest-api.php
+msgid "Failed to send."
+msgstr ""
+
+#: includes/esp/class-phpmailer.php
+msgid "Default (PHP)"
+msgstr ""
+
+#: includes/esp/class-phpmailer.php
+msgid "wp_mail() failed."
+msgstr ""
+
+#: includes/esp/class-ses.php
+msgid "Amazon SES"
+msgstr ""
+
+#: includes/esp/class-ses.php
+msgid "Access Key ID"
+msgstr ""
+
+#: includes/esp/class-ses.php
+msgid "Secret Access Key"
+msgstr ""
+
+#: includes/esp/class-ses.php
+msgid "Region"
+msgstr ""
+
+#: includes/esp/class-postmark.php
+msgid "Postmark"
+msgstr ""
+
+#: includes/esp/class-postmark.php
+msgid "Server Token"
+msgstr ""
+
+#: includes/esp/class-postmark.php
+msgid "Message Stream"
+msgstr ""
+
+#: includes/esp/class-postmark.php
+msgid "Invalid response from Postmark."
+msgstr ""
+
+#: includes/esp/class-postmark.php
+msgid "Unknown Postmark error."
+msgstr ""
+
+#: includes/esp/class-resend.php
+msgid "Resend"
+msgstr ""
+
+#: includes/esp/class-resend.php
+msgid "API Key"
+msgstr ""
+
+#: includes/esp/class-resend.php
+msgid "Invalid response from Resend."
+msgstr ""
+
+#: includes/esp/class-resend.php
+msgid "Unknown Resend error."
+msgstr ""
+
+#: includes/esp/class-brevo.php
+msgid "Brevo"
+msgstr ""
+
+#. translators: %d = HTTP status code
+#: includes/esp/class-brevo.php
+msgid "Brevo error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "Custom SMTP"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "SMTP Host"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "Port"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "Encryption"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "Username"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "Password"
+msgstr ""
+
+#: includes/esp/class-smtp.php
+msgid "SMTP send failed."
+msgstr ""
+
+#: includes/esp/class-postmark.php
+#: includes/esp/class-resend.php
+#: includes/esp/class-brevo.php
+#: includes/esp/class-ses.php
+msgid "Empty email body."
+msgstr ""
