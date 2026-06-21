@@ -22,6 +22,8 @@ const exclude = [
 	'tailwind.config.js',
 	'postcss.config.js',
 	'components.json',
+	'docs/*',
+	'docs',
 	'*.webp',
 	'*.md',
 	'.gitignore',
