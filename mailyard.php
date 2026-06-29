@@ -5,7 +5,7 @@
  * Description:       Reliable email delivery for WordPress. Route emails through Amazon SES, Postmark, Resend, or any SMTP server with smart failover.
  * Version:           1.0.0
  * Requires at least: 5.8
- * Tested up to:      6.8
+ * Tested up to:      7.0
  * Requires PHP:      7.4
  * Author:            PlugPress
  * Author URI:        https://plugpress.co
