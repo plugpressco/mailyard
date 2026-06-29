@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "wp-scripts build",
+    "build": "composer install --no-interaction && wp-scripts build",
     "start": "wp-scripts start",
     "lint:js": "wp-scripts lint-js",
     "zip": "node scripts/zip.js"

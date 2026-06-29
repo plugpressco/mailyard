@@ -41,6 +41,7 @@ class REST_API {
 		$this->route( $ns, '/logs',                array( 'GET'  => 'get_logs' ) );
 		$this->route( $ns, '/deliverability',      array( 'GET'  => 'get_deliverability' ) );
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
+		$this->route( $ns, '/data/erase-all',      array( 'POST' => 'erase_all_data' ) );
 	}
 
 	// Register one or more methods on a route with the admin permission check.
@@ -431,7 +432,33 @@ class REST_API {
 			'last_5_rows'        => $last_rows,
 			'wp_mail_filtered'   => has_filter( 'pre_wp_mail' ) ? 'yes' : 'no',
 			'wp_mail_succeeded_hooked' => has_action( 'wp_mail_succeeded' ) ? 'yes' : 'no',
+			// Bounce/complaint webhook URLs to paste into each provider's dashboard
+			// (Bounce + Spam-Complaint events). Token-gated; SMTP has no feedback.
+			'webhook_urls'       => array(
+				'postmark' => Options::webhook_url( 'postmark' ),
+				'ses'      => Options::webhook_url( 'ses' ),
+				'resend'   => Options::webhook_url( 'resend' ),
+				'brevo'    => Options::webhook_url( 'brevo' ),
+			),
 		) );
+	}
+
+	// Danger Zone: irreversibly erase ALL Mailyard data. Requires the body to
+	// carry confirm === 'DELETE' so this can never fire on an accidental POST.
+	public function erase_all_data( $request ) {
+		$confirm = $request->get_json_params()['confirm'] ?? '';
+
+		if ( 'DELETE' !== $confirm ) {
+			return new \WP_Error(
+				'confirmation_required',
+				__( 'Confirmation required. Type DELETE to erase all data.', 'mailyard' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		Data_Deleter::delete_all_data();
+
+		return rest_ensure_response( array( 'success' => true ) );
 	}
 
 	public function get_logs( $request ) {

@@ -12,6 +12,7 @@ class Options {
 	const CONNECTIONS    = 'mailyard_connections';
 	const ONBOARDED      = 'mailyard_onboarded';
 	const TABLE_VERSION  = 'mailyard_log_table_version';
+	const WEBHOOK_SECRET = 'mailyard_webhook_secret';
 
 	// Custom table suffix (prepended with $wpdb->prefix).
 	const TABLE_LOGS     = 'mailyard_logs';
@@ -37,6 +38,27 @@ class Options {
 
 	public static function providers_with_default(): array {
 		return array_merge( self::providers(), array( self::DEFAULT_PROVIDER ) );
+	}
+
+	// Per-site secret embedded in webhook URLs as `?token=`. Generated on first read
+	// and never autoloaded. The first line of defense for the public bounce endpoint:
+	// a caller without this secret can't report bounces.
+	public static function webhook_secret(): string {
+		$secret = (string) get_option( self::WEBHOOK_SECRET, '' );
+		if ( '' === $secret ) {
+			$secret = wp_generate_password( 40, false );
+			update_option( self::WEBHOOK_SECRET, $secret, false );
+		}
+		return $secret;
+	}
+
+	// The full webhook URL to paste into a provider's dashboard, including the token.
+	public static function webhook_url( string $provider ): string {
+		return add_query_arg(
+			'token',
+			self::webhook_secret(),
+			rest_url( self::REST_NS . '/webhooks/' . $provider )
+		);
 	}
 
 	// Request-scoped cache for the settings array. wp_mail() inside a single

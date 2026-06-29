@@ -33,6 +33,7 @@ class Plugin {
 		add_action( 'delete_option_' . Options::SETTINGS, array( Options::class, 'flush_settings_cache' ) );
 
 		( new REST_API() )->init();
+		( new Webhooks() )->init();
 
 		if ( is_admin() ) {
 			Settings::instance()->init();
@@ -116,7 +117,9 @@ class Plugin {
 		require_once $includes . 'class-deliverability.php';
 		require_once $includes . 'class-logger.php';
 		require_once $includes . 'class-override.php';
+		require_once $includes . 'class-data-deleter.php';
 		require_once $includes . 'class-rest-api.php';
+		require_once $includes . 'class-webhooks.php';
 		require_once $includes . 'class-settings.php';
 		require_once $includes . 'class-conflicts.php';
 	}

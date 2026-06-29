@@ -58,7 +58,12 @@ class Override {
 		$headers     = $atts['headers'] ?? '';
 		$from        = $this->resolve_from( $headers, $settings );
 
-		$chain = Manager::instance()->chain_for( $from['email'], 'transactional' );
+		// Message purpose picks the connection/stream: a campaign sender (e.g. Outbees)
+		// sets `X-Mailyard-Purpose: marketing` to reach the broadcast-capable
+		// connection (Postmark broadcast stream); everything else stays transactional.
+		$purpose = $this->resolve_purpose( $headers, $from['email'], $atts );
+
+		$chain = Manager::instance()->chain_for( $from['email'], $purpose );
 		if ( empty( $chain ) ) {
 			return null; // Fall through to default wp_mail.
 		}
@@ -156,6 +161,26 @@ class Override {
 
 		do_action( 'mailyard_send_failed', $to, $last_error );
 		return false;
+	}
+
+	// Read the requested send purpose from the message. Defaults to 'transactional'
+	// so every existing caller (and other plugins) route exactly as before; campaign
+	// senders opt into 'marketing' via the X-Mailyard-Purpose header. The
+	// `mailyard_purpose` filter lets integrations decide without a header.
+	private function resolve_purpose( $headers, string $from_email, array $atts ): string {
+		$purpose = 'transactional';
+
+		$parsed = $this->normalize_headers( $headers );
+		if ( isset( $parsed['x-mailyard-purpose'] ) ) {
+			$value = strtolower( trim( $parsed['x-mailyard-purpose'] ) );
+			if ( in_array( $value, array( 'marketing', 'broadcast', 'bulk' ), true ) ) {
+				$purpose = 'marketing';
+			}
+		}
+
+		$purpose = (string) apply_filters( 'mailyard_purpose', $purpose, $from_email, $atts );
+
+		return 'marketing' === $purpose ? 'marketing' : 'transactional';
 	}
 
 	// Determine From name+email — message headers drive routing, so they win; fall
