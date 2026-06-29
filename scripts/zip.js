@@ -8,16 +8,28 @@ const name = pkg.name || 'mailyard';
 const version = pkg.version || '1.0.0';
 const outFile = path.join( root, `${ name }-${ version }.zip` );
 
-// Files/dirs to exclude from the zip.
+// Files/dirs to exclude from the zip (plugin-root dev tooling + sources).
+// Mailyard has no runtime Composer dependencies, so vendor/ (dev/test only)
+// never ships.
 const exclude = [
 	'node_modules/*',
+	'vendor/*',
+	'vendor',
 	'.git/*',
+	'.github/*',
 	'.claude/*',
 	'.claude',
 	'src/*',
 	'scripts/*',
+	'tests/*',
+	'tests',
+	'bin/*',
 	'package.json',
 	'package-lock.json',
+	'composer.json',
+	'composer.lock',
+	'phpcs.xml*',
+	'phpunit.xml*',
 	'webpack.config.js',
 	'tailwind.config.js',
 	'postcss.config.js',
@@ -28,6 +40,7 @@ const exclude = [
 	'*.md',
 	'.gitignore',
 	'.editorconfig',
+	'.distignore',
 	'.eslintrc*',
 	'.prettierrc*',
 	'**/.DS_Store',
@@ -35,22 +48,29 @@ const exclude = [
 	'*.zip',
 ];
 
-// Build first.
-console.log( 'Building...' );
-execSync( 'npm run build', { cwd: root, stdio: 'inherit' } );
+const run = ( cmd, opts = {} ) =>
+	execSync( cmd, { cwd: root, stdio: 'inherit', ...opts } );
 
-// Remove old zip.
+// 1. Build production assets.
+console.log( 'Building production assets...' );
+run( 'npm run build' );
+
+// 2. Remove any previous zip.
 if ( fs.existsSync( outFile ) ) {
 	fs.unlinkSync( outFile );
 }
 
-// Create zip from parent directory so the zip contains `mailyard/` as root folder.
+// 3. Create the zip with `mailyard/` as the root folder.
 const parent = path.dirname( root );
 const folder = path.basename( root );
-const excludeFlags = exclude.map( ( e ) => `-x "${ folder }/${ e }"` ).join( ' ' );
-
+const excludeFlags = exclude
+	.map( ( e ) => `-x "${ folder }/${ e }"` )
+	.join( ' ' );
 console.log( `\nZipping ${ name } v${ version }...` );
-execSync( `cd "${ parent }" && zip -r "${ outFile }" "${ folder }/" ${ excludeFlags }`, { stdio: 'inherit' } );
+run(
+	`cd "${ parent }" && zip -rq "${ outFile }" "${ folder }/" ${ excludeFlags }`,
+	{ cwd: parent }
+);
 
 const size = ( fs.statSync( outFile ).size / 1024 ).toFixed( 0 );
 console.log( `\n✓ ${ path.basename( outFile ) } (${ size } KB)` );

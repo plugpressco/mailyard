@@ -4,70 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e48d7ad09b11320bebb99f6be41f3cc3",
-    "packages": [
-        {
-            "name": "plugpressco/plugpress-sdk",
-            "version": "v1.2.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/plugpressco/plugpress-sdk.git",
-                "reference": "aa7fb7dc1801cb26eff5dec48e02a2446b2d4fea"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/plugpressco/plugpress-sdk/zipball/aa7fb7dc1801cb26eff5dec48e02a2446b2d4fea",
-                "reference": "aa7fb7dc1801cb26eff5dec48e02a2446b2d4fea",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.0"
-            },
-            "type": "library",
-            "extra": {
-                "plugpress-sdk": {
-                    "components": {
-                        "about": "PlugPress_About    — About / Beta Hub admin page",
-                        "optin": "PlugPress_Optin    — anonymous telemetry opt-in (GDPR/WP-guideline 7 compliant)",
-                        "license": "PlugPress_License  — license key activation/validation (gated on pro:true + updater:true)",
-                        "notices": "PlugPress_Notices  — shared dismissible admin notice helper",
-                        "updater": "PlugPress_Updater  — self-hosted update checker (skip when Freemius/WP.org owns updates)",
-                        "feedback": "PlugPress_Feedback — deactivation reason modal on plugins.php"
-                    }
-                }
-            },
-            "autoload": {
-                "classmap": [
-                    "src/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "GPL-2.0-or-later"
-            ],
-            "authors": [
-                {
-                    "name": "PlugPress",
-                    "homepage": "https://plugpress.co"
-                }
-            ],
-            "description": "PlugPress SDK — self-hosted updates, licensing, telemetry opt-in, deactivation feedback, and About page for WordPress plugins.",
-            "homepage": "https://plugpress.co",
-            "keywords": [
-                "license",
-                "plugin",
-                "plugpress",
-                "telemetry",
-                "updater",
-                "wordpress"
-            ],
-            "support": {
-                "issues": "https://github.com/plugpressco/plugpress-sdk/issues",
-                "source": "https://github.com/plugpressco/plugpress-sdk/tree/v1.2.3"
-            },
-            "time": "2026-06-21T22:55:51+00:00"
-        }
-    ],
+    "content-hash": "b38781e805dd5e00237db33d07b32c21",
+    "packages": [],
     "packages-dev": [
         {
             "name": "doctrine/instantiator",

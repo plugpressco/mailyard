@@ -2,7 +2,7 @@
 Contributors: badhonrocks
 Tags: smtp, wp-mail, email-log, mail, transactional
 Requires at least: 5.8
-Tested up to: 7.0
+Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -39,7 +39,7 @@ No coding. No complicated setup. Pick a provider, paste your API key, and it wor
 * **Send a test.** Click one button from the dashboard to send a test email and confirm everything is working.
 * **Conflict detection.** If you have another SMTP plugin installed at the same time, Mailyard warns you so you can remove it.
 * **Automatic cleanup.** Old email logs are deleted after 30 days so your database stays tidy.
-* **Clean removal.** Uninstalling the plugin removes everything — no leftover data in your database.
+* **Your data stays yours.** Uninstalling never deletes your logs or settings, so you can reinstall without losing anything. A one-click "Delete all data" action lives in Settings for when you want a clean wipe.
 
 = Is it free? =
 
@@ -119,7 +119,7 @@ Activating per-site works fine. Network-wide activation hasn't been fully tested
 
 = Does uninstalling remove all my data? =
 
-Yes. The email log table and all plugin settings are permanently deleted when you remove the plugin.
+No — uninstalling Mailyard leaves your email log and settings untouched, so you can reinstall later without losing anything. If you want everything gone, use the **Delete all data** button in Settings → it permanently removes the email log table and all plugin options. That action is the only thing that erases your data, and it's never triggered automatically.
 
 = Is this plugin free? =
 
@@ -139,10 +139,12 @@ Yes. Everything described here is in the free version. There is no Pro version, 
 * Initial release.
 * Six providers: Amazon SES, Postmark, Resend, Brevo, Custom SMTP, PHP Mail.
 * Automatic failover across backup providers.
+* Bounce & spam-complaint webhooks for Postmark, Amazon SES, Resend, and Brevo — paste the per-provider URL (Connections → Diagnostics) into your provider so failed addresses are reported back for suppression.
+* Message-purpose routing — a sender can set the `X-Mailyard-Purpose: marketing` header (or use the `mailyard_purpose` filter) to route a broadcast through the marketing connection / provider stream instead of the transactional one.
 * Full email logging with 30-day automatic cleanup.
 * Attachments, CC, and BCC work with all providers.
 * Conflict detection for other SMTP plugins.
-* Clean uninstall.
+* Non-destructive uninstall, with optional one-click data erasure from Settings.
 
 == Upgrade Notice ==
 

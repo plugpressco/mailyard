@@ -26,38 +26,6 @@ require_once MAILYARD_DIR . 'includes/class-plugin.php';
 
 Mailyard\Plugin::instance()->boot();
 
-// PlugPress SDK — self-hosted updates and shared admin UI.
-// Mailyard is a free plugin, so `pro` is false: all installs receive updates
-// from the PlugPress server without a license key and no License page appears.
-//
-// Must run on `plugins_loaded` (not `init`) so that PlugPress_Updater can hook
-// `pre_set_site_transient_update_plugins` in time. WordPress fires that filter
-// during background update checks that run before `init`, so an `init`-deferred
-// registration means the updater never sees those checks and the update badge
-// never appears. Translatable strings in the config (About tagline) are passed
-// as plain strings here and translated at render time via the SDK's own __().
-add_action( 'plugins_loaded', function () {
-	require_once dirname( MAILYARD_FILE ) . '/vendor/autoload.php';
-	PlugPress_SDK::init( [
-		'slug'             => 'mailyard',
-		'name'             => 'Mailyard',
-		'file'             => MAILYARD_FILE,
-		'version'          => MAILYARD_VERSION,
-		'server'           => 'https://updates.plugpress.co',
-		'telemetry_server' => 'https://analytics.plugpress.co',
-		'pro'              => false,
-		'menu_parent'      => 'options-general.php',
-		'accent'           => '#2563EB',
-		'about'            => [
-			'tagline' => 'Reliable email delivery for WordPress.',
-			'links'   => [
-				'Documentation' => 'https://mailyard.co/docs',
-				'Support'       => 'https://mailyard.co/support',
-			],
-		],
-	] );
-} );
-
 if ( ! function_exists( 'mailyard_is_active' ) ) {
 	/**
 	 * Whether Mailyard is actively routing mail (a non-default provider is configured).
