@@ -64,7 +64,7 @@ export const LIVE_PROVIDERS = [
 	{
 		id: 'brevo',
 		name: 'Brevo',
-		desc: 'Free 300/day',
+		desc: 'All-in-one email platform',
 		dashboard: 'https://app.brevo.com/settings/keys/api',
 		fields: [
 			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 'xkeysib-xxxxxxxxxxxxxxxxxxxx', hint: 'Found in Brevo dashboard → SMTP & API → API Keys. Use a v3 key.' },

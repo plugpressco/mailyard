@@ -8,40 +8,40 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Reliable WordPress email with automatic failover between providers, sender routing, bounce tracking, and a deliverability checker.
+WordPress email with a backup plan — automatic failover between providers, sender routing, bounce tracking, and a deliverability checker.
 
 == Description ==
 
-Mailyard makes sure your site's email actually shows up — password resets, WooCommerce orders, form notifications, the lot. By default WordPress hands email to your host's mail server, which usually either blocks it or dumps it in spam. Mailyard sends it through a real email service instead.
+Mailyard makes sure the email your site sends actually arrives — password resets, WooCommerce receipts, form notifications, all of it. Out of the box, WordPress hands mail to your host's server, and most hosts are bad at email: messages get blocked, land in spam, or vanish without a trace. Mailyard routes everything through a real email service instead.
 
-Plenty of plugins do that part. What Mailyard adds is everything around it:
+Plenty of plugins do that part. Here's what Mailyard does that most of them don't:
 
-= Failover =
+= Automatic failover =
 
-You can set up more than one provider. If the first one fails, Mailyard tries the next one on the same send, so the email isn't lost. Most SMTP plugins just give up.
+Add a backup provider and Mailyard switches to it the moment your first one fails — on the same send, not in a retry queue. A flaky API key on a Saturday night stops being your problem. Most SMTP plugins just give up and log the failure.
 
 = Sender routing =
 
-Send different addresses through different providers, or split marketing mail off from transactional mail. Useful once you outgrow a single inbox.
+Send store receipts through Postmark and newsletters through Brevo, automatically, based on the from address. One site, the right provider for each kind of mail. You can also split by purpose — transactional one way, marketing the other.
 
 = Bounce and complaint tracking =
 
-When someone's address hard-bounces or marks you as spam, Postmark, Amazon SES, Resend, and Brevo can tell you. Mailyard catches those events, tidies them into one shape, and fires a `mailyard_bounce` action other plugins can listen to.
+When an address hard-bounces or someone hits "mark as spam", Postmark, Amazon SES, Resend, and Brevo report it back. Mailyard catches those events, tidies them into one shape, and fires a single `mailyard_bounce` hook your other plugins can act on — so bad addresses get caught instead of quietly wrecking your sender reputation.
 
 = Deliverability checker =
 
-Checks your domain's SPF, DKIM, DMARC, and MX records and points out what's missing. This is usually why mail lands in spam.
+Reads your domain's SPF, DKIM, DMARC, and MX records and tells you exactly what's missing. That missing record is usually the reason mail lands in spam — and most people never find out.
 
-You also get a full email log, one-click test sends, a warning if another SMTP plugin is fighting you, and automatic log cleanup after 30 days. It's all free — there's no Pro version.
+And the rest: a full email log, one-click test sends, a warning if another SMTP plugin is fighting you, and automatic log cleanup after 30 days. Everything in the plugin is free. There's no Pro version to upsell you to.
 
 = Setup =
 
-Pick a provider, paste your API key, set the address you send from. That's the whole setup. No code.
+Pick a provider, paste your API key, set the address you send from. That's the whole thing. No code, no config files.
 
 = Providers you can use =
 
-* Resend — free for 3,000 emails a month, easiest to start with.
-* Brevo (was Sendinblue) — free for 300 a day.
+* Resend — easiest to start with.
+* Brevo (was Sendinblue) — all-in-one email platform.
 * Postmark — best inbox placement, good for stores.
 * Amazon SES — cheapest at high volume.
 * Custom SMTP — any SMTP server, Gmail app passwords included.
@@ -95,25 +95,29 @@ In the Connections tab, click Add, set up a second provider, enable it, and drag
 
 = Coming from another SMTP plugin =
 
-Turn off your current mail plugin (WP Mail SMTP, FluentSMTP, Post SMTP, whatever) before activating Mailyard. Two of them running together causes conflicts — Mailyard will warn you if it spots another one.
+Deactivate your current mail plugin (WP Mail SMTP, FluentSMTP, Post SMTP, whichever) before activating Mailyard. Two of them running at once causes conflicts — Mailyard will warn you if it spots one.
 
 == Frequently Asked Questions ==
 
 = Will this fix my emails not sending? =
 
-That's the whole point. Connect a provider (Resend is free), send a test, you're done.
+That's the whole point. Connect a provider, send a test, you're done. If the test lands, your password resets and order emails will too.
 
 = Does it work with WooCommerce, Contact Form 7, Gravity Forms? =
 
-Yes. Anything that uses WordPress's normal email goes through Mailyard automatically.
+Yes. Anything that sends mail the normal WordPress way goes through Mailyard automatically — no per-plugin setup.
 
 = Which provider should I pick? =
 
-Just starting out, go with Resend — free and simple. For a store or real volume, Postmark has the best inbox placement. Brevo's a decent free pick if you send under 300 a day.
+Just starting out, go with Resend — it's the simplest to set up. Running a store or sending real volume, Postmark has the best inbox placement. Brevo is a solid pick for lower volume. And if you already have an account somewhere, just use that — Mailyard doesn't care which one you choose.
 
 = What if my provider goes down? =
 
-If you've added a backup in Connections, Mailyard retries it on the same send and nothing is lost. With only one provider, the email fails like it normally would.
+If you've added a backup in Connections, Mailyard retries on the same send and nothing is lost. With only one provider, the email fails like it normally would — so add a backup.
+
+= Where are my API keys stored? =
+
+In your WordPress database, like any SMTP plugin's settings. They're only ever sent to the provider they belong to — never to us, never anywhere else.
 
 = Gmail or Microsoft 365? =
 
@@ -121,15 +125,15 @@ Personal Gmail works through Custom SMTP with an app password. Google Workspace 
 
 = How long do you keep logs? =
 
-30 days, then they're deleted automatically. You can also turn logging off in Settings.
+30 days, then they're deleted automatically. You can also turn logging off entirely in Settings.
 
 = Does uninstalling delete my data? =
 
-No. Uninstalling leaves your logs and settings alone so you can reinstall without losing anything. If you actually want it all gone, there's a Delete all data button in Settings — that's the only thing that wipes your data, and it never runs on its own.
+No. Uninstalling leaves your logs and settings alone, so you can reinstall without losing anything. If you want it all gone, there's a Delete all data button in Settings — that's the only thing that wipes your data, and it never runs on its own.
 
 = Is it really free? =
 
-Yes. No Pro version, nothing locked away.
+Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the log. No Pro version, no locked buttons, no catch.
 
 == Screenshots ==
 
@@ -156,4 +160,3 @@ Yes. No Pro version, nothing locked away.
 
 = 1.0.0 =
 First release.
-</content>

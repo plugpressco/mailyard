@@ -49,17 +49,19 @@ module.exports = {
         },
       },
       fontFamily: {
+        // Match the WP admin system font stack — no bundled fonts.
         sans: [
-          '"Fira Sans"',
           '-apple-system',
           'BlinkMacSystemFont',
           '"Segoe UI"',
           'Roboto',
+          'Oxygen-Sans',
+          'Ubuntu',
+          'Cantarell',
           '"Helvetica Neue"',
           'sans-serif',
         ],
         mono: [
-          '"Fira Code"',
           'ui-monospace',
           'SFMono-Regular',
           'Menlo',
