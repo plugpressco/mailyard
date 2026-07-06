@@ -1,51 +1,50 @@
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'sonner';
+import { Dialog, toast } from '@plugpress/ui';
 import useSettings from '@/hooks/useSettings';
 import { post } from '@/lib/api';
 import { Card, Toggle, Input, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
 
-// Confirm modal for the irreversible "Delete all data" action. Mirrors the
-// app's custom backdrop + Card dialog pattern (see Connections TestDialog).
-// The destructive button stays disabled until the user types DELETE exactly.
+// Confirm modal for the irreversible "Delete all data" action. Uses the
+// design system's Dialog (focus trap, esc, aria). The destructive button
+// stays disabled until the user types DELETE exactly.
 function EraseDialog( { onConfirm, onCancel, erasing } ) {
-	const backdropRef = useRef( null );
 	const [ value, setValue ] = useState( '' );
 	const ready = value === 'DELETE';
 
 	return (
-		<div
-			ref={ backdropRef }
-			onClick={ ( e ) => e.target === backdropRef.current && ! erasing && onCancel() }
-			className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/20 backdrop-blur-[2px] animate-in"
-		>
-			<Card className="w-full max-w-[420px] p-5" style={ { animation: 'popIn 150ms ease-out' } }>
-				<div className="mb-1 text-[14px] font-semibold text-danger">Delete all data</div>
-				<p className="m-0 mb-2 text-[12.5px] leading-relaxed text-ink-500">
-					This permanently erases <strong className="text-ink-700">all delivery logs, connections, and settings</strong>.
-					Mailyard will reset to a fresh install. <strong className="text-ink-700">This cannot be undone.</strong>
-				</p>
-				<p className="m-0 mb-4 text-[12.5px] leading-relaxed text-ink-500">
-					Type <strong className="font-mono text-ink-800">DELETE</strong> to confirm.
-				</p>
-				<Input
-					label="Confirmation"
-					placeholder="DELETE"
-					value={ value }
-					autoFocus
-					disabled={ erasing }
-					onChange={ ( e ) => setValue( e.target.value ) }
-					onKeyDown={ ( e ) => { if ( e.key === 'Enter' && ready && ! erasing ) onConfirm(); } }
-				/>
-				<div className="mt-4 flex gap-2">
-					<Button variant="secondary" className="flex-1 justify-center" disabled={ erasing } onClick={ onCancel }>
+		<Dialog
+			open
+			onOpenChange={ ( open ) => ! open && ! erasing && onCancel() }
+			size="sm"
+			title="Delete all data"
+			footer={
+				<>
+					<Button variant="secondary" disabled={ erasing } onClick={ onCancel }>
 						Cancel
 					</Button>
-					<Button variant="danger" className="flex-1 justify-center" disabled={ ! ready || erasing } onClick={ onConfirm }>
+					<Button variant="danger" disabled={ ! ready || erasing } onClick={ onConfirm }>
 						{ erasing ? 'Deleting…' : 'Delete all data' }
 					</Button>
-				</div>
-			</Card>
-		</div>
+				</>
+			}
+		>
+			<p className="m-0 mb-2 text-[12.5px] leading-relaxed text-ink-500">
+				This permanently erases <strong className="text-ink-700">all delivery logs, connections, and settings</strong>.
+				Mailyard will reset to a fresh install. <strong className="text-ink-700">This cannot be undone.</strong>
+			</p>
+			<p className="m-0 mb-4 text-[12.5px] leading-relaxed text-ink-500">
+				Type <strong className="font-mono text-ink-800">DELETE</strong> to confirm.
+			</p>
+			<Input
+				label="Confirmation"
+				placeholder="DELETE"
+				value={ value }
+				autoFocus
+				disabled={ erasing }
+				onChange={ ( e ) => setValue( e.target.value ) }
+				onKeyDown={ ( e ) => { if ( e.key === 'Enter' && ready && ! erasing ) onConfirm(); } }
+			/>
+		</Dialog>
 	);
 }
 

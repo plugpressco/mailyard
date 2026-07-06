@@ -1,64 +1,41 @@
 /**
- * Icon re-exports from @heroicons/react.
- *
- * 24/outline — used for UI actions, nav, buttons (stroke-based, clean).
- * 20/solid   — used for small inline indicators, badges.
- *
+ * Icon re-exports from the PlugPress design system's curated lucide set
+ * (strokeWidth 1.75), under Mailyard's historical names.
  * All icons accept className for Tailwind sizing (e.g. "h-4 w-4").
  */
+import { LoaderIcon } from '@plugpress/ui';
 
 export {
-	EnvelopeIcon as MailIcon,
-	PaperAirplaneIcon as SendIcon,
-	Cog6ToothIcon as GearIcon,
+	MailIcon,
+	SendIcon,
+	SettingsIcon as GearIcon,
 	ShieldCheckIcon as ShieldIcon,
-	ArrowPathIcon as RetryIcon,
-	BoltIcon,
-	Squares2X2Icon as GridIcon,
-	QueueListIcon as ListIcon,
-	ArrowsRightLeftIcon as RouteIcon,
-	DocumentTextIcon as LogIcon,
+	RefreshIcon as RetryIcon,
+	ZapIcon as BoltIcon,
+	GridIcon,
+	ListIcon,
+	ArrowLeftRightIcon as RouteIcon,
+	FileTextIcon as LogIcon,
 	LinkIcon,
 	PlusIcon,
-	MagnifyingGlassIcon as SearchIcon,
-	XMarkIcon as XIcon,
+	SearchIcon,
+	XIcon,
 	EyeIcon,
-	ArrowDownTrayIcon as DownloadIcon,
+	DownloadIcon,
 	ChevronRightIcon,
-	QuestionMarkCircleIcon as HelpIcon,
+	HelpIcon,
 	ChevronUpIcon as UpIcon,
-} from '@heroicons/react/24/outline';
-
-export {
 	CheckIcon,
 	CheckCircleIcon,
-	ExclamationCircleIcon as AlertIcon,
+	AlertCircleIcon as AlertIcon,
 	XCircleIcon,
-} from '@heroicons/react/20/solid';
+	GripIcon,
+} from '@plugpress/ui';
 
 /**
- * Grip handle — 6-dot drag handle. No Heroicon equivalent.
- */
-export function GripIcon( props ) {
-	return (
-		<svg { ...props } viewBox="0 0 16 16" fill="currentColor">
-			<circle cx="5" cy="4" r="1.2" />
-			<circle cx="11" cy="4" r="1.2" />
-			<circle cx="5" cy="8" r="1.2" />
-			<circle cx="11" cy="8" r="1.2" />
-			<circle cx="5" cy="12" r="1.2" />
-			<circle cx="11" cy="12" r="1.2" />
-		</svg>
-	);
-}
-
-/**
- * Spinner — animated loading circle.
+ * Spinner — animated loading circle (kept for existing call sites; the
+ * design system's Button has a built-in `loading` state for new code).
  */
 export function SpinnerIcon( { className = '', ...props } ) {
-	return (
-		<svg { ...props } viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.5" className={ `smtp-spin ${ className }` }>
-			<circle cx="10" cy="10" r="7" strokeDasharray="30 14" />
-		</svg>
-	);
+	return <LoaderIcon className={ `smtp-spin ${ className }` } { ...props } />;
 }

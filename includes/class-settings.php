@@ -18,6 +18,19 @@ class Settings {
 	public function init() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+		add_filter( 'admin_body_class', array( $this, 'body_class' ) );
+	}
+
+	/**
+	 * PlugPress design system token scope on <body>, so portaled overlays
+	 * (dialogs, dropdowns, toasts) inherit the --pp-* custom properties.
+	 */
+	public function body_class( $classes ) {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( $screen && 'settings_page_mailyard' === $screen->id ) {
+			$classes .= ' pp-scope';
+		}
+		return $classes;
 	}
 
 	public function add_menu() {

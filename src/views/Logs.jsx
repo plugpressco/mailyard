@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Drawer } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useLogs from '@/hooks/useLogs';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
 import { Card, Input, SectionTitle, PageHeader, TableSkeleton } from '@/components/ui';
-import { SearchIcon, XIcon } from '@/components/Icons';
+import { SearchIcon } from '@/components/Icons';
 import { LIVE_PROVIDERS } from '@/lib/providers';
 
 const FILTERS = [ 'all', 'sent', 'failed' ];
@@ -134,63 +135,44 @@ function LogDrawer( { row: r, onClose } ) {
 	const provider = LIVE_PROVIDERS.find( ( p ) => p.id === r.provider );
 
 	return (
-		<>
-			<div
-				onClick={ onClose }
-				className="fixed inset-0 z-40 bg-ink-900/20 backdrop-blur-[2px] animate-in"
-			/>
-			<div
-				className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-[520px] flex-col border-l border-ink-200 bg-surface shadow-xl"
-				style={ { animation: 'slideIn 200ms ease-out' } }
-			>
-				<div className="flex items-start justify-between border-b border-ink-200 px-5 py-4">
-					<div className="min-w-0 flex-1">
-						<div className="truncate text-[14px] font-semibold text-ink-900">{ r.subject || '(no subject)' }</div>
-						<div className="mt-0.5 truncate font-mono text-[11.5px] text-ink-400">{ r.to }</div>
+		<Drawer
+			open
+			onOpenChange={ ( open ) => ! open && onClose() }
+			width={ 520 }
+			title={ r.subject || '(no subject)' }
+			description={ r.to }
+		>
+			<div className="mb-4 flex items-center gap-3 text-[11.5px]">
+				<StatusPill status={ r.status }>{ r.status }</StatusPill>
+				{ provider && (
+					<div className="flex items-center gap-1.5 text-ink-500">
+						<ProviderIcon id={ r.provider } size={ 14 } />
+						<span>{ provider.name }</span>
 					</div>
-					<button
-						onClick={ onClose }
-						aria-label="Close"
-						className="ml-2 cursor-pointer rounded-md border-none bg-transparent p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
-					>
-						<XIcon className="h-4 w-4" />
-					</button>
-				</div>
-
-				<div className="flex items-center gap-3 border-b border-ink-200/60 px-5 py-3 text-[11.5px]">
-					<StatusPill status={ r.status }>{ r.status }</StatusPill>
-					{ provider && (
-						<div className="flex items-center gap-1.5 text-ink-500">
-							<ProviderIcon id={ r.provider } size={ 14 } />
-							<span>{ provider.name }</span>
-						</div>
-					) }
-					<span className="ml-auto text-ink-400">{ r.time || r.created_at }</span>
-				</div>
-
-				<div className="flex-1 overflow-y-auto px-5 py-4">
-					{ r.status === 'failed' && r.error && (
-						<div className="mb-4 rounded-lg bg-danger-light px-3 py-2.5 text-[12px] text-danger">
-							<SectionTitle className="mb-0.5 text-danger">Error</SectionTitle>
-							{ r.error }
-						</div>
-					) }
-
-					<SectionTitle className="mb-1">Body</SectionTitle>
-					<div className="mb-4 whitespace-pre-wrap rounded-lg border border-ink-200/70 bg-white p-3 text-[12px] leading-relaxed text-ink-700">
-						{ r.body || '(no body)' }
-					</div>
-
-					{ r.headers && (
-						<>
-							<SectionTitle className="mb-1">Headers</SectionTitle>
-							<div className="break-all rounded-lg border border-ink-200/70 bg-white p-3 font-mono text-[10.5px] text-ink-500">
-								{ r.headers }
-							</div>
-						</>
-					) }
-				</div>
+				) }
+				<span className="ml-auto text-ink-400">{ r.time || r.created_at }</span>
 			</div>
-		</>
+
+			{ r.status === 'failed' && r.error && (
+				<div className="mb-4 rounded-lg bg-danger-light px-3 py-2.5 text-[12px] text-danger">
+					<SectionTitle className="mb-0.5 text-danger">Error</SectionTitle>
+					{ r.error }
+				</div>
+			) }
+
+			<SectionTitle className="mb-1">Body</SectionTitle>
+			<div className="mb-4 whitespace-pre-wrap rounded-lg border border-ink-200/70 bg-white p-3 text-[12px] leading-relaxed text-ink-700">
+				{ r.body || '(no body)' }
+			</div>
+
+			{ r.headers && (
+				<>
+					<SectionTitle className="mb-1">Headers</SectionTitle>
+					<div className="break-all rounded-lg border border-ink-200/70 bg-white p-3 font-mono text-[10.5px] text-ink-500">
+						{ r.headers }
+					</div>
+				</>
+			) }
+		</Drawer>
 	);
 }

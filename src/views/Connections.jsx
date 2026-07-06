@@ -6,7 +6,7 @@ import {
 	arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { toast } from 'sonner';
+import { Dialog, toast } from '@plugpress/ui';
 import useConnections from '@/hooks/useConnections';
 import { post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
@@ -195,49 +195,50 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 }
 
 function ConfirmDelete( { conn, onConfirm, onCancel } ) {
-	const backdropRef = useRef( null );
 	return (
-		<div ref={ backdropRef } onClick={ ( e ) => e.target === backdropRef.current && onCancel() } className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/20 backdrop-blur-[2px] animate-in">
-			<Card className="w-full max-w-[360px] p-5" style={ { animation: 'popIn 150ms ease-out' } }>
-				<div className="mb-1 text-[14px] font-semibold text-ink-900">Remove { conn.name }?</div>
-				<p className="m-0 mb-4 text-[12.5px] leading-relaxed text-ink-500">
-					This will disconnect { conn.name } and remove its credentials. Emails will no longer be sent through this provider.
-				</p>
-				<div className="flex gap-2">
-					<Button variant="secondary" className="flex-1 justify-center" onClick={ onCancel }>Cancel</Button>
-					<Button variant="danger" className="flex-1 justify-center" onClick={ onConfirm }>Remove</Button>
-				</div>
-			</Card>
-		</div>
+		<Dialog
+			open
+			onOpenChange={ ( open ) => ! open && onCancel() }
+			size="sm"
+			title={ `Remove ${ conn.name }?` }
+			description={ `This will disconnect ${ conn.name } and remove its credentials. Emails will no longer be sent through this provider.` }
+			footer={
+				<>
+					<Button variant="secondary" onClick={ onCancel }>Cancel</Button>
+					<Button variant="danger" onClick={ onConfirm }>Remove</Button>
+				</>
+			}
+		/>
 	);
 }
 
 function TestDialog( { conn, onSend, onCancel, sending } ) {
-	const backdropRef = useRef( null );
 	const [ email, setEmail ] = useState( '' );
 	return (
-		<div ref={ backdropRef } onClick={ ( e ) => e.target === backdropRef.current && onCancel() } className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/20 backdrop-blur-[2px] animate-in">
-			<Card className="w-full max-w-[400px] p-5" style={ { animation: 'popIn 150ms ease-out' } }>
-				<div className="mb-1 text-[14px] font-semibold text-ink-900">Test { conn.name }</div>
-				<p className="m-0 mb-4 text-[12.5px] leading-relaxed text-ink-500">
-					Sends a test email through this connection. Use an inbox you can check — and that isn’t suppressed at your provider.
-				</p>
-				<Input
-					label="Send test to"
-					type="email"
-					placeholder="you@example.com"
-					value={ email }
-					onChange={ ( e ) => setEmail( e.target.value ) }
-					hint="Leave empty to use your account email."
-				/>
-				<div className="mt-4 flex gap-2">
-					<Button variant="secondary" className="flex-1 justify-center" onClick={ onCancel }>Cancel</Button>
-					<Button className="flex-1 justify-center" disabled={ sending } onClick={ () => onSend( email.trim() ) }>
+		<Dialog
+			open
+			onOpenChange={ ( open ) => ! open && onCancel() }
+			size="sm"
+			title={ `Test ${ conn.name }` }
+			description="Sends a test email through this connection. Use an inbox you can check — and that isn’t suppressed at your provider."
+			footer={
+				<>
+					<Button variant="secondary" onClick={ onCancel }>Cancel</Button>
+					<Button disabled={ sending } onClick={ () => onSend( email.trim() ) }>
 						{ sending ? 'Sending…' : 'Send test' }
 					</Button>
-				</div>
-			</Card>
-		</div>
+				</>
+			}
+		>
+			<Input
+				label="Send test to"
+				type="email"
+				placeholder="you@example.com"
+				value={ email }
+				onChange={ ( e ) => setEmail( e.target.value ) }
+				hint="Leave empty to use your account email."
+			/>
+		</Dialog>
 	);
 }
 

@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { Toaster } from '@plugpress/ui';
 import Sidebar from './components/Sidebar';
 import { DashboardSkeleton, ConnectionsSkeleton, TableSkeleton, SettingsSkeleton } from './components/ui';
 
-const LazyToaster = lazy( () => import( 'sonner' ).then( ( m ) => ( { default: m.Toaster } ) ) );
 const Setup = lazy( () => import( './views/Setup' ) );
 const Dashboard = lazy( () => import( './views/Dashboard' ) );
 const Connections = lazy( () => import( './views/Connections' ) );
@@ -29,28 +29,6 @@ function ViewFallback( { view } ) {
 	return <Skel />;
 }
 
-function ToasterWrapper() {
-	return (
-		<Suspense fallback={ null }>
-			<LazyToaster
-				position="bottom-right"
-				toastOptions={ {
-					style: {
-						fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
-						fontSize: '13px',
-						borderRadius: 'var(--my-r)',
-						border: '1px solid var(--my-border)',
-						boxShadow: 'none',
-						background: 'var(--my-surface)',
-						color: 'var(--my-text)',
-						padding: '12px 14px',
-					},
-				} }
-			/>
-		</Suspense>
-	);
-}
-
 export default function App() {
 	const [ onboarded, setOnboarded ] = useState(
 		() => window.mailyard?.onboarded ?? false
@@ -74,15 +52,15 @@ export default function App() {
 	if ( ! onboarded ) {
 		return (
 			<Suspense fallback={ <DashboardSkeleton /> }>
-				<ToasterWrapper />
+				<Toaster />
 				<Setup onComplete={ handleSetupComplete } />
 			</Suspense>
 		);
 	}
 
 	return (
-		<div className="flex min-h-screen bg-ink-50 font-sans">
-			<ToasterWrapper />
+		<div className="flex min-h-screen bg-canvas">
+			<Toaster />
 			<Sidebar view={ view } onNavigate={ navigate } />
 			<main className="min-w-0 flex-1">
 				<div className="mx-auto max-w-[1180px] px-8 py-7">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@plugpress/ui';
 import useDeliverability from '@/hooks/useDeliverability';
 import ProviderIcon from '@/components/ProviderIcon';
 import { Card, Button, SectionTitle, PageHeader, ScoreRing } from '@/components/ui';

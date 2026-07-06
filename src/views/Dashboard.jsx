@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import { get, post } from '@/lib/api';
 import useDeliverability from '@/hooks/useDeliverability';
@@ -126,7 +126,7 @@ function SendTestPanel( { onClose, onSent } ) {
 				<div className="flex-1">
 					<Input type="email" value={ to } onChange={ ( e ) => setTo( e.target.value ) } placeholder="Leave empty to use your admin email" />
 				</div>
-				<Button className="bg-success text-white hover:bg-success/90" onClick={ send } disabled={ state === 'sending' }>
+				<Button onClick={ send } disabled={ state === 'sending' }>
 					{ state === 'sending' ? <><SpinnerIcon className="h-3.5 w-3.5" /> Sending</> : <><SendIcon className="h-3.5 w-3.5" /> Send</> }
 				</Button>
 			</div>
@@ -167,7 +167,7 @@ export default function Dashboard( { onNavigate } ) {
 						<span className={ `inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ meta.cls }` }>
 							<span className={ `h-1.5 w-1.5 rounded-full ${ meta.dot }` } /> { meta.label }
 						</span>
-						<Button size="sm" className="bg-success text-white hover:bg-success/90" onClick={ () => setTestOpen( ( v ) => ! v ) }>
+						<Button size="sm" onClick={ () => setTestOpen( ( v ) => ! v ) }>
 							<SendIcon className="h-3.5 w-3.5" /> Send test
 						</Button>
 					</div>

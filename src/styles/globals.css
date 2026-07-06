@@ -3,88 +3,48 @@
 @tailwind utilities;
 
 /*
- * Mailyard design tokens — Violet on cool ink.
- * Scoped to #mailyard-admin, also sets Shadcn CSS vars.
+ * Mailyard styles on top of the PlugPress design system (@plugpress/ui).
+ * Tokens come from ui.css (--pp-*) + tokens/accents/mailyard.css (blue accent).
+ * No font-family here — the app renders in wp-admin's native font.
+ *
+ * --my-* aliases are TRANSITIONAL: a few components still reference them
+ * inline. New code should use --pp-* (or the Tailwind theme) directly.
  */
-@layer base {
-  :root {
-    /* ── Accent — trust blue (interactive; primary actions are slate-900) ── */
-    --my-accent: #2563EB;
-    --my-accent-hover: #1D4ED8;
-    --my-accent-light: #EFF6FF;
-    --my-accent-muted: #2563EB14;
-    --my-accent-soft: #BFDBFE;
+:root {
+  --my-accent: var(--pp-accent);
+  --my-accent-hover: var(--pp-accent-hover);
+  --my-accent-light: var(--pp-accent-tint);
+  --my-accent-muted: var(--pp-accent-muted);
+  --my-accent-soft: var(--pp-accent-muted);
 
-    /* ── Surfaces (slate) ── */
-    --my-bg: #F8FAFC;
-    --my-surface: #FFFFFF;
-    --my-surface-alt: #F8FAFC;
-    --my-surface-hover: #F1F5F9;
+  --my-bg: var(--pp-canvas);
+  --my-surface: var(--pp-surface);
+  --my-surface-alt: var(--pp-surface-alt);
+  --my-surface-hover: var(--pp-surface-hover);
 
-    /* ── Borders ── */
-    --my-border: #E2E8F0;
-    --my-border-light: #F1F5F9;
-    --my-border-focus: #2563EB;
+  --my-border: var(--pp-border);
+  --my-border-light: var(--pp-surface-alt);
+  --my-border-focus: var(--pp-accent);
 
-    /* ── Typography (slate foreground) ── */
-    --my-text: #0F172A;
-    --my-text-secondary: #475569;
-    --my-text-muted: #94A3B8;
+  --my-text: var(--pp-text);
+  --my-text-secondary: var(--pp-text-secondary);
+  --my-text-muted: var(--pp-text-muted);
 
-    /* ── Status ── */
-    --my-success: #16A34A;
-    --my-success-bg: #F0FDF4;
-    --my-warning: #F59E0B;
-    --my-warning-bg: #FFFBEB;
-    --my-danger: #DC2626;
-    --my-danger-bg: #FEF2F2;
+  --my-success: var(--pp-success);
+  --my-success-bg: var(--pp-success-bg);
+  --my-warning: var(--pp-warning);
+  --my-warning-bg: var(--pp-warning-bg);
+  --my-danger: var(--pp-danger);
+  --my-danger-bg: var(--pp-danger-bg);
 
-    /* ── Radius ── */
-    --my-r: 8px;
-    --my-r-sm: 6px;
-    --my-r-lg: 12px;
-
-    /* ── Shadcn semantic mappings ── */
-    --background: 210 40% 98%;       /* --my-bg #F8FAFC */
-    --foreground: 222 47% 11%;       /* --my-text #0F172A */
-    --card: 0 0% 100%;               /* --my-surface */
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 222 47% 11%;          /* slate-900 primary */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;        /* slate-100 */
-    --secondary-foreground: 222 30% 20%;
-    --muted: 210 40% 98%;            /* --my-bg */
-    --muted-foreground: 215 19% 35%; /* slate-600 */
-    --accent: 214 100% 97%;          /* --my-accent-light #EFF6FF */
-    --accent-foreground: 221 83% 45%;
-    --destructive: 0 72% 51%;        /* --my-danger #DC2626 */
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;           /* --my-border #E2E8F0 */
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;             /* --my-accent #2563EB */
-    --chart-1: 251 33% 58%;
-    --chart-2: 160 84% 39%;          /* success */
-    --chart-3: 38 92% 50%;           /* warning */
-    --chart-4: 0 84% 60%;            /* danger */
-    --chart-5: 240 8% 47%;
-    --radius: 0.5rem;
-
-    --sidebar: 240 20% 98%;
-    --sidebar-foreground: 240 14% 8%;
-    --sidebar-primary: 251 33% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 252 38% 96%;
-    --sidebar-accent-foreground: 251 30% 45%;
-    --sidebar-border: 240 18% 92%;
-    --sidebar-ring: 251 33% 58%;
-  }
+  --my-r: var(--pp-r);
+  --my-r-sm: var(--pp-r-sm);
+  --my-r-lg: var(--pp-r-lg);
 }
 
 @layer base {
-  * {
-    border-color: var(--my-border);
+  #mailyard-admin * {
+    border-color: var(--pp-border);
   }
 }
 
@@ -93,115 +53,15 @@
   padding-left: 0;
 }
 
-#mailyard-admin {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--my-text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Tighter tracking on headings — the Geist look. */
-#mailyard-admin h1,
-#mailyard-admin h2,
-#mailyard-admin h3 {
-  letter-spacing: -0.02em;
-}
-
-#mailyard-admin *,
-#mailyard-admin *::before,
-#mailyard-admin *::after {
-  box-sizing: border-box;
-}
-
 #mailyard-admin button {
   font-family: inherit;
 }
 
-/* ── Sonner toast overrides ── */
-[data-sonner-toaster] {
-  --normal-bg: var(--my-surface);
-  --normal-border: var(--my-border);
-  --normal-text: var(--my-text);
-  --success-bg: var(--my-success-bg);
-  --success-border: var(--my-accent-soft);
-  --success-text: var(--my-accent);
-  --error-bg: var(--my-danger-bg);
-  --error-border: #FECACA;
-  --error-text: var(--my-danger);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-}
-
-[data-sonner-toast] {
-  box-shadow: none !important;
-}
-
-[data-sonner-toast][data-type="success"] {
-  background: var(--my-accent-light) !important;
-  border-color: var(--my-accent-soft) !important;
-  color: var(--my-accent) !important;
-}
-
-[data-sonner-toast][data-type="success"] [data-icon] svg {
-  color: var(--my-accent) !important;
-}
-
-[data-sonner-toast][data-type="error"] {
-  background: var(--my-danger-bg) !important;
-  border-color: #FECACA !important;
-  color: var(--my-danger) !important;
-}
-
-[data-sonner-toast][data-type="error"] [data-icon] svg {
-  color: var(--my-danger) !important;
-}
-
-[data-sonner-toast] [data-title] {
-  font-weight: 500 !important;
-}
-
-[data-sonner-toast] [data-description] {
-  color: var(--my-text-secondary) !important;
-  font-size: 12px !important;
-}
-
-/* ── Animations ── */
+/* Legacy spinner class used by SpinnerIcon call sites. */
 @keyframes smtp-spin {
   to { transform: rotate(360deg); }
 }
 
 .smtp-spin {
   animation: smtp-spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: spin 0.7s linear infinite;
-}
-
-#mailyard-admin [class*="border-t"] {
-  animation: fadeSlideIn 150ms ease-out;
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-in {
-  animation: popIn 150ms ease-out;
-}
-
-@keyframes popIn {
-  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
 }

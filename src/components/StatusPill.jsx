@@ -1,11 +1,12 @@
-import { cn } from '@/lib/utils';
+import { Badge } from '@plugpress/ui';
 
-const variants = {
-	ok: 'bg-success-light text-success',
-	warn: 'bg-warning-light text-warning',
-	bad: 'bg-danger-light text-danger',
-	accent: 'bg-brand-light text-brand-dark',
-	default: 'bg-ink-100 text-ink-600',
+// Design-system Badge under Mailyard's historical StatusPill API.
+const toneByVariant = {
+	ok: 'success',
+	warn: 'warning',
+	bad: 'danger',
+	accent: 'accent',
+	default: 'neutral',
 };
 
 const statusMap = {
@@ -23,14 +24,5 @@ const statusMap = {
 
 export default function StatusPill( { children, variant, status } ) {
 	const v = variant || statusMap[ status ] || 'default';
-	return (
-		<span
-			className={ cn(
-				'inline-block rounded-full px-2 py-[2px] text-[10.5px] font-semibold tracking-wide whitespace-nowrap',
-				variants[ v ]
-			) }
-		>
-			{ children }
-		</span>
-	);
+	return <Badge tone={ toneByVariant[ v ] }>{ children }</Badge>;
 }

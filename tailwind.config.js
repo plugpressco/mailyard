@@ -1,39 +1,40 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  presets: [require('@plugpress/ui/tailwind-preset')],
   content: [
     './src/**/*.{js,jsx}',
   ],
   theme: {
     extend: {
       colors: {
-        // Interactive accent — trust blue. Links, focus rings, selected/active
-        // states. Primary actions use slate-900 (ink-900) for structure.
+        // Mailyard accent (matches @plugpress/ui/tokens/accents/mailyard.css).
+        // Literal hexes so Tailwind alpha modifiers (bg-brand/[0.08]) work.
         brand: {
           DEFAULT: '#2563EB',
           hover: '#1D4ED8',
-          dark: '#1E40AF',
+          dark: '#1D4ED8',
           light: '#EFF6FF',
           soft: '#BFDBFE',
           muted: '#2563EB14',
         },
-        // Slate neutral scale — cool, professional. 900 is the near-black
-        // foreground used for text and primary buttons.
+        // Geist-style pure neutral ramp (design-system neutrals; the semantic
+        // tokens --pp-* map onto this same family). Replaces the old slate ink.
         ink: {
-          50:  '#F8FAFC',
-          100: '#F1F5F9',
-          200: '#E2E8F0',
-          300: '#CBD5E1',
-          400: '#94A3B8',
-          500: '#64748B',
-          600: '#475569',
-          700: '#334155',
-          800: '#1E293B',
-          900: '#0F172A',
+          50:  '#FAFAFA',
+          100: '#F5F5F5',
+          200: '#EAEAEA',
+          300: '#D4D4D4',
+          400: '#A3A3A3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          alt: '#F8FAFC',
-          hover: '#F1F5F9',
+          alt: '#FAFAFA',
+          hover: '#F5F5F5',
         },
         success: {
           light: '#F0FDF4',
@@ -41,33 +42,12 @@ module.exports = {
         },
         warning: {
           light: '#FFFBEB',
-          DEFAULT: '#F59E0B',
+          DEFAULT: '#B45309',
         },
         danger: {
           light: '#FEF2F2',
           DEFAULT: '#DC2626',
         },
-      },
-      fontFamily: {
-        // Match the WP admin system font stack — no bundled fonts.
-        sans: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"Segoe UI"',
-          'Roboto',
-          'Oxygen-Sans',
-          'Ubuntu',
-          'Cantarell',
-          '"Helvetica Neue"',
-          'sans-serif',
-        ],
-        mono: [
-          'ui-monospace',
-          'SFMono-Regular',
-          'Menlo',
-          'Consolas',
-          'monospace',
-        ],
       },
       fontSize: {
         '2xs': ['11px', { lineHeight: '1.4' }],
