@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense, Fragment } from 'react';
-import { Toaster } from '@plugpress/ui';
+import { AppShell, Toaster } from '@plugpress/ui';
 import Sidebar from './components/Sidebar';
 import { DashboardSkeleton } from './components/ui';
 import { collectModules, matchModule, mergeGroups } from './shell/registry';
@@ -79,24 +79,40 @@ export default function App() {
 	const Skeleton = active.skeleton;
 	const fullscreen = !! active.isFullscreen?.( route );
 
-	return (
-		<div className="flex min-h-screen bg-canvas">
-			<Toaster />
-			{ ! fullscreen && (
-				<Sidebar groups={ groups } modules={ modules } route={ route } onNavigate={ navigate } />
-			) }
-			<main className="min-w-0 flex-1">
-				{ /* Keyed by MODULE (not route): the outlet stays mounted while the
-				     user moves between the module's own routes, so client caches
-				     (e.g. Pro's react-query) survive section switches. */ }
-				<div key={ active.id } className={ fullscreen ? '' : 'mx-auto max-w-[1180px] px-8 py-7' }>
-					<Provider>
-						<Suspense fallback={ Skeleton ? <Skeleton route={ route } /> : <DashboardSkeleton /> }>
-							<Outlet route={ route } navigate={ navigate } />
-						</Suspense>
-					</Provider>
-				</div>
-			</main>
+	// Keyed by MODULE (not route): the outlet stays mounted while the user
+	// moves between the module's own routes, so client caches (e.g. Pro's
+	// react-query) survive section switches.
+	// AppShell's <main> already pads the content column, so the outlet only
+	// centers itself; fullscreen routes bypass the shell entirely.
+	const outlet = (
+		<div key={ active.id } className={ fullscreen ? '' : 'mx-auto max-w-[1180px]' }>
+			<Provider>
+				<Suspense fallback={ Skeleton ? <Skeleton route={ route } /> : <DashboardSkeleton /> }>
+					<Outlet route={ route } navigate={ navigate } />
+				</Suspense>
+			</Provider>
 		</div>
+	);
+
+	if ( fullscreen ) {
+		return (
+			<div className="min-h-screen bg-canvas">
+				<Toaster />
+				{ outlet }
+			</div>
+		);
+	}
+
+	// AppShell owns the sidebar frame (sticky rail, <782px icon-rail collapse).
+	return (
+		<>
+			<Toaster />
+			<AppShell
+				variant="sidebar"
+				nav={ <Sidebar groups={ groups } modules={ modules } route={ route } onNavigate={ navigate } /> }
+			>
+				{ outlet }
+			</AppShell>
+		</>
 	);
 }
