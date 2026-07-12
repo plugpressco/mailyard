@@ -32,9 +32,14 @@
  * semantics):
  *   `mailyard.shell.dashboardWidgets` — [{ id, order, Component }] rendered
  *     at the bottom of the Dashboard view (src/views/Dashboard.jsx).
- *   `mailyard.shell.settingsTabs`     — [{ id, label, order, Component }]
- *     rendered as tabs of the Settings view; the tab owns every route under
- *     `settings/<id>` (src/views/Settings.jsx).
+ *   `mailyard.shell.settingsSections` — [{ id, label, order,
+ *     group: 'configure'|'connect'|'data', Component }] — flat sections of
+ *     the ONE Settings page (left-nav rail, grouped by `group`); the section
+ *     owns every route under `settings/<id>` (src/views/Settings.jsx). There
+ *     is deliberately no per-product wrapper tab.
+ *   `mailyard.shell.dataPanels`       — [{ id, order, Component }] stacked on
+ *     the Data & danger section: order < 50 renders above the free erase
+ *     card (backup/restore), >= 50 below (product danger zones).
  *   `mailyard.shell.aiSections`       — [{ id, order, Component }] appended to
  *     the Connect AI page: one tool-permissions card per family plugin. Each
  *     Component owns its own catalog, master switch, and persistence (no

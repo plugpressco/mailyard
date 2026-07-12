@@ -21,6 +21,11 @@
 - **Connect AI page** (`src/views/ConnectAI.jsx`, core Settings tab): master switch + per-tool permissions (instant persist), WP-7.0/MCP-bridge status dots, and a `GuideDrawer` with copy-paste config for Claude Code/Desktop, Cursor, Codex, Windsurf. Backed by new `GET|POST mailyard/v1/ai` (catalog + toggles, whitelisted against the catalog; MCP server auto-detected by sniffing REST routes).
 - Graceful degradation: `Requires at least` stays **5.8** — the whole layer no-ops below WP 6.9 and the page says so. Master switch off → all abilities unregister (verified).
 
+## Settings IA (2026-07-13): one left-nav page, no product wrapper
+- Settings is a single left-nav page (Configure · Connect · Data groups); both plugins contribute FLAT sections via the new `mailyard.shell.settingsSections` filter (replaces settingsTabs). Free registers Delivery / Connect AI / Data & danger; Pro adds Brand, Campaigns, Compliance, API access.
+- Data & danger: stacked panels via `mailyard.shell.dataPanels` (Pro backup/restore above, product danger zones below); free's erase card now uses the design system's DangerZone component.
+- Unknown/retired section ids (old #/settings/marketing/*) redirect to Delivery.
+
 ## Next up
 - **User:** review/merge PR #9 (`feat/freemius-parent`) then `feat/universal-shell` on top; in-browser visual QA; new .org screenshots (top-level menu) before the SVN release.
 - Launch ops (mailyard#8): create Freemius parent+add-on products, paste the four ID/key values, then .org SVN release (can go straight to 1.2.0).
