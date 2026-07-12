@@ -22,8 +22,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// This (free, parent) product's Freemius credentials.
-defined( 'MAILYARD_FS_ID' ) || define( 'MAILYARD_FS_ID', '' );
+// This (free, parent) product's Freemius credentials. Stays dormant until
+// the public key is pasted from the Freemius dashboard.
+defined( 'MAILYARD_FS_ID' ) || define( 'MAILYARD_FS_ID', '34096' );
 defined( 'MAILYARD_FS_PUBLIC_KEY' ) || define( 'MAILYARD_FS_PUBLIC_KEY', '' );
 
 if ( ! function_exists( 'mailyard_fs' ) ) {
