@@ -10,10 +10,14 @@
   - readme.txt/site-copy: "no Pro version, ever" copy rewritten (free stays complete; Pro = separate campaigns plugin); Freemius added to External services; 1.1.0 changelog.
 - Committed the pending @plugpress/ui v0.8.3 pin bump + managed AGENTS.md separately.
 
+## Ship 2 (same day): universal dashboard — DONE on `feat/universal-shell` (→ 1.2.0)
+- Top-level menu at reserved slot **58.14** (B1, mailyard#5): submenus via the `mailyard_admin_submenus` filter, click interceptor, legacy options-general URL 302s with fragment.
+- Shell registry (B2, mailyard#6): `mailyard.shell.modules` wp.hooks filter, module contract in `src/shell/registry.js`, core module dogfoods it (Dashboard / Delivery / footer System groups), outlet keyed by module, `MAILYARD_SHELL_VERSION=1` + `mailyard_admin_enqueue` action. WP-submenu highlight sync added in B6.
+- Back-compat matrix verified in Playground; .org build carries zero Pro references (generic hooks only).
+
 ## Next up
-- **B1/B2 (mailyard#5, #6):** move Mailyard to top-level menu 58.14 + universal shell registry (`mailyard.shell.modules`) with grouped sidebar — Mailyard Pro plugs its Marketing group in (plan: `~/.claude/plans/generic-zooming-whistle.md`).
-- Launch ops (mailyard#8): create Freemius parent+add-on products, paste the four ID/key values, then .org SVN release of 1.1.0.
-- (Superseded: the old "Migrate Outbees to @plugpress/ui at slot 58.12" item is folded into the Ship-2 dashboard issues above.)
+- **User:** review/merge PR #9 (`feat/freemius-parent`) then `feat/universal-shell` on top; in-browser visual QA; new .org screenshots (top-level menu) before the SVN release.
+- Launch ops (mailyard#8): create Freemius parent+add-on products, paste the four ID/key values, then .org SVN release (can go straight to 1.2.0).
 
 ## Blockers / open questions
 - Push `plugpressco/plugpress-ui` to GitHub is done; all consumers install via `github:plugpressco/plugpress-ui#v0.2.0`.

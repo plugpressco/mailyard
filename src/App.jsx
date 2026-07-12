@@ -29,6 +29,33 @@ export default function App() {
 		return () => window.removeEventListener( 'hashchange', handler );
 	}, [] );
 
+	// Mirror the active route onto the WP admin submenu highlight for
+	// programmatic navigation (menu CLICKS are handled by the PHP-side
+	// interceptor). Generic over every registered section, Pro's included.
+	useEffect( () => {
+		const seg = route.split( '/' )[ 0 ] || 'dashboard';
+		const items = document.querySelectorAll( '#adminmenu .wp-submenu li' );
+		if ( ! items.length ) {
+			return;
+		}
+		let matched = false;
+		items.forEach( ( li ) => {
+			const a = li.querySelector( 'a' );
+			const href = a ? a.getAttribute( 'href' ) || '' : '';
+			const hit = href.includes( 'page=mailyard#/' + seg );
+			li.classList.toggle( 'current', hit );
+			matched = matched || hit;
+		} );
+		if ( ! matched && 'dashboard' === seg ) {
+			items.forEach( ( li ) => {
+				const a = li.querySelector( 'a' );
+				if ( a && /page=mailyard$/.test( a.getAttribute( 'href' ) || '' ) ) {
+					li.classList.add( 'current' );
+				}
+			} );
+		}
+	}, [ route ] );
+
 	const navigate = useCallback( ( id ) => {
 		window.location.hash = '#/' + id;
 	}, [] );

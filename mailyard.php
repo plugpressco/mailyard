@@ -3,7 +3,7 @@
  * Plugin Name:       Mailyard
  * Plugin URI:        https://mailyard.co
  * Description:       Reliable email delivery for WordPress. Route emails through Amazon SES, Postmark, Resend, or any SMTP server with smart failover.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 5.8
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MAILYARD_VERSION', '1.1.0' );
+define( 'MAILYARD_VERSION', '1.2.0' );
 
 // Universal admin-shell API version. Extenders (Mailyard Pro) check this to
 // decide between shell mode (register into Mailyard's dashboard) and their

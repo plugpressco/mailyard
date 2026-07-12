@@ -4,7 +4,7 @@ Tags: smtp, wp-mail, email-log, email-deliverability, failover
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,10 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 
 == Changelog ==
 
+= 1.2.0 =
+* Mailyard moved from Settings → Mailyard to its own top-level admin menu, with sections (Dashboard, Connections, Deliverability, Logs, Settings) as native submenus. Old Settings-page bookmarks redirect automatically.
+* New universal dashboard shell: the sidebar is now grouped, and family plugins (Mailyard Pro) plug their sections into the same dashboard — one menu for delivery and campaigns. Nothing changes when no add-on is installed.
+
 = 1.1.0 =
 * Mailyard is now the free parent product for the new Mailyard Pro campaigns add-on (separate plugin — nothing in Mailyard changed or got locked).
 * Added the Freemius SDK for the optional account surface and Pro licensing. Strictly opt-in; disclosed under External services.
@@ -168,6 +172,9 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Uninstall leaves your data in place, with a one-click erase in Settings if you want it gone.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Mailyard gets its own top-level admin menu and a unified dashboard that Mailyard Pro plugs into. Old Settings-page links redirect automatically.
 
 = 1.1.0 =
 Adds the Freemius account/licensing layer for the new Mailyard Pro add-on. No feature changes; everything stays free.
