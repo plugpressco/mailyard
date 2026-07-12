@@ -1,42 +1,30 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { useState, useCallback, useEffect, useMemo, lazy, Suspense, Fragment } from 'react';
 import { Toaster } from '@plugpress/ui';
 import Sidebar from './components/Sidebar';
-import { DashboardSkeleton, ConnectionsSkeleton, TableSkeleton, SettingsSkeleton } from './components/ui';
+import { DashboardSkeleton } from './components/ui';
+import { collectModules, matchModule, mergeGroups } from './shell/registry';
+import coreModule from './shell/coreModule';
 
 const Setup = lazy( () => import( './views/Setup' ) );
-const Dashboard = lazy( () => import( './views/Dashboard' ) );
-const Connections = lazy( () => import( './views/Connections' ) );
-const Deliverability = lazy( () => import( './views/Deliverability' ) );
-const Logs = lazy( () => import( './views/Logs' ) );
-const Settings = lazy( () => import( './views/Settings' ) );
 
-const VALID_VIEWS = [ 'dashboard', 'connections', 'deliverability', 'logs', 'settings' ];
-
-function getHashView() {
-	const hash = window.location.hash.replace( '#/', '' ).replace( '#', '' );
-	return VALID_VIEWS.includes( hash ) ? hash : 'dashboard';
-}
-
-const SKELETONS = {
-	dashboard:   DashboardSkeleton,
-	connections: ConnectionsSkeleton,
-	logs:        TableSkeleton,
-	settings:    SettingsSkeleton,
-};
-
-function ViewFallback( { view } ) {
-	const Skel = SKELETONS[ view ] || DashboardSkeleton;
-	return <Skel />;
+function getRoute() {
+	return window.location.hash.replace( /^#\/?/, '' );
 }
 
 export default function App() {
 	const [ onboarded, setOnboarded ] = useState(
 		() => window.mailyard?.onboarded ?? false
 	);
-	const [ view, setView ] = useState( getHashView );
+	const [ route, setRoute ] = useState( getRoute );
+
+	// Collected ONCE at mount: extenders (Mailyard Pro) registered their
+	// `mailyard.shell.modules` filter at script-eval time, before
+	// DOMContentLoaded mounted us — deterministic via script dependencies.
+	const modules = useMemo( () => collectModules( [ coreModule ] ), [] );
+	const groups = useMemo( () => mergeGroups( modules ), [ modules ] );
 
 	useEffect( () => {
-		const handler = () => setView( getHashView() );
+		const handler = () => setRoute( getRoute() );
 		window.addEventListener( 'hashchange', handler );
 		return () => window.removeEventListener( 'hashchange', handler );
 	}, [] );
@@ -58,19 +46,28 @@ export default function App() {
 		);
 	}
 
+	const active = matchModule( modules, route ) || coreModule;
+	const Provider = active.Provider || Fragment;
+	const Outlet = active.Component;
+	const Skeleton = active.skeleton;
+	const fullscreen = !! active.isFullscreen?.( route );
+
 	return (
 		<div className="flex min-h-screen bg-canvas">
 			<Toaster />
-			<Sidebar view={ view } onNavigate={ navigate } />
+			{ ! fullscreen && (
+				<Sidebar groups={ groups } modules={ modules } route={ route } onNavigate={ navigate } />
+			) }
 			<main className="min-w-0 flex-1">
-				<div className="mx-auto max-w-[1180px] px-8 py-7">
-					<Suspense fallback={ <ViewFallback view={ view } /> }>
-						{ view === 'dashboard' && <Dashboard onNavigate={ navigate } /> }
-						{ view === 'connections' && <Connections /> }
-						{ view === 'deliverability' && <Deliverability /> }
-						{ view === 'logs' && <Logs /> }
-						{ view === 'settings' && <Settings /> }
-					</Suspense>
+				{ /* Keyed by MODULE (not route): the outlet stays mounted while the
+				     user moves between the module's own routes, so client caches
+				     (e.g. Pro's react-query) survive section switches. */ }
+				<div key={ active.id } className={ fullscreen ? '' : 'mx-auto max-w-[1180px] px-8 py-7' }>
+					<Provider>
+						<Suspense fallback={ Skeleton ? <Skeleton route={ route } /> : <DashboardSkeleton /> }>
+							<Outlet route={ route } navigate={ navigate } />
+						</Suspense>
+					</Provider>
 				</div>
 			</main>
 		</div>

@@ -18,6 +18,13 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'MAILYARD_VERSION', '1.1.0' );
+
+// Universal admin-shell API version. Extenders (Mailyard Pro) check this to
+// decide between shell mode (register into Mailyard's dashboard) and their
+// legacy standalone admin. Bump ONLY on breaking changes to the
+// mailyard.shell.modules contract or the mailyard_admin_* hooks.
+define( 'MAILYARD_SHELL_VERSION', 1 );
+
 define( 'MAILYARD_FILE', __FILE__ );
 define( 'MAILYARD_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MAILYARD_BASENAME', plugin_basename( __FILE__ ) );

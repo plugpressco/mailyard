@@ -1,14 +1,12 @@
 import { cn } from '@/lib/utils';
-import { GridIcon, RouteIcon, ShieldIcon, ListIcon, GearIcon, SendIcon, HelpIcon } from './Icons';
+import { SendIcon, HelpIcon } from './Icons';
 
-const NAV = [
-	{ id: 'dashboard',      label: 'Dashboard',      Icon: GridIcon },
-	{ id: 'connections',    label: 'Connections',    Icon: RouteIcon },
-	{ id: 'deliverability', label: 'Deliverability', Icon: ShieldIcon },
-	{ id: 'logs',           label: 'Logs',           Icon: ListIcon },
-];
+function routeActive( route, itemRoute ) {
+	return route === itemRoute || route.startsWith( itemRoute + '/' ) || ( '' === route && 'dashboard' === itemRoute );
+}
 
 function NavItem( { item, active, onClick } ) {
+	const Icon = item.icon;
 	return (
 		<button
 			onClick={ onClick }
@@ -18,13 +16,46 @@ function NavItem( { item, active, onClick } ) {
 			) }
 		>
 			{ active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand" /> }
-			<item.Icon className="h-[18px] w-[18px] shrink-0" />
+			{ Icon && <Icon className="h-[18px] w-[18px] shrink-0" /> }
 			{ item.label }
 		</button>
 	);
 }
 
-export default function Sidebar( { view, onNavigate } ) {
+function Group( { group, route, onNavigate } ) {
+	return (
+		<div className="flex flex-col gap-0.5">
+			{ group.label && (
+				<div className="px-3 pb-1 pt-4 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-400">
+					{ group.label }
+				</div>
+			) }
+			{ group.items.map( ( item ) => (
+				<NavItem
+					key={ item.id }
+					item={ item }
+					active={ routeActive( route, item.route ) }
+					onClick={ () => onNavigate( item.route ) }
+				/>
+			) ) }
+		</div>
+	);
+}
+
+/**
+ * Grouped sidebar over the merged shell model. Renders ONLY registered
+ * groups — when Mailyard Pro isn't active its groups simply don't exist;
+ * there are no locked or placeholder entries.
+ */
+export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
+	const main = groups.filter( ( g ) => ! g.footer );
+	const footer = groups.filter( ( g ) => g.footer );
+
+	const versionLine = modules
+		.filter( ( m ) => m.version )
+		.map( ( m ) => `${ m.versionLabel || m.id } v${ m.version }` )
+		.join( ' · ' );
+
 	return (
 		<aside className="sticky top-8 flex h-[calc(100vh-2rem)] w-[228px] shrink-0 flex-col self-start border-r border-ink-200 bg-surface px-3 py-4">
 			{ /* Brand */ }
@@ -35,20 +66,18 @@ export default function Sidebar( { view, onNavigate } ) {
 				<span className="text-[15px] font-semibold tracking-[-0.01em] text-ink-900">Mailyard</span>
 			</div>
 
-			{ /* Primary nav */ }
+			{ /* Grouped nav */ }
 			<nav className="flex flex-col gap-0.5">
-				{ NAV.map( ( item ) => (
-					<NavItem key={ item.id } item={ item } active={ view === item.id } onClick={ () => onNavigate( item.id ) } />
+				{ main.map( ( group ) => (
+					<Group key={ group.id } group={ group } route={ route } onNavigate={ onNavigate } />
 				) ) }
 			</nav>
 
 			{ /* Footer */ }
 			<div className="mt-auto flex flex-col gap-0.5 border-t border-ink-200 pt-3">
-				<NavItem
-					item={ { id: 'settings', label: 'Settings', Icon: GearIcon } }
-					active={ view === 'settings' }
-					onClick={ () => onNavigate( 'settings' ) }
-				/>
+				{ footer.map( ( group ) => (
+					<Group key={ group.id } group={ group } route={ route } onNavigate={ onNavigate } />
+				) ) }
 				<a
 					href="https://wordpress.org/plugins/mailyard/"
 					target="_blank"
@@ -58,7 +87,9 @@ export default function Sidebar( { view, onNavigate } ) {
 					<HelpIcon className="h-[18px] w-[18px] shrink-0" />
 					Help &amp; docs
 				</a>
-				<div className="px-3 pt-2 text-[11px] font-medium text-ink-400">Mailyard v1.0.0</div>
+				{ versionLine && (
+					<div className="px-3 pt-2 text-[11px] font-medium text-ink-400">{ versionLine }</div>
+				) }
 			</div>
 		</aside>
 	);

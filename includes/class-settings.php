@@ -116,10 +116,23 @@ class Settings {
 		// which supplies its own X-WP-Nonce (wp_rest) middleware. We expose the REST
 		// root + nonce so the client can authenticate, plus the onboarding flag.
 		wp_localize_script( 'mailyard-admin', 'mailyard', array(
-			'onboarded' => (bool) get_option( Options::ONBOARDED, false ),
-			'restUrl'   => esc_url_raw( rest_url( Options::REST_NS ) ),
-			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'onboarded'    => (bool) get_option( Options::ONBOARDED, false ),
+			'restUrl'      => esc_url_raw( rest_url( Options::REST_NS ) ),
+			'nonce'        => wp_create_nonce( 'wp_rest' ),
+			'version'      => MAILYARD_VERSION,
+			'shellVersion' => MAILYARD_SHELL_VERSION,
 		) );
+
+		/**
+		 * Fires after Mailyard's admin bundle is enqueued on its page.
+		 *
+		 * Extenders (Mailyard Pro) hook this to enqueue their own bundle with
+		 * a dependency on the passed handle — that ordering guarantees their
+		 * `mailyard.shell.modules` filter registers before the shell mounts.
+		 *
+		 * @param string $handle Mailyard's admin script handle.
+		 */
+		do_action( 'mailyard_admin_enqueue', 'mailyard-admin' );
 	}
 
 	public function render() {
