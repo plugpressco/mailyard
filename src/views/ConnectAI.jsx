@@ -1,33 +1,40 @@
 /*
- * Connect AI — the control page for Mailyard's Abilities API tools.
+ * Connect AI — the ONE control page for the family's Abilities API tools.
  *
- * Two jobs: decide exactly what an assistant is allowed to do (master switch +
- * per-tool permissions), and show how to point an MCP client at this site.
- * Mailyard ships no MCP transport — a bridge plugin (WordPress MCP Adapter, or
- * Saddle) exposes the server; this page detects it and hands over the endpoint.
+ * Free Mailyard owns the page; each family plugin contributes a section of
+ * tools through the `mailyard.shell.aiSections` filter (Mailyard Pro adds its
+ * campaign tools). Every plugin keeps its own permissions storage and REST, so
+ * each section carries its own master switch — no cross-plugin writes.
+ *
+ * Mailyard ships no MCP transport: a bridge (WordPress MCP Adapter, or Saddle)
+ * exposes the server; this page detects it and hands over the endpoint + guide.
  */
-import { useState, useEffect, useCallback } from 'react';
-import { Badge, GuideDrawer, CodeBlock, StatusDot, Notice, toast } from '@plugpress/ui';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { applyFilters } from '@wordpress/hooks';
+import { Badge, GuideDrawer, CodeBlock, LiveIndicator, Notice, toast } from '@plugpress/ui';
 import { get, post } from '@/lib/api';
 import { Card, Button, Toggle, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
 import { AlertIcon, BoltIcon } from '@/components/Icons';
 
 const ACCESS_BADGE = {
 	read: { label: 'View', variant: 'default' },
-	action: { label: 'Sends email', variant: 'danger' },
+	write: { label: 'Draft', variant: 'info' },
+	action: { label: 'Action', variant: 'warning' },
+	send: { label: 'Sends email', variant: 'danger' },
 };
 
 const GROUPS = [
 	{ label: 'View · read-only, always safe', accesses: [ 'read' ] },
-	{ label: 'Act · delivers a real email', accesses: [ 'action' ], danger: true },
+	{ label: 'Manage · create, edit, stop', accesses: [ 'write' ] },
+	{ label: 'Act · delivers a real email', accesses: [ 'action', 'send' ], danger: true },
 ];
 
 function ToolRow( { tool, disabled, onToggle } ) {
 	const badge = ACCESS_BADGE[ tool.access ] || ACCESS_BADGE.read;
-	const danger = 'action' === tool.access;
+	const danger = 'action' === tool.access || 'send' === tool.access;
 
 	return (
-		<div className="flex items-start justify-between gap-4 border-t border-ink-200 px-5 py-3.5 first:border-t-0">
+		<div className="flex items-start justify-between gap-4 border-t border-ink-200 px-5 py-3.5">
 			<div className="min-w-0">
 				<div className="flex items-center gap-2">
 					<span className="text-[13px] font-semibold text-ink-900">{ tool.label }</span>
@@ -55,15 +62,72 @@ function ToolRow( { tool, disabled, onToggle } ) {
 	);
 }
 
+/**
+ * One product's tool list: a master switch plus its tools, grouped by access.
+ * Exported so family plugins can render their own section identically —
+ * import { AiSection } from the shell and feed it your catalog.
+ */
+export function AiSection( { title, subtitle, enabled, tools = [], onToggleMaster, onToggleTool } ) {
+	return (
+		<Card className="mb-4 overflow-hidden">
+			<div className="flex items-center justify-between px-5 py-4">
+				<div>
+					<div className="text-[13px] font-semibold text-ink-900">{ title }</div>
+					<div className="mt-[1px] text-[12px] text-ink-400">{ subtitle }</div>
+				</div>
+				<Toggle label={ `AI access — ${ title }` } on={ !! enabled } onChange={ onToggleMaster } />
+			</div>
+
+			<div className={ enabled ? '' : 'pointer-events-none opacity-50' }>
+				{ GROUPS.map( ( group ) => {
+					const rows = tools.filter( ( t ) => group.accesses.includes( t.access ) );
+					if ( ! rows.length ) {
+						return null;
+					}
+					return (
+						<div key={ group.label }>
+							<div
+								className={ `border-t border-ink-200 bg-canvas px-5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] ${
+									group.danger ? 'text-danger' : 'text-ink-400'
+								}` }
+							>
+								{ group.label }
+							</div>
+							{ rows.map( ( tool ) => (
+								<ToolRow
+									key={ tool.name }
+									tool={ tool }
+									disabled={ ! enabled }
+									onToggle={ onToggleTool }
+								/>
+							) ) }
+						</div>
+					);
+				} ) }
+			</div>
+		</Card>
+	);
+}
+
 export default function ConnectAI() {
 	const [ data, setData ] = useState( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ guideOpen, setGuideOpen ] = useState( false );
 
-	const load = useCallback(
-		() => get( 'ai' ).then( setData ).catch( () => setData( null ) ),
-		[]
-	);
+	// Tool sections contributed by family plugins (Mailyard Pro adds its
+	// campaign tools). Each owns its own data + persistence.
+	// AiSection is handed to extenders through the filter's context arg: their
+	// bundle can't import ours, but both share the one React global, so a
+	// component reference crosses the boundary fine — and every product's tool
+	// list renders identically.
+	const sections = useMemo( () => {
+		const list = applyFilters( 'mailyard.shell.aiSections', [], { AiSection } );
+		return ( Array.isArray( list ) ? list : [] )
+			.filter( ( s ) => s && s.id && s.Component )
+			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
+	}, [] );
+
+	const load = useCallback( () => get( 'ai' ).then( setData ).catch( () => setData( null ) ), [] );
 	useEffect( () => {
 		load().finally( () => setLoading( false ) );
 	}, [ load ] );
@@ -89,8 +153,6 @@ export default function ConnectAI() {
 	const { enabled, abilitiesApi, adapterActive, endpoint, abilities = [] } = data;
 	const ready = abilitiesApi && adapterActive;
 
-	const toggleMaster = ( v ) => save( { enabled: v }, { enabled: v } );
-
 	const toggleTool = ( name, v ) => {
 		const next = abilities.map( ( a ) => ( a.name === name ? { ...a, enabled: v } : a ) );
 		const map = {};
@@ -106,68 +168,67 @@ export default function ConnectAI() {
 		? { label: 'Ready to connect', cls: 'bg-success/10 text-success' }
 		: { label: 'Finish setup', cls: 'bg-warning/10 text-warning' };
 
+	const authHeader = 'Authorization: Basic <base64 of WP_USERNAME:APP_PASSWORD>';
+	const claudeCmd = [
+		'claude mcp add --transport http mailyard \\',
+		`  ${ endpoint } \\`,
+		'  --header "Authorization: Basic $(printf \'WP_USERNAME:APP_PASSWORD\' | base64)"',
+	].join( '\n' );
+	const clientJson = JSON.stringify(
+		{
+			mcpServers: {
+				mailyard: {
+					type: 'http',
+					url: endpoint,
+					headers: { Authorization: 'Basic <base64 of WP_USERNAME:APP_PASSWORD>' },
+				},
+			},
+		},
+		null,
+		2
+	);
+
 	return (
 		<div className="max-w-[840px]">
 			<PageHeader
 				title="Connect AI"
-				subtitle="Let an assistant like Claude or Codex diagnose your email delivery — and decide exactly what it may touch."
+				subtitle="Let an assistant like Claude or Codex work on your email — and decide exactly what it may touch."
 				action={
-					<span className={ `inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ statusPill.cls }` }>
+					<span
+						className={ `inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ statusPill.cls }` }
+					>
 						{ statusPill.label }
 					</span>
 				}
 			/>
 
-			{ /* Permissions — the centerpiece. */ }
-			<Card className="mb-4 overflow-hidden">
-				<div className="flex items-center justify-between px-5 py-4">
-					<div>
-						<div className="text-[13px] font-semibold text-ink-900">AI access</div>
-						<div className="mt-[1px] text-[12px] text-ink-400">
-							Master switch for every Mailyard tool.
-						</div>
-					</div>
-					<Toggle label="AI access" on={ !! enabled } onChange={ toggleMaster } />
-				</div>
+			<AiSection
+				title="Delivery tools · Mailyard"
+				subtitle="Diagnose why email isn’t arriving."
+				enabled={ enabled }
+				tools={ abilities }
+				onToggleMaster={ ( v ) => save( { enabled: v }, { enabled: v } ) }
+				onToggleTool={ toggleTool }
+			/>
 
-				<div className={ enabled ? '' : 'pointer-events-none opacity-50' }>
-					{ GROUPS.map( ( group ) => {
-						const tools = abilities.filter( ( a ) => group.accesses.includes( a.access ) );
-						if ( ! tools.length ) {
-							return null;
-						}
-						return (
-							<div key={ group.label }>
-								<div
-									className={ `border-t border-ink-200 bg-canvas px-5 py-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] ${
-										group.danger ? 'text-danger' : 'text-ink-400'
-									}` }
-								>
-									{ group.label }
-								</div>
-								{ tools.map( ( tool ) => (
-									<ToolRow
-										key={ tool.name }
-										tool={ tool }
-										disabled={ ! enabled }
-										onToggle={ toggleTool }
-									/>
-								) ) }
-							</div>
-						);
-					} ) }
-				</div>
-			</Card>
+			{ sections.map( ( { id, Component } ) => (
+				<Suspense key={ id } fallback={ null }>
+					<Component />
+				</Suspense>
+			) ) }
 
-			{ /* Connect your tool. */ }
 			<Card className="overflow-hidden">
 				<div className="px-5 pt-4 pb-1">
 					<SectionTitle>Connect your tool</SectionTitle>
 				</div>
 				<div className="flex items-center justify-between gap-4 px-5 pb-5 pt-3">
 					<div className="flex items-center gap-4">
-						<StatusDot tone={ abilitiesApi ? 'success' : 'danger' }>WordPress 7.0</StatusDot>
-						<StatusDot tone={ adapterActive ? 'success' : 'warning' }>MCP server</StatusDot>
+						<LiveIndicator tone={ abilitiesApi ? 'success' : 'danger' } pulse={ false }>
+							WordPress 7.0
+						</LiveIndicator>
+						<LiveIndicator tone={ adapterActive ? 'success' : 'warning' } pulse={ false }>
+							MCP server
+						</LiveIndicator>
 					</div>
 					<Button size="sm" variant="secondary" onClick={ () => setGuideOpen( true ) }>
 						<BoltIcon className="h-3.5 w-3.5" /> How to connect
@@ -195,11 +256,7 @@ export default function ConnectAI() {
 				) }
 			</Card>
 
-			<GuideDrawer
-				open={ guideOpen }
-				onOpenChange={ setGuideOpen }
-				title="Connect your AI tool"
-			>
+			<GuideDrawer open={ guideOpen } onOpenChange={ setGuideOpen } title="Connect your AI tool">
 				<p>
 					Mailyard’s tools ride the WordPress <strong>Abilities API</strong>. Any MCP client —
 					Claude Code, Claude Desktop, Codex, Cursor, Windsurf, your own scripts — connects with
@@ -224,34 +281,12 @@ export default function ConnectAI() {
 				</p>
 
 				<h3>2 · Connection details</h3>
-				<CodeBlock copyable>{ endpoint }</CodeBlock>
-				<CodeBlock copyable>
-					{ 'Authorization: Basic <base64 of WP_USERNAME:APP_PASSWORD>' }
-				</CodeBlock>
+				<CodeBlock label="Endpoint" code={ endpoint } wrap />
+				<CodeBlock label="Auth header" code={ authHeader } wrap />
 
 				<h3>3 · Add it to your client</h3>
-				<p>Claude Code:</p>
-				<CodeBlock copyable language="bash">
-					{ `claude mcp add --transport http mailyard \\\n  ${ endpoint } \\\n  --header "Authorization: Basic $(printf 'WP_USERNAME:APP_PASSWORD' | base64)"` }
-				</CodeBlock>
-				<p>Cursor, Claude Desktop, Codex, Windsurf:</p>
-				<CodeBlock copyable language="json">
-					{ JSON.stringify(
-						{
-							mcpServers: {
-								mailyard: {
-									type: 'http',
-									url: endpoint,
-									headers: {
-										Authorization: 'Basic <base64 of WP_USERNAME:APP_PASSWORD>',
-									},
-								},
-							},
-						},
-						null,
-						2
-					) }
-				</CodeBlock>
+				<CodeBlock label="Claude Code" code={ claudeCmd } wrap />
+				<CodeBlock label="Cursor · Claude Desktop · Codex · Windsurf" code={ clientJson } wrap />
 				<p>
 					Clients that only speak stdio can wrap the endpoint:{ ' ' }
 					<code>npx mcp-remote { endpoint }</code>

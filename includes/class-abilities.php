@@ -57,15 +57,15 @@ class Abilities {
 	}
 
 	/**
-	 * Risk-aware default before the user has chosen. Every free tool is
-	 * read-only except send-test, which delivers one real email to an address
-	 * the caller names — safe enough to leave on (it can't touch an audience).
+	 * Risk-aware default before the user has chosen. The read-only tools are on
+	 * so the diagnosis workflow works out of the box; send-test delivers a REAL
+	 * email to an address the assistant names, so it is opt-in — the same stance
+	 * Pro takes on its whole-audience send.
 	 *
 	 * @param string $name Ability name.
 	 */
 	public static function default_for( string $name ): bool {
-		unset( $name );
-		return true;
+		return 'mailyard/send-test-email' !== $name;
 	}
 
 	/**
@@ -112,7 +112,7 @@ class Abilities {
 				'warning'     => __( 'Returns the message content of the email you ask for.', 'mailyard' ),
 			),
 			array(
-				'name'        => 'mailyard/send-test',
+				'name'        => 'mailyard/send-test-email',
 				'label'       => __( 'Send a test email', 'mailyard' ),
 				'description' => __( 'Send a test through the live provider chain to confirm delivery works.', 'mailyard' ),
 				'access'      => 'action',
@@ -291,7 +291,7 @@ class Abilities {
 		);
 
 		$this->maybe_register(
-			'mailyard/send-test',
+			'mailyard/send-test-email',
 			array(
 				'label'               => __( 'Send a test email', 'mailyard' ),
 				'description'         => __( 'Send a test email through the live provider chain (with failover) to confirm delivery works end to end. Delivers a real email to the address given; defaults to the current user. Use after fixing a connection or DNS record.', 'mailyard' ),

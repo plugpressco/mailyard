@@ -259,13 +259,13 @@ Mailyard registers its delivery tools on the **WordPress Abilities API** (WordPr
 | `mailyard/check-deliverability` | View | Scores SPF, DKIM, DMARC, and MX per sending domain (0–100 + letter grade) and returns the exact DNS record to add for each failing check. Pass `refresh: true` to bypass the 1-hour cache. |
 | `mailyard/list-logs` | View | Recent emails with recipient, subject, provider, status, and error. Filter with `status` (`all`/`sent`/`failed`), `search`, `limit`. Message bodies are **not** included. |
 | `mailyard/get-log` | View | One logged email in full, including its body, to debug a specific failure. Takes the `id` from `list-logs`. |
-| `mailyard/send-test` | Sends email | Sends a real test through the live chain (with failover). Optional `to` and `subject`; defaults to the current user. |
+| `mailyard/send-test-email` | Sends email | Sends a real test through the live chain (with failover). Optional `to` and `subject`; defaults to the current user. |
 
 Every tool requires the `manage_options` capability. Credentials (`config`), and the webhook secret are **never** exposed to an assistant — the chain is projected to safe fields only.
 
 ### Permissions
 
-**Settings → Connect AI** has a master switch ("AI access") and a switch per tool. Turning the master off unregisters every Mailyard ability immediately. All five tools are on by default; the send-test tool is flagged because it delivers a real email.
+**Settings → Connect AI** has a master switch ("AI access") and a switch per tool. Turning the master off unregisters every Mailyard ability immediately. The four read-only tools are on by default; `mailyard/send-test-email` is OFF by default because it delivers a real email — turn it on deliberately.
 
 ### Connecting a client
 

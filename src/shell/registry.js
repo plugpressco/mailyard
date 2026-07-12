@@ -35,6 +35,11 @@
  *   `mailyard.shell.settingsTabs`     — [{ id, label, order, Component }]
  *     rendered as tabs of the Settings view; the tab owns every route under
  *     `settings/<id>` (src/views/Settings.jsx).
+ *   `mailyard.shell.aiSections`       — [{ id, order, Component }] appended to
+ *     the Connect AI page: one tool-permissions card per family plugin. Each
+ *     Component owns its own catalog, master switch, and persistence (no
+ *     cross-plugin writes) — render it with the exported `AiSection` from
+ *     src/views/ConnectAI.jsx so every product's list looks identical.
  */
 import { applyFilters } from '@wordpress/hooks';
 
