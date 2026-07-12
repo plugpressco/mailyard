@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { applyFilters } from '@wordpress/hooks';
 import { toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import { get, post } from '@/lib/api';
@@ -142,6 +143,16 @@ export default function Dashboard( { onNavigate } ) {
 	const [ testOpen, setTestOpen ] = useState( false );
 	const { domains } = useDeliverability();
 
+	// Widgets contributed by family plugins (Mailyard Pro adds its campaign
+	// stats/recent-campaigns card). Collected once — extenders registered
+	// their filters at script eval, before the shell mounted.
+	const widgets = useMemo( () => {
+		const list = applyFilters( 'mailyard.shell.dashboardWidgets', [] );
+		return ( Array.isArray( list ) ? list : [] )
+			.filter( ( w ) => w && w.id && w.Component )
+			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
+	}, [] );
+
 	const refresh = useCallback( () => get( 'dashboard' ).then( setData ).catch( () => setData( null ) ), [] );
 	useEffect( () => { refresh().finally( () => setLoading( false ) ); }, [ refresh ] );
 
@@ -201,6 +212,14 @@ export default function Dashboard( { onNavigate } ) {
 			</div>
 
 			<ActivityFeed items={ recent } onNavigate={ onNavigate } />
+
+			{ widgets.map( ( { id, Component } ) => (
+				<div key={ id } className="mt-4">
+					<Suspense fallback={ null }>
+						<Component />
+					</Suspense>
+				</div>
+			) ) }
 		</div>
 	);
 }

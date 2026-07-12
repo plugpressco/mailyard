@@ -23,7 +23,7 @@ export default function CoreOutlet( { route, navigate } ) {
 		case 'logs':
 			return <Logs />;
 		case 'settings':
-			return <Settings />;
+			return <Settings route={ route } navigate={ navigate } />;
 		case 'dashboard':
 		default:
 			return <Dashboard onNavigate={ navigate } />;

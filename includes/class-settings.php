@@ -48,33 +48,66 @@ class Settings {
 			'58.14'
 		);
 
-		// SPA sections as native submenus for deep-linking. The first entry
-		// reuses the parent slug so it replaces WP's auto-duplicated
-		// "Mailyard" label; the rest are hash routes into the SPA.
+		// SPA sections as native submenus for deep-linking. Entries are
+		// order-aware so extenders slot in by weight instead of appending
+		// after Settings — the flyout mirrors the SPA sidebar (Dashboard,
+		// Marketing 20s, Delivery 30s, Settings last at 90).
 		$submenus = array(
-			'dashboard'      => __( 'Dashboard', 'mailyard' ),
-			'connections'    => __( 'Connections', 'mailyard' ),
-			'deliverability' => __( 'Deliverability', 'mailyard' ),
-			'logs'           => __( 'Logs', 'mailyard' ),
-			'settings'       => __( 'Settings', 'mailyard' ),
+			'dashboard'      => array(
+				'label' => __( 'Dashboard', 'mailyard' ),
+				'order' => 10,
+			),
+			'connections'    => array(
+				'label' => __( 'Connections', 'mailyard' ),
+				'order' => 30,
+			),
+			'deliverability' => array(
+				'label' => __( 'Deliverability', 'mailyard' ),
+				'order' => 31,
+			),
+			'logs'           => array(
+				'label' => __( 'Logs', 'mailyard' ),
+				'order' => 32,
+			),
+			'settings'       => array(
+				'label' => __( 'Settings', 'mailyard' ),
+				'order' => 90,
+			),
 		);
 
 		/**
-		 * Extend the Mailyard admin submenu (slug-key => label).
+		 * Extend the Mailyard admin submenu.
 		 *
-		 * Mailyard Pro appends its sections (Campaigns, Contacts, Automations)
+		 * Mailyard Pro adds its sections (Campaigns, Contacts, Automations)
 		 * here so both products live under one menu.
 		 *
-		 * @param array $submenus Map of SPA hash route => menu label.
+		 * @param array $submenus Map of SPA hash route => array( 'label', 'order' ).
+		 *                        Plain-string values are accepted (order 50).
 		 */
 		$submenus = apply_filters( 'mailyard_admin_submenus', $submenus );
 
+		// Normalize legacy string entries, then sort by weight.
+		foreach ( $submenus as $key => $entry ) {
+			if ( ! is_array( $entry ) ) {
+				$submenus[ $key ] = array(
+					'label' => (string) $entry,
+					'order' => 50,
+				);
+			}
+		}
+		uasort(
+			$submenus,
+			static function ( $a, $b ) {
+				return ( $a['order'] ?? 50 ) <=> ( $b['order'] ?? 50 );
+			}
+		);
+
 		$first = true;
-		foreach ( $submenus as $key => $label ) {
+		foreach ( $submenus as $key => $entry ) {
 			add_submenu_page(
 				'mailyard',
-				$label,
-				$label,
+				$entry['label'],
+				$entry['label'],
 				'manage_options',
 				$first ? 'mailyard' : 'mailyard#/' . $key,
 				array( $this, 'render' )

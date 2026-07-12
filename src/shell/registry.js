@@ -27,6 +27,14 @@
  *     isFullscreen: ( route ) => bool,       // suppress the sidebar
  *     skeleton: SkeletonComponent,           // Suspense fallback
  *   }
+ *
+ * Two more extension filters (same wp.hooks registry, same collect-once
+ * semantics):
+ *   `mailyard.shell.dashboardWidgets` — [{ id, order, Component }] rendered
+ *     at the bottom of the Dashboard view (src/views/Dashboard.jsx).
+ *   `mailyard.shell.settingsTabs`     — [{ id, label, order, Component }]
+ *     rendered as tabs of the Settings view; the tab owns every route under
+ *     `settings/<id>` (src/views/Settings.jsx).
  */
 import { applyFilters } from '@wordpress/hooks';
 

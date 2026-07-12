@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { applyFilters } from '@wordpress/hooks';
 import { Dialog, toast } from '@plugpress/ui';
+import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
 import { post } from '@/lib/api';
 import { Card, Toggle, Input, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
@@ -99,7 +101,12 @@ function DangerZone() {
 	);
 }
 
-export default function Settings() {
+/**
+ * The free plugin's own settings — the "Delivery" tab of the shared page.
+ * All original hooks/state live here so they don't run while another
+ * plugin's tab is active.
+ */
+function DeliverySettings() {
 	const { settings, loading, save } = useSettings();
 
 	const [ fromEmail, setFromEmail ] = useState( '' );
@@ -194,6 +201,72 @@ export default function Settings() {
 					Mailyard by PlugPress · plugpress.co
 				</a>
 			</div>
+		</div>
+	);
+}
+
+/**
+ * Settings shell: the Delivery tab (Mailyard's own settings above) plus tabs
+ * contributed by family plugins via the `mailyard.shell.settingsTabs` filter
+ * (Mailyard Pro registers "Marketing"). With no contributed tabs the tab bar
+ * doesn't render at all — the free-only page looks exactly as before.
+ *
+ * The active tab comes from the route: `settings` → Delivery,
+ * `settings/<tabId>[/…]` → that tab (deep segments belong to the tab).
+ */
+export default function Settings( { route = 'settings', navigate } ) {
+	const extraTabs = useMemo( () => {
+		const list = applyFilters( 'mailyard.shell.settingsTabs', [] );
+		return ( Array.isArray( list ) ? list : [] )
+			.filter( ( t ) => t && t.id && t.label && t.Component )
+			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
+	}, [] );
+
+	if ( ! extraTabs.length ) {
+		return <DeliverySettings />;
+	}
+
+	const activeId = route.split( '/' )[ 1 ] || 'delivery';
+	const active = extraTabs.find( ( t ) => t.id === activeId );
+	const go = ( id ) => {
+		if ( navigate ) {
+			navigate( 'delivery' === id ? 'settings' : 'settings/' + id );
+		} else {
+			window.location.hash = 'delivery' === id ? '#/settings' : '#/settings/' + id;
+		}
+	};
+
+	const tabs = [ { id: 'delivery', label: 'Delivery' }, ...extraTabs ];
+
+	return (
+		<div>
+			<div className="mb-5 flex items-center gap-1 border-b border-ink-200">
+				{ tabs.map( ( t ) => {
+					const isActive = active ? t.id === active.id : 'delivery' === t.id;
+					return (
+						<button
+							key={ t.id }
+							onClick={ () => go( t.id ) }
+							className={ cn(
+								'-mb-px cursor-pointer border-0 border-b-2 border-solid bg-transparent px-3.5 py-2.5 text-[13px] font-medium transition-colors',
+								isActive
+									? 'border-brand text-ink-900'
+									: 'border-transparent text-ink-500 hover:text-ink-900'
+							) }
+						>
+							{ t.label }
+						</button>
+					);
+				} ) }
+			</div>
+
+			{ active ? (
+				<Suspense fallback={ null }>
+					<active.Component />
+				</Suspense>
+			) : (
+				<DeliverySettings />
+			) }
 		</div>
 	);
 }
