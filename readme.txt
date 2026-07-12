@@ -4,7 +4,7 @@ Tags: smtp, wp-mail, email-log, email-deliverability, failover
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,7 +32,11 @@ When an address hard-bounces or someone hits "mark as spam", Postmark, Amazon SE
 
 Reads your domain's SPF, DKIM, DMARC, and MX records and tells you exactly what's missing. That missing record is usually the reason mail lands in spam — and most people never find out.
 
-And the rest: a full email log, one-click test sends, a warning if another SMTP plugin is fighting you, and automatic log cleanup after 30 days. Everything in the plugin is free. There's no Pro version to upsell you to.
+And the rest: a full email log, one-click test sends, a warning if another SMTP plugin is fighting you, and automatic log cleanup after 30 days. Everything in Mailyard is free and stays free — no locked buttons, no crippled features.
+
+= Mailyard Pro =
+
+If you also want to *send campaigns* — broadcast email, contacts, and automations — that's a separate paid plugin, Mailyard Pro, which uses Mailyard as its delivery engine. Mailyard itself never nags you about it, and nothing in this plugin is held back for it.
 
 = Setup =
 
@@ -81,6 +85,9 @@ Custom SMTP — if you pick the Custom SMTP option, email goes to the SMTP host 
 
 Cloudflare DNS over HTTPS — only used by the deliverability checker, and only as a fallback when your server's own DNS lookup fails. It sends just your domain name (to read SPF/DKIM/DMARC/MX records) to `https://cloudflare-dns.com/dns-query`. No email content is involved.
 Terms: https://www.cloudflare.com/website-terms/ — Privacy: https://developers.cloudflare.com/1.1.1.1/privacy/public-dns-resolver/
+
+Freemius — account and update service (`api.freemius.com`), used for the optional Mailyard account and for licensing the separate Mailyard Pro add-on. Usage tracking is strictly opt-in: unless you explicitly opt in (or activate a Mailyard Pro license), nothing is sent. When you do, Freemius receives basic site data — site URL, WordPress/PHP versions, and the plugin version — never your email content, logs, or API keys.
+Terms: https://freemius.com/terms/ — Privacy: https://freemius.com/privacy/
 
 == Installation ==
 
@@ -133,7 +140,7 @@ No. Uninstalling leaves your logs and settings alone, so you can reinstall witho
 
 = Is it really free? =
 
-Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the log. No Pro version, no locked buttons, no catch.
+Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the log. Nothing in this plugin is locked or metered. The only thing we sell is Mailyard Pro, a separate campaigns plugin that builds on top of Mailyard — this plugin is complete without it.
 
 == Screenshots ==
 
@@ -144,6 +151,10 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 5. Settings — default From address and the logging toggle.
 
 == Changelog ==
+
+= 1.1.0 =
+* Mailyard is now the free parent product for the new Mailyard Pro campaigns add-on (separate plugin — nothing in Mailyard changed or got locked).
+* Added the Freemius SDK for the optional account surface and Pro licensing. Strictly opt-in; disclosed under External services.
 
 = 1.0.0 =
 * First release.
@@ -157,6 +168,9 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Uninstall leaves your data in place, with a one-click erase in Settings if you want it gone.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds the Freemius account/licensing layer for the new Mailyard Pro add-on. No feature changes; everything stays free.
 
 = 1.0.0 =
 First release.

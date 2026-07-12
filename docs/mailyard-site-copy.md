@@ -11,7 +11,7 @@ wordpress.org listing is the distribution engine). Differentiators lead, not "SM
 > Your WordPress email, with a backup plan.
 
 **Subhead:**
-> Most SMTP plugins send through one provider and give up if it fails. Mailyard sends through several — if the first one drops, the next one delivers, on the same send. Free, no Pro version.
+> Most SMTP plugins send through one provider and give up if it fails. Mailyard sends through several — if the first one drops, the next one delivers, on the same send. Free, complete, nothing locked.
 
 **Primary CTA:** `Install Free from WordPress.org`
 **Secondary CTA:** `See how failover works`
@@ -78,10 +78,12 @@ is going. **Coming in a future free update — install now and you'll get it aut
 
 ## CLOSE
 
-**Headline:** Free. No Pro version. No catch.
-**Body:** Every feature here is in the free plugin on WordPress.org — failover, routing,
+**Headline:** Free. Complete. Nothing locked.
+**Body:** Every delivery feature is in the free plugin on WordPress.org — failover, routing,
 bounce tracking, the deliverability checker, the email log. Built and maintained by PlugPress.
-**CTA:** `Install Mailyard Free`
+Want to *send campaigns* too? **Mailyard Pro** adds broadcast email, contacts, and automations
+on top of Mailyard — a separate plugin, so the free one stays complete on its own.
+**CTA:** `Install Mailyard Free` · `Explore Mailyard Pro`
 
 ---
 

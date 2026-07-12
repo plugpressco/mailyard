@@ -3,7 +3,7 @@
  * Plugin Name:       Mailyard
  * Plugin URI:        https://mailyard.co
  * Description:       Reliable email delivery for WordPress. Route emails through Amazon SES, Postmark, Resend, or any SMTP server with smart failover.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 5.8
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -17,10 +17,22 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MAILYARD_VERSION', '1.0.0' );
+define( 'MAILYARD_VERSION', '1.1.0' );
 define( 'MAILYARD_FILE', __FILE__ );
 define( 'MAILYARD_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MAILYARD_BASENAME', plugin_basename( __FILE__ ) );
+
+// Composer vendor (Freemius SDK). Optional at runtime: the plugin works
+// without it — the account surface simply stays dormant.
+if ( file_exists( MAILYARD_DIR . 'vendor/autoload.php' ) ) {
+	require_once MAILYARD_DIR . 'vendor/autoload.php';
+}
+
+// Freemius — Mailyard is the free PARENT product; the Mailyard Pro add-on
+// attaches to it for licensing/updates. Must init at file scope so the
+// `mailyard_fs_loaded` signal fires before plugins_loaded (Pro defers its
+// own init onto it). Dormant until dashboard credentials are set.
+require_once MAILYARD_DIR . 'includes/freemius.php';
 
 require_once MAILYARD_DIR . 'includes/class-plugin.php';
 
