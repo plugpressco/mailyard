@@ -135,7 +135,7 @@ export default function Setup( { onComplete } ) {
 					<>
 						<GroupLabel
 							action={ picked.dashboard && (
-								<a href={ picked.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[11px] text-brand no-underline hover:underline">
+								<a href={ picked.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[11px] !text-brand no-underline hover:underline">
 									Get your keys <ChevronRightIcon className="h-3 w-3" />
 								</a>
 							) }

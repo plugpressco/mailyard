@@ -152,14 +152,16 @@ function DeliverySettings() {
 	}
 
 	return (
-		<div className="max-w-[600px]">
+		// 840px matches the Marketing tab's content column (Pro settings) so
+		// switching tabs never jumps the container width.
+		<div className="max-w-[840px]">
 			<PageHeader title="Settings" subtitle="Changes save automatically." />
 
 			<Card className="mb-3 overflow-hidden">
 				<div className="px-5 pt-4 pb-1">
 					<SectionTitle>Default sender</SectionTitle>
 				</div>
-				<div className="flex flex-col gap-3 px-5 pb-5 pt-3">
+				<div className="flex max-w-[520px] flex-col gap-3 px-5 pb-5 pt-3">
 					<Input
 						label="From Email"
 						type="email"
@@ -197,7 +199,7 @@ function DeliverySettings() {
 			<DangerZone />
 
 			<div className="mt-8 text-center">
-				<a href="https://plugpress.co" target="_blank" rel="noopener noreferrer" className="text-[11px] text-ink-400 no-underline opacity-60 transition-opacity hover:opacity-100 hover:text-brand">
+				<a href="https://plugpress.co" target="_blank" rel="noopener noreferrer" className="text-[11px] !text-ink-400 no-underline opacity-60 transition-opacity hover:opacity-100 hover:!text-brand">
 					Mailyard by PlugPress · plugpress.co
 				</a>
 			</div>

@@ -48,6 +48,16 @@
   }
 }
 
+/*
+ * ANCHOR COLORS — wp-admin trap: core ships id-scoped rules like
+ * `#wpbody-content a { color:#2271b1 }` (specificity 1,0,1) that beat any
+ * single-class Tailwind color utility (0,1,0) on <a> elements — buttons are
+ * unaffected. Every <a> rendered inside the app must therefore use the
+ * IMPORTANT variants of its color utilities (`!text-ink-500`,
+ * `hover:!text-brand`, …); a plain `text-*` on an anchor silently renders
+ * wp-admin blue.
+ */
+
 /* Remove WP admin left padding on our page */
 .toplevel_page_mailyard #wpcontent {
   padding-left: 0;

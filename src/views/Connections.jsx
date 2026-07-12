@@ -125,7 +125,7 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 					</div>
 					{ provider.dashboard && (
 						<div className="border-t border-ink-200/40 px-5 py-3">
-							<a href={ provider.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-brand no-underline hover:underline">
+							<a href={ provider.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] !text-brand no-underline hover:underline">
 								Where do I find these? <ChevronRightIcon className="h-3.5 w-3.5" />
 							</a>
 						</div>

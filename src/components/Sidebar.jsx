@@ -78,11 +78,13 @@ export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
 				{ footer.map( ( group ) => (
 					<Group key={ group.id } group={ group } route={ route } onNavigate={ onNavigate } />
 				) ) }
+				{ /* !text-*: wp-admin's id-scoped `#wpbody-content a` rule beats
+				     plain utilities on anchors — see globals.css note. */ }
 				<a
 					href="https://wordpress.org/plugins/mailyard/"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-ink-500 no-underline transition-colors duration-150 hover:bg-ink-100 hover:text-ink-900"
+					className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium !text-ink-500 no-underline transition-colors duration-150 hover:bg-ink-100 hover:!text-ink-900"
 				>
 					<HelpIcon className="h-[18px] w-[18px] shrink-0" />
 					Help &amp; docs
