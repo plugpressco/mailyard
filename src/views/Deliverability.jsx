@@ -42,7 +42,7 @@ function CheckRow( { check } ) {
 				<span className="w-12 shrink-0 text-[12.5px] font-semibold text-ink-800">{ check.label }</span>
 				<span className="flex-1 text-[12px] leading-relaxed text-ink-500">{ check.message }</span>
 				{ hasFix && (
-					<span className="shrink-0 text-[11px] font-medium text-brand">{ open ? 'Hide' : 'How to fix' }</span>
+					<span className="shrink-0 text-[11px] font-medium text-brand-text">{ open ? 'Hide' : 'How to fix' }</span>
 				) }
 			</button>
 			{ open && hasFix && (

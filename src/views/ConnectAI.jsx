@@ -186,7 +186,7 @@ export default function ConnectAI() {
 							href="https://github.com/wordpress/mcp-adapter"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="!text-brand"
+							className="!text-brand-text"
 						>
 							WordPress MCP Adapter
 						</a>{ ' ' }

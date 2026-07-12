@@ -194,11 +194,16 @@ class Settings {
 	}
 
 	/**
-	 * Menu icon: paper-plane send mark, base64 SVG data URI (wp-admin gray).
+	 * Menu icon: the Mailyard mark (disc with the send arrow knocked out) as a
+	 * base64 SVG data URI.
+	 *
+	 * Monochrome in wp-admin's icon grey on purpose — WordPress does NOT
+	 * recolour data-URI menu icons, it only shifts their opacity for
+	 * hover/current, so the brand blue would fight every admin colour scheme.
 	 */
 	private function menu_icon(): string {
-		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">'
-			. '<path fill="#a7aaad" d="M18.6 2.2a.75.75 0 0 0-.98-.83l-16 5.5a.75.75 0 0 0-.05 1.4l6.8 2.72 2.72 6.8a.75.75 0 0 0 1.4-.05l5.5-16a.75.75 0 0 0 .01-.04zM14.9 4.04 8.83 10.1 4.1 8.21l10.8-4.17zm-4.98 7.13 6.06-6.06-4.17 10.8-1.89-4.74z"/>'
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+			. '<path fill="#a7aaad" d="M50 0C77.6142 7.99448e-07 100 22.3858 100 50C100 77.6142 77.6142 100 50 100C22.3858 100 1.12106e-06 77.6142 0 50C0 22.3858 22.3858 0 50 0ZM13.5225 40.7559C11.9745 41.2977 10.9135 42.7295 10.8467 44.3682C10.7798 46.0067 11.7202 47.5203 13.2188 48.1865L39.9375 60.0615L51.8135 86.7812C52.4797 88.2798 53.9932 89.2202 55.6318 89.1533C57.2705 89.0865 58.7023 88.0255 59.2441 86.4775L81.1094 24.0049C80.9164 24.5449 80.6043 25.0519 80.1719 25.4844L45.7969 59.8594C44.2348 61.4215 41.7027 61.4215 40.1406 59.8594C38.5785 58.2973 38.5785 55.7652 40.1406 54.2031L74.5156 19.8281C74.9479 19.3959 75.4545 19.0837 75.9941 18.8906L13.5225 40.7559Z"/>'
 			. '</svg>';
 
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode

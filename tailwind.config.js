@@ -7,15 +7,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Mailyard accent (matches @plugpress/ui/tokens/accents/mailyard.css).
+        // Mailyard brand blue (matches @plugpress/ui/tokens/accents/mailyard.css).
         // Literal hexes so Tailwind alpha modifiers (bg-brand/[0.08]) work.
+        //
+        // DEFAULT is 3.22:1 on white — SURFACES only (marks, dots, focus rings,
+        // underlines: the 3:1 bar). For TEXT use `brand-text` (#1372B0, 5.17:1);
+        // `text-brand` on a link silently fails WCAG AA.
         brand: {
-          DEFAULT: '#2563EB',
-          hover: '#1D4ED8',
-          dark: '#1D4ED8',
-          light: '#EFF6FF',
-          soft: '#BFDBFE',
-          muted: '#2563EB14',
+          DEFAULT: '#2395E7',
+          hover: '#1F83CB',
+          text: '#1372B0',
+          dark: '#0E5181',
+          light: '#E3F2FC',
+          soft: '#96CCF3',
+          muted: '#2395E714',
         },
         // Geist-style pure neutral ramp (design-system neutrals; the semantic
         // tokens --pp-* map onto this same family). Replaces the old slate ink.

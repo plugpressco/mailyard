@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
+import MailyardMark from '@/components/Logo';
 import { Button, Input, Select, SectionTitle } from '@/components/ui';
 import { SpinnerIcon, ChevronRightIcon } from '@/components/Icons';
 import { LIVE_PROVIDERS } from '@/lib/providers';
@@ -96,7 +97,7 @@ export default function Setup( { onComplete } ) {
 		<div className="min-h-screen bg-ink-50 font-sans">
 			<div className="border-b border-ink-200 bg-surface px-6 py-4">
 				<div className="mx-auto flex max-w-[560px] items-center gap-2">
-					<div className="h-2 w-2 rounded-full bg-brand" />
+					<MailyardMark size={ 20 } className="text-brand" />
 					<span className="text-[13px] font-bold tracking-tight text-ink-900">Mailyard</span>
 				</div>
 			</div>
@@ -135,7 +136,7 @@ export default function Setup( { onComplete } ) {
 					<>
 						<GroupLabel
 							action={ picked.dashboard && (
-								<a href={ picked.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[11px] !text-brand no-underline hover:underline">
+								<a href={ picked.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-[11px] !text-brand-text no-underline hover:underline">
 									Get your keys <ChevronRightIcon className="h-3 w-3" />
 								</a>
 							) }

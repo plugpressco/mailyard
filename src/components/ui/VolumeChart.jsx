@@ -2,7 +2,8 @@ import {
 	ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 
-const BLUE = '#2563EB';
+// Brand blue (a chart mark is a surface, not text — the 3:1 bar applies).
+const BLUE = '#2395E7';
 const RED  = '#DC2626';
 
 function fmtDay( iso ) {

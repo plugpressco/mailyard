@@ -37,7 +37,7 @@ function PanelHead( { title, action, onAction } ) {
 		<div className="flex items-center justify-between border-b border-ink-200 px-4 py-3">
 			<span className="text-[13px] font-semibold text-ink-900">{ title }</span>
 			{ action && (
-				<button onClick={ onAction } className="inline-flex items-center gap-0.5 cursor-pointer border-none bg-transparent text-[12px] font-medium text-brand hover:underline">
+				<button onClick={ onAction } className="inline-flex items-center gap-0.5 cursor-pointer border-none bg-transparent text-[12px] font-medium text-brand-text hover:underline">
 					{ action } <ChevronRightIcon className="h-3 w-3" />
 				</button>
 			) }

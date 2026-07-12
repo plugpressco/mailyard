@@ -1,5 +1,6 @@
 import { AppNav } from '@plugpress/ui';
-import { SendIcon, HelpIcon } from './Icons';
+import { HelpIcon } from './Icons';
+import MailyardMark from './Logo';
 
 /**
  * Which item owns the current route: exact match, prefix match (nested routes
@@ -53,9 +54,7 @@ export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
 			aria-label="Mailyard"
 			brand={
 				<>
-					<span className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-ink-900">
-						<SendIcon className="h-[14px] w-[14px] text-white" />
-					</span>
+					<MailyardMark size={ 26 } className="shrink-0 text-brand" />
 					Mailyard
 				</>
 			}

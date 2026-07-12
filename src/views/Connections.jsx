@@ -125,7 +125,7 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 					</div>
 					{ provider.dashboard && (
 						<div className="border-t border-ink-200/40 px-5 py-3">
-							<a href={ provider.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] !text-brand no-underline hover:underline">
+							<a href={ provider.dashboard } target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] !text-brand-text no-underline hover:underline">
 								Where do I find these? <ChevronRightIcon className="h-3.5 w-3.5" />
 							</a>
 						</div>
@@ -298,7 +298,7 @@ function SortableCard( { conn, index, testing, onToggle, onRemove, onEdit, onTes
 			<button
 				onClick={ () => onTest( conn.id ) }
 				disabled={ testing }
-				className="cursor-pointer rounded-md border border-ink-200/70 bg-white px-2 py-[3px] text-[11px] font-medium text-ink-600 transition-colors hover:border-brand hover:text-brand disabled:opacity-50"
+				className="cursor-pointer rounded-md border border-ink-200/70 bg-white px-2 py-[3px] text-[11px] font-medium text-ink-600 transition-colors hover:border-brand hover:text-brand-text disabled:opacity-50"
 			>
 				{ testing ? 'Testing…' : 'Test' }
 			</button>

@@ -201,7 +201,7 @@ function DeliverySettings() {
 			<DangerZone />
 
 			<div className="mt-8 text-center">
-				<a href="https://plugpress.co" target="_blank" rel="noopener noreferrer" className="text-[11px] !text-ink-400 no-underline opacity-60 transition-opacity hover:opacity-100 hover:!text-brand">
+				<a href="https://plugpress.co" target="_blank" rel="noopener noreferrer" className="text-[11px] !text-ink-400 no-underline opacity-60 transition-opacity hover:opacity-100 hover:!text-brand-text">
 					Mailyard by PlugPress · plugpress.co
 				</a>
 			</div>
