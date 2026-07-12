@@ -247,6 +247,48 @@ Click **Send test** to send a real email through your live routing chain. Leave 
 
 ---
 
+## Connect AI (Abilities API / MCP)
+
+Mailyard registers its delivery tools on the **WordPress Abilities API** (WordPress 7.0+), so an AI assistant can diagnose email problems for you. Control everything in **Settings → Connect AI**.
+
+### The tools
+
+| Ability | Access | What it does |
+| --- | --- | --- |
+| `mailyard/delivery-status` | View | Active provider, the ordered fallback chain with each connection's last test result, health, and sent/failed counts for the last 7 days. |
+| `mailyard/check-deliverability` | View | Scores SPF, DKIM, DMARC, and MX per sending domain (0–100 + letter grade) and returns the exact DNS record to add for each failing check. Pass `refresh: true` to bypass the 1-hour cache. |
+| `mailyard/list-logs` | View | Recent emails with recipient, subject, provider, status, and error. Filter with `status` (`all`/`sent`/`failed`), `search`, `limit`. Message bodies are **not** included. |
+| `mailyard/get-log` | View | One logged email in full, including its body, to debug a specific failure. Takes the `id` from `list-logs`. |
+| `mailyard/send-test` | Sends email | Sends a real test through the live chain (with failover). Optional `to` and `subject`; defaults to the current user. |
+
+Every tool requires the `manage_options` capability. Credentials (`config`), and the webhook secret are **never** exposed to an assistant — the chain is projected to safe fields only.
+
+### Permissions
+
+**Settings → Connect AI** has a master switch ("AI access") and a switch per tool. Turning the master off unregisters every Mailyard ability immediately. All five tools are on by default; the send-test tool is flagged because it delivers a real email.
+
+### Connecting a client
+
+Mailyard exposes abilities but ships **no MCP server** — install a bridge, e.g. the free [WordPress MCP Adapter](https://github.com/wordpress/mcp-adapter). Then:
+
+1. Create an Application Password (**Users → Profile → Application Passwords**).
+2. Copy the endpoint from Settings → Connect AI (the "How to connect" guide has copy buttons).
+3. Add it to your client, e.g. Claude Code:
+
+```bash
+claude mcp add --transport http mailyard \
+  https://example.com/wp-json/mcp/mcp-adapter-default-server \
+  --header "Authorization: Basic $(printf 'WP_USERNAME:APP_PASSWORD' | base64)"
+```
+
+Cursor, Claude Desktop, Codex, and Windsurf take the equivalent `mcpServers` JSON block (also in the guide). stdio-only clients can wrap the endpoint with `npx mcp-remote <endpoint>`.
+
+Then ask: *"Why aren't my WordPress emails arriving?"*
+
+Mailyard Pro adds its campaign tools (`mailyard/list-campaigns`, `mailyard/send-campaign`, …) to the **same** `mailyard` category, so an assistant sees one coherent toolset.
+
+---
+
 ## Developer hooks
 
 ### `mailyard_providers` filter

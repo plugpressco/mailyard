@@ -35,6 +35,11 @@ class Plugin {
 		( new REST_API() )->init();
 		( new Webhooks() )->init();
 
+		// Delivery tools for the WordPress Abilities API — a silent no-op on
+		// WP < 6.9 (the API's functions simply don't exist) and when the user
+		// turns AI access off in Settings → Connect AI.
+		( new Abilities() )->register();
+
 		if ( is_admin() ) {
 			Settings::instance()->init();
 			Conflicts::instance()->init();
@@ -119,6 +124,7 @@ class Plugin {
 		require_once $includes . 'class-override.php';
 		require_once $includes . 'class-data-deleter.php';
 		require_once $includes . 'class-rest-api.php';
+		require_once $includes . 'class-abilities.php';
 		require_once $includes . 'class-webhooks.php';
 		require_once $includes . 'class-settings.php';
 		require_once $includes . 'class-conflicts.php';

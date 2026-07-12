@@ -159,8 +159,16 @@ export function InlineSelect( { label, options = [], className, id: propId, ...p
 	);
 }
 
-export function Toggle( { on, onChange, label, id } ) {
-	return <Switch id={ id } checked={ !! on } onChange={ onChange } aria-label={ label } />;
+export function Toggle( { on, onChange, label, id, disabled } ) {
+	return (
+		<Switch
+			id={ id }
+			checked={ !! on }
+			onChange={ onChange }
+			disabled={ disabled }
+			aria-label={ label }
+		/>
+	);
 }
 
 export function SegmentedControl( { options, value, onChange, label, hint, required } ) {

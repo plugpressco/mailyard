@@ -42,6 +42,68 @@ class REST_API {
 		$this->route( $ns, '/deliverability',      array( 'GET'  => 'get_deliverability' ) );
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
 		$this->route( $ns, '/data/erase-all',      array( 'POST' => 'erase_all_data' ) );
+
+		// Connect AI: the ability catalog + per-tool permissions.
+		$this->route( $ns, '/ai', array(
+			'GET'  => 'get_ai',
+			'POST' => 'save_ai',
+		) );
+	}
+
+	/**
+	 * Connect AI status: whether the platform supports abilities, whether an
+	 * MCP bridge is present, the endpoint to paste into a client, and the tool
+	 * catalog with each tool's current permission.
+	 */
+	public function get_ai() {
+		$route = $this->mcp_route();
+
+		return rest_ensure_response( array(
+			'enabled'       => Abilities::is_enabled(),
+			'abilitiesApi'  => function_exists( 'wp_register_ability' ),
+			'adapterActive' => '' !== $route,
+			'endpoint'      => rest_url( $route ? $route : 'mcp/mcp-adapter-default-server' ),
+			'siteUrl'       => home_url(),
+			'abilities'     => Abilities::catalog(),
+		) );
+	}
+
+	/**
+	 * Save the master switch and/or the per-tool permission map. Incoming keys
+	 * are whitelisted against the catalog — an unknown ability can't be stored.
+	 */
+	public function save_ai( $request ) {
+		$input = (array) $request->get_json_params();
+
+		if ( array_key_exists( 'enabled', $input ) ) {
+			update_option( Abilities::OPTION, ! empty( $input['enabled'] ) ? '1' : '0' );
+		}
+
+		if ( isset( $input['abilities'] ) && is_array( $input['abilities'] ) ) {
+			$incoming = $input['abilities'];
+			$map      = array();
+			foreach ( Abilities::catalog() as $ability ) {
+				$map[ $ability['name'] ] = ! empty( $incoming[ $ability['name'] ] ) ? '1' : '0';
+			}
+			update_option( Abilities::ABILITIES_OPTION, $map );
+		}
+
+		return $this->get_ai();
+	}
+
+	/**
+	 * Find an MCP server route exposed by a bridge plugin (the WordPress MCP
+	 * Adapter, Saddle, or the legacy wordpress-mcp). Empty string when none is
+	 * active — Mailyard ships no MCP transport of its own.
+	 */
+	private function mcp_route(): string {
+		foreach ( array_keys( rest_get_server()->get_routes() ) as $route ) {
+			$route = ltrim( (string) $route, '/' );
+			if ( preg_match( '#^mcp/[a-z0-9_-]*server#i', $route ) || false !== strpos( $route, 'wpmcp/streamable' ) ) {
+				return $route;
+			}
+		}
+		return '';
 	}
 
 	// Register one or more methods on a route with the admin permission check.

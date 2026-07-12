@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
 import { applyFilters } from '@wordpress/hooks';
 import { Dialog, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
 import { post } from '@/lib/api';
 import { Card, Toggle, Input, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
+
+const ConnectAI = lazy( () => import( './ConnectAI' ) );
 
 // Confirm modal for the irreversible "Delete all data" action. Uses the
 // design system's Dialog (focus trap, esc, aria). The destructive button
@@ -224,12 +226,7 @@ export default function Settings( { route = 'settings', navigate } ) {
 			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
 	}, [] );
 
-	if ( ! extraTabs.length ) {
-		return <DeliverySettings />;
-	}
-
 	const activeId = route.split( '/' )[ 1 ] || 'delivery';
-	const active = extraTabs.find( ( t ) => t.id === activeId );
 	const go = ( id ) => {
 		if ( navigate ) {
 			navigate( 'delivery' === id ? 'settings' : 'settings/' + id );
@@ -238,7 +235,13 @@ export default function Settings( { route = 'settings', navigate } ) {
 		}
 	};
 
-	const tabs = [ { id: 'delivery', label: 'Delivery' }, ...extraTabs ];
+	// Delivery + Connect AI are core; family plugins (Mailyard Pro) append theirs.
+	const tabs = [
+		{ id: 'delivery', label: 'Delivery' },
+		{ id: 'connect-ai', label: 'Connect AI', Component: ConnectAI },
+		...extraTabs,
+	];
+	const active = tabs.find( ( t ) => t.id === activeId && t.Component );
 
 	return (
 		<div>

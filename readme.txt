@@ -4,7 +4,7 @@ Tags: smtp, wp-mail, email-log, email-deliverability, failover
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,12 @@ When an address hard-bounces or someone hits "mark as spam", Postmark, Amazon SE
 = Deliverability checker =
 
 Reads your domain's SPF, DKIM, DMARC, and MX records and tells you exactly what's missing. That missing record is usually the reason mail lands in spam — and most people never find out.
+
+= AI agents (MCP) =
+
+Mailyard is the SMTP plugin an AI assistant can actually operate. It exposes its delivery tools through the WordPress Abilities API, so Claude, Codex, Cursor — any MCP client — can answer "why aren't my WooCommerce emails arriving?" for you: check the provider and fallback chain, score your SPF/DKIM/DMARC records (with the exact DNS lines to add), read the failure log, and send a test once it's fixed.
+
+You decide what it may touch. Settings → Connect AI has a master switch and a per-tool permission for each of the five tools, with a step-by-step guide to connecting your client. Nothing is exposed until you install an MCP bridge (the free WordPress MCP Adapter plugin), and Mailyard never sends your data anywhere on its own. Needs WordPress 7.0 or newer.
 
 And the rest: a full email log, one-click test sends, a warning if another SMTP plugin is fighting you, and automatic log cleanup after 30 days. Everything in Mailyard is free and stays free — no locked buttons, no crippled features.
 
@@ -114,6 +120,10 @@ That's the whole point. Connect a provider, send a test, you're done. If the tes
 
 Yes. Anything that sends mail the normal WordPress way goes through Mailyard automatically — no per-plugin setup.
 
+= Can an AI assistant use Mailyard? =
+
+Yes — that's what Settings → Connect AI is for. Mailyard registers five tools on the WordPress Abilities API: delivery status, deliverability check, read the email log, open one logged email, and send a test. Install an MCP bridge (the free WordPress MCP Adapter plugin), create an Application Password, and paste the endpoint into Claude Code, Claude Desktop, Cursor, Codex, or Windsurf — the in-plugin guide gives you the exact command. Every tool has its own on/off switch, and the whole thing is off in one click. Requires WordPress 7.0+; on older WordPress the tools simply don't appear.
+
 = Which provider should I pick? =
 
 Just starting out, go with Resend — it's the simplest to set up. Running a store or sending real volume, Postmark has the best inbox placement. Brevo is a solid pick for lower volume. And if you already have an account somewhere, just use that — Mailyard doesn't care which one you choose.
@@ -152,6 +162,11 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 
 == Changelog ==
 
+= 1.3.0 =
+* **AI agents can now operate Mailyard.** Five tools on the WordPress Abilities API — delivery status, deliverability check (SPF/DKIM/DMARC/MX with the DNS fixes), read the email log, open one logged email, send a test — so an assistant can diagnose "why isn't my email arriving?" end to end.
+* **New Settings → Connect AI page**: a master switch plus a permission for every individual tool, a live check for WordPress 7.0 and an MCP bridge, and a step-by-step guide with copy-paste config for Claude Code, Claude Desktop, Cursor, Codex, and Windsurf.
+* Tools stay hidden until you install an MCP bridge, and API keys, credentials, and webhook secrets are never exposed to an assistant. Needs WordPress 7.0+; older WordPress is unaffected.
+
 = 1.2.0 =
 * Mailyard moved from Settings → Mailyard to its own top-level admin menu, with sections (Dashboard, Connections, Deliverability, Logs, Settings) as native submenus. Old Settings-page bookmarks redirect automatically.
 * New universal dashboard shell: the sidebar is now grouped, and family plugins (Mailyard Pro) plug their sections into the same dashboard — one menu for delivery and campaigns. Nothing changes when no add-on is installed.
@@ -172,6 +187,9 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Uninstall leaves your data in place, with a one-click erase in Settings if you want it gone.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Adds AI agent support (WordPress Abilities API) with a Connect AI control page — a master switch, per-tool permissions, and a guide for connecting Claude, Cursor, or Codex. Optional and off-limits until you install an MCP bridge.
 
 = 1.2.0 =
 Mailyard gets its own top-level admin menu and a unified dashboard that Mailyard Pro plugs into. Old Settings-page links redirect automatically.
