@@ -49,7 +49,7 @@
 }
 
 /* Remove WP admin left padding on our page */
-.settings_page_mailyard #wpcontent {
+.toplevel_page_mailyard #wpcontent {
   padding-left: 0;
 }
 

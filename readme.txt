@@ -92,7 +92,7 @@ Terms: https://freemius.com/terms/ — Privacy: https://freemius.com/privacy/
 == Installation ==
 
 1. Search for "Mailyard" in Plugins → Add New (or upload the zip), then activate.
-2. Open Settings → Mailyard.
+2. Open the Mailyard menu in your admin sidebar.
 3. Pick a provider, enter your API key, set your sender address.
 4. Hit Send test on the Dashboard to confirm it works.
 

@@ -55,15 +55,15 @@ if ( ! function_exists( 'mailyard_fs' ) ) {
 					'is_premium'     => false,
 					'has_addons'     => true,
 					'has_paid_plans' => false,
-					// Mailyard lives under Settings → Mailyard.
+					// Mailyard owns a top-level menu (slot 58.14); Freemius
+					// Account hangs under it as a native WP submenu.
 					'menu'           => array(
-						'slug'    => 'mailyard',
-						'parent'  => array(
-							'slug' => 'options-general.php',
-						),
-						'account' => true,
-						'contact' => false,
-						'support' => false,
+						'slug'       => 'mailyard',
+						'first-path' => 'admin.php?page=mailyard',
+						'account'    => true,
+						'contact'    => false,
+						'support'    => false,
+						'pricing'    => false,
 					),
 				)
 			);

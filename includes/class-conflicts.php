@@ -49,7 +49,7 @@ class Conflicts {
 		}
 
 		$screen = get_current_screen();
-		if ( $screen && ! in_array( $screen->id, array( 'settings_page_mailyard', 'plugins' ), true ) ) {
+		if ( $screen && ! in_array( $screen->id, array( 'toplevel_page_mailyard', 'plugins' ), true ) ) {
 			return;
 		}
 
