@@ -50,6 +50,18 @@ jobs:
           node-version: '20'
           cache: npm
 
+      # @plugpress/ui is a PRIVATE GitHub repo pinned via git in package.json;
+      # npm needs a PAT (Contents: read on plugpressco/plugpress-ui) stored as
+      # the GH_PACKAGES_TOKEN secret. Same setup as plugin-check.yml.
+      - name: Authenticate private @plugpress/ui
+        run: |
+          if [ -z "${{ secrets.GH_PACKAGES_TOKEN }}" ]; then
+            echo "::error::GH_PACKAGES_TOKEN secret is not set — required to install the private @plugpress/ui dependency."
+            exit 1
+          fi
+          git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
+
       - name: Install build tooling
         run: npm ci
 

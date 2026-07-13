@@ -16,6 +16,7 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
+- **User:** create a fine-grained PAT (Contents: read on `plugpressco/plugpress-ui`) and add it as the `GH_PACKAGES_TOKEN` org secret — CI builds (plugin-check, release) fail with a clear error until then because @plugpress/ui is private.
 - **User:** close PR #10; visual QA (incl. Deliverability drawer); produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
 - Submit slug `mailyard` to WordPress.org; after approval add `SVN_USERNAME`/`SVN_PASSWORD` repo secrets.
 - Freemius launch ops (mailyard#8): create parent+add-on products, paste the four ID/key values.
