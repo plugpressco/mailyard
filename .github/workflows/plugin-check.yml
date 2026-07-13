@@ -1,0 +1,40 @@
+name: Plugin Check
+
+# WordPress.org's own review tool (Plugin Check) against the built plugin, so
+# directory problems surface in CI instead of during the .org review queue.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  plugin-check:
+    name: WP.org Plugin Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build admin assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Runtime composer only (vendor/ ships the Freemius SDK)
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Run Plugin Check
+        uses: WordPress/plugin-check-action@v1
+        with:
+          exclude-directories: 'node_modules,src,scripts,tests,bin,docs'

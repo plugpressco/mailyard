@@ -1,0 +1,86 @@
+name: Release
+
+# On a version tag: build the production zip, attach it to a GitHub Release,
+# and deploy trunk + tag + assets to the WordPress.org SVN repo. The SVN steps
+# skip cleanly until the plugin is approved on WordPress.org and the
+# SVN_USERNAME / SVN_PASSWORD repo secrets exist — you still get the GitHub
+# Release zip in the meantime.
+#
+# Release flow (version bumps need Fahim's explicit OK):
+#   bump the version (mailyard.php header + MAILYARD_VERSION, readme.txt
+#   Stable tag, package.json) → commit → git tag vX.Y.Z && git push --follow-tags
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, publish zip, deploy to WP.org
+    runs-on: ubuntu-latest
+    env:
+      HAS_SVN: ${{ secrets.SVN_USERNAME != '' && secrets.SVN_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches the plugin version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          HDR="$(grep -m1 -oE 'Version:[[:space:]]*[0-9.]+' mailyard.php | grep -oE '[0-9.]+')"
+          STABLE="$(grep -m1 -oE 'Stable tag:[[:space:]]*[0-9.]+' readme.txt | grep -oE '[0-9.]+')"
+          echo "tag=$TAG  header=$HDR  stable=$STABLE"
+          if [ "$TAG" != "$HDR" ] || [ "$TAG" != "$STABLE" ]; then
+            echo "::error::Tag v$TAG does not match mailyard.php ($HDR) / readme.txt Stable tag ($STABLE). Bump and commit before tagging."
+            exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_ENV"
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install build tooling
+        run: npm ci
+
+      # scripts/zip.js builds the admin assets, prunes composer to runtime
+      # packages, zips, and integrity-checks that vendor/autoload.php, the
+      # Freemius SDK, and build/admin.js made it into the archive.
+      - name: Build plugin zip
+        run: npm run zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mailyard-${{ env.VERSION }}.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+
+      # zip.js restores dev composer packages when it finishes; prune again so
+      # the tree rsynced to SVN carries only the runtime vendor (Freemius SDK).
+      - name: Prune composer for SVN deploy
+        if: env.HAS_SVN == 'true'
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Deploy to WordPress.org SVN
+        if: env.HAS_SVN == 'true'
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: mailyard
+          ASSETS_DIR: .wordpress.org
+
+      - name: SVN deploy skipped
+        if: env.HAS_SVN != 'true'
+        run: echo "::notice::SVN_USERNAME/SVN_PASSWORD secrets not set — WordPress.org deploy skipped (GitHub Release still published)."

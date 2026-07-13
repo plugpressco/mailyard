@@ -1,0 +1,35 @@
+name: WP.org assets & readme
+
+# Sync readme.txt and .wordpress.org/ assets (icon, banners, screenshots) to
+# the WordPress.org SVN repo between releases — no version bump needed.
+# Skips cleanly until the plugin is approved and the SVN secrets exist.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'readme.txt'
+      - '.wordpress.org/**'
+
+jobs:
+  assets:
+    name: Sync readme + assets to WP.org SVN
+    runs-on: ubuntu-latest
+    env:
+      HAS_SVN: ${{ secrets.SVN_USERNAME != '' && secrets.SVN_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync to SVN
+        if: env.HAS_SVN == 'true'
+        uses: 10up/action-wordpress-plugin-asset-update@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: mailyard
+          ASSETS_DIR: .wordpress.org
+          README_NAME: readme.txt
+
+      - name: Sync skipped
+        if: env.HAS_SVN != 'true'
+        run: echo "::notice::SVN secrets not set — skipping (plugin not yet live on WordPress.org)."

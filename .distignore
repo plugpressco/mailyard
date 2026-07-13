@@ -1,0 +1,47 @@
+# Files and folders excluded from the distributed plugin (WP.org SVN deploy
+# via 10up/action-wordpress-plugin-deploy, and any `wp dist-archive` use).
+#
+# Patterns are ANCHORED (leading /) on purpose: an unanchored `src` or
+# `scripts` would also strip vendor/freemius/**/src and fatal the plugin.
+#
+# vendor/ SHIPS — it carries the Freemius SDK (runtime dependency). Run
+# `composer install --no-dev` before deploying so only runtime packages are
+# in the tree. build/ SHIPS too (compiled admin app); readme.txt points to
+# the GitHub repo for the unminified src/.
+
+/.git
+/.github
+/.claude
+/.wordpress.org
+/node_modules
+/src
+/scripts
+/tests
+/bin
+/docs
+/vendor/bin
+/package.json
+/package-lock.json
+/composer.json
+/composer.lock
+/phpcs.xml
+/phpcs.xml.dist
+/phpunit.xml
+/phpunit.xml.dist
+/webpack.config.js
+/tailwind.config.js
+/postcss.config.js
+/components.json
+/.gitignore
+/.editorconfig
+/.distignore
+/.eslintrc
+/.eslintrc.js
+/.eslintrc.json
+/.prettierrc
+/.prettierrc.js
+/AGENTS.md
+/CLAUDE.md
+/STATUS.md
+/*.zip
+.DS_Store

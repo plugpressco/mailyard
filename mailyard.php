@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Mailyard
  * Plugin URI:        https://mailyard.co
- * Description:       Reliable email delivery for WordPress. Route emails through Amazon SES, Postmark, Resend, or any SMTP server with smart failover.
+ * Description:       WP SMTP plugin with automatic email failover. Send via Amazon SES, Postmark, Resend, Brevo or any SMTP — with an email log and deliverability fixes.
  * Version:           1.0.0
  * Requires at least: 5.8
  * Tested up to:      7.0

@@ -1,6 +1,6 @@
-=== Mailyard ===
+=== Mailyard – WP SMTP Plugin with Amazon SES, Postmark, Resend, Brevo, Email Log & Failover ===
 Contributors: badhonrocks
-Tags: smtp, wp-mail, email-log, email-deliverability, failover
+Tags: smtp, email, mail, wp-mail, email-log
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
@@ -8,54 +8,69 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-WordPress email with a backup plan — automatic failover between providers, sender routing, bounce tracking, and a deliverability checker.
+WP SMTP plugin with automatic email failover. Send via Amazon SES, Postmark, Resend, Brevo or any SMTP — with an email log & deliverability fixes.
 
 == Description ==
 
-Mailyard makes sure the email your site sends actually arrives — password resets, WooCommerce receipts, form notifications, all of it. Out of the box, WordPress hands mail to your host's server, and most hosts are bad at email: messages get blocked, land in spam, or vanish without a trace. Mailyard routes everything through a real email service instead.
+**Mailyard is a WordPress SMTP plugin with a backup plan.** Connect Amazon SES, Postmark, Resend, Brevo, or any SMTP server, and every email your site sends — password resets, WooCommerce receipts, form notifications — goes through a real email service instead of your host's mail server. And if that service fails, Mailyard switches to your backup **on the same send**, so the email still goes out.
 
-Plenty of plugins do that part. Here's what Mailyard does that most of them don't:
+Out of the box, WordPress hands `wp_mail()` to your web host, and most hosts are bad at email: messages get blocked, land in spam, or vanish without a trace. That's why "WordPress not sending emails" is one of the most common problems on any support forum. Mailyard fixes it — and keeps it fixed when your provider has a bad day.
 
-= Automatic failover =
+Everything you see is free. No locked buttons, no crippled features, no upgrade nags.
 
-Add a backup provider and Mailyard switches to it the moment your first one fails — on the same send, not in a retry queue. A flaky API key on a Saturday night stops being your problem. Most SMTP plugins just give up and log the failure.
+= ✅ What you get =
 
-= Sender routing =
+* 🔁 **Automatic email failover** — a backup provider takes over the moment the first one fails
+* ✉️ **Six ways to send** — Amazon SES, Postmark, Resend, Brevo, custom SMTP, or PHP mail
+* 🧭 **Smart sender routing** — the right provider for each kind of mail, automatically
+* 📊 **Full email log** — every send and every failure, with the exact error
+* 🛡️ **Deliverability checker** — grades your SPF, DKIM, DMARC & MX records and hands you the fix
+* 📬 **Bounce & complaint tracking** — one clean hook for all four provider webhooks
+* 🤖 **AI agent tools (MCP)** — let Claude, Cursor, or Codex diagnose your email problems
+* ⚡ **60-second setup** — pick a provider, paste a key, send a test
 
-Send store receipts through Postmark and newsletters through Brevo, automatically, based on the from address. One site, the right provider for each kind of mail. You can also split by purpose — transactional one way, marketing the other.
+= 🔁 Automatic email failover =
 
-= Bounce and complaint tracking =
+Add a backup provider and Mailyard switches to it the moment your first one fails — on the same send, not in a retry queue. A flaky API key on a Saturday night stops being your problem. Most SMTP plugins just give up and log the failure; SMTP failover is the reason Mailyard exists.
+
+= 🧭 Smart sender routing =
+
+Send store receipts through Postmark and newsletters through Brevo, automatically, based on the from address. One site, the right provider for each kind of mail. You can also split by purpose — transactional email one way, marketing the other.
+
+= 📊 Full email log =
+
+Every email your site sends is logged — recipient, subject, status, and the exact provider error when something fails — so "did the order confirmation go out?" takes ten seconds to answer, not an afternoon of digging through server logs. Logs clean themselves up after 30 days, and you can switch email logging off entirely.
+
+= 🛡️ Deliverability checker (SPF, DKIM, DMARC & MX) =
+
+Reads your sending domain's SPF, DKIM, DMARC, and MX records, grades them A–F, and tells you exactly which DNS record to add. That missing record is usually the reason email lands in spam — and most people never find out.
+
+= 📬 Bounce and complaint tracking =
 
 When an address hard-bounces or someone hits "mark as spam", Postmark, Amazon SES, Resend, and Brevo report it back. Mailyard catches those events, tidies them into one shape, and fires a single `mailyard_bounce` hook your other plugins can act on — so bad addresses get caught instead of quietly wrecking your sender reputation.
 
-= Deliverability checker =
-
-Reads your domain's SPF, DKIM, DMARC, and MX records and tells you exactly what's missing. That missing record is usually the reason mail lands in spam — and most people never find out.
-
-= AI agents (MCP) =
+= 🤖 AI agents (MCP) =
 
 Mailyard is the SMTP plugin an AI assistant can actually operate. It exposes its delivery tools through the WordPress Abilities API, so Claude, Codex, Cursor — any MCP client — can answer "why aren't my WooCommerce emails arriving?" for you: check the provider and fallback chain, score your SPF/DKIM/DMARC records (with the exact DNS lines to add), read the failure log, and send a test once it's fixed.
 
 You decide what it may touch. Settings → Connect AI has a master switch and a per-tool permission for each of the five tools, with a step-by-step guide to connecting your client. Nothing is exposed until you install an MCP bridge (the free WordPress MCP Adapter plugin), and Mailyard never sends your data anywhere on its own. Needs WordPress 7.0 or newer.
 
-And the rest: a full email log, one-click test sends, a warning if another SMTP plugin is fighting you, and automatic log cleanup after 30 days. Everything in Mailyard is free and stays free — no locked buttons, no crippled features.
+= ⚡ 60-second setup =
 
-= Mailyard Pro =
+Pick a provider, paste your API key, set the address you send from. That's the whole thing. No code, no config files. Mailyard also warns you if another SMTP plugin is fighting you, and one-click test sends tell you immediately that mail is flowing.
+
+= ✉️ Providers you can use =
+
+* **Resend** — easiest to start with.
+* **Brevo** (was Sendinblue) — all-in-one email platform.
+* **Postmark** — best inbox placement, good for stores.
+* **Amazon SES** — cheapest transactional email at high volume.
+* **Custom SMTP** — any SMTP server or SMTP relay, Gmail app passwords included.
+* **Default PHP mail** — your host's server. No setup, but don't count on it.
+
+= 🧩 Mailyard Pro =
 
 If you also want to *send campaigns* — broadcast email, contacts, and automations — that's a separate paid plugin, Mailyard Pro, which uses Mailyard as its delivery engine. Mailyard itself never nags you about it, and nothing in this plugin is held back for it.
-
-= Setup =
-
-Pick a provider, paste your API key, set the address you send from. That's the whole thing. No code, no config files.
-
-= Providers you can use =
-
-* Resend — easiest to start with.
-* Brevo (was Sendinblue) — all-in-one email platform.
-* Postmark — best inbox placement, good for stores.
-* Amazon SES — cheapest at high volume.
-* Custom SMTP — any SMTP server, Gmail app passwords included.
-* Default PHP mail — your host's server. No setup, but don't count on it.
 
 = Source code =
 
@@ -112,9 +127,17 @@ Deactivate your current mail plugin (WP Mail SMTP, FluentSMTP, Post SMTP, whiche
 
 == Frequently Asked Questions ==
 
+= Why is WordPress not sending emails? =
+
+Because by default WordPress hands `wp_mail()` to your web host's own mail server, and web hosts aren't email providers: no proper SPF/DKIM authentication, shared IP addresses with bad reputations, silent failures. Gmail and Outlook treat that mail as suspicious, so it gets blocked or lands in spam. The fix is routing email through a real provider over SMTP or an API — which is exactly what Mailyard does. Connect one, send a test, done.
+
 = Will this fix my emails not sending? =
 
 That's the whole point. Connect a provider, send a test, you're done. If the test lands, your password resets and order emails will too.
+
+= Is Mailyard an alternative to WP Mail SMTP, FluentSMTP, or Post SMTP? =
+
+Yes. Mailyard does the same core job — routing `wp_mail()` through a real email service — and adds the things most of them don't have: automatic failover on the same send, sender routing across multiple providers, bounce and complaint tracking, and a deliverability checker, all free. Just deactivate the other SMTP plugin first; two mailers at once conflict.
 
 = Does it work with WooCommerce, Contact Form 7, Gravity Forms? =
 
@@ -126,7 +149,7 @@ Yes — that's what Settings → Connect AI is for. Mailyard registers five tool
 
 = Which provider should I pick? =
 
-Just starting out, go with Resend — it's the simplest to set up. Running a store or sending real volume, Postmark has the best inbox placement. Brevo is a solid pick for lower volume. And if you already have an account somewhere, just use that — Mailyard doesn't care which one you choose.
+Just starting out, go with Resend — it's the simplest to set up. Running a store or sending real volume, Postmark has the best inbox placement. Brevo is a solid pick for lower volume. Amazon SES is the cheapest at scale. And if you already have an account somewhere, just use that — Mailyard doesn't care which one you choose.
 
 = What if my provider goes down? =
 
@@ -150,33 +173,23 @@ No. Uninstalling leaves your logs and settings alone, so you can reinstall witho
 
 = Is it really free? =
 
-Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the log. Nothing in this plugin is locked or metered. The only thing we sell is Mailyard Pro, a separate campaigns plugin that builds on top of Mailyard — this plugin is complete without it.
+Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the email log. Nothing in this plugin is locked or metered. The only thing we sell is Mailyard Pro, a separate campaigns plugin that builds on top of Mailyard — this plugin is complete without it.
 
 == Screenshots ==
 
 1. Setup — pick a provider, paste your key, set your sender address.
 2. Dashboard — sending health, the last 14 days of volume, recent activity.
-3. Connections — add providers and drag to choose the primary.
-4. Email Logs — every send, with status and the error if it failed.
-5. Settings — default From address and the logging toggle.
+3. Connections — add providers and drag to choose the primary and its backup.
+4. Deliverability — every sending domain graded A–F, with the exact DNS fix for anything that fails.
+5. Email Logs — every send, with status and the error if it failed.
+6. Settings → Connect AI — the master switch and per-tool permissions for AI agents.
 
 == Changelog ==
 
 = 1.0.0 =
-* First release.
-* Six providers: Amazon SES, Postmark, Resend, Brevo, Custom SMTP, PHP Mail.
-* Failover across backup providers on the same send.
-* Sender / message-purpose routing (`X-Mailyard-Purpose` header or the `mailyard_purpose` filter).
-* Bounce and spam-complaint webhooks for Postmark, Amazon SES, Resend, and Brevo, exposed through the `mailyard_bounce` action.
-* Deliverability checker for SPF, DKIM, DMARC, and MX.
-* Email logging with 30-day cleanup; attachments, CC, and BCC on every provider.
-* Top-level admin menu with a unified dashboard (Dashboard, Connections, Deliverability, Logs, Settings) that family plugins like Mailyard Pro plug into.
-* AI agents can operate Mailyard: five tools on the WordPress Abilities API — delivery status, deliverability check, read the email log, open one logged email, send a test — controlled from Settings → Connect AI with a master switch and per-tool permissions. Needs WordPress 7.0+; older WordPress is unaffected, and API keys, credentials, and webhook secrets are never exposed to an assistant.
-* Optional Freemius account surface for the Mailyard Pro campaigns add-on. Strictly opt-in; disclosed under External services.
-* Warns you if another SMTP plugin is active.
-* Uninstall leaves your data in place, with a one-click erase in Settings if you want it gone.
+* Initial release.
 
 == Upgrade Notice ==
 
 = 1.0.0 =
-First release.
+Initial release.
