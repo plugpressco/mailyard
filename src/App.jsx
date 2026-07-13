@@ -85,7 +85,7 @@ export default function App() {
 	// AppShell's <main> already pads the content column, so the outlet only
 	// centers itself; fullscreen routes bypass the shell entirely.
 	const outlet = (
-		<div key={ active.id } className={ fullscreen ? '' : 'mx-auto max-w-[1180px]' }>
+		<div key={ active.id } className={ fullscreen ? '' : 'mx-auto max-w-[960px]' }>
 			<Provider>
 				<Suspense fallback={ Skeleton ? <Skeleton route={ route } /> : <DashboardSkeleton /> }>
 					<Outlet route={ route } navigate={ navigate } />

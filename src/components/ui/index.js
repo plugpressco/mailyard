@@ -41,7 +41,7 @@ export {
 export const WIDTH = {
 	form: 'max-w-[560px]',
 	content: 'max-w-[760px]',
-	wide: 'max-w-[1080px]',
+	wide: 'max-w-[960px]',
 };
 
 export function Button( { size = 'md', ...props } ) {
