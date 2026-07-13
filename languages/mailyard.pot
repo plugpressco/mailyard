@@ -1,149 +1,456 @@
 # Copyright (C) 2026 PlugPress
-# This file is distributed under the GPLv2 or later license.
+# This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
 "Project-Id-Version: Mailyard 1.0.0\n"
-"Report-Msgid-Bugs-To: https://mailyard.co\n"
-"POT-Creation-Date: 2026-05-27 00:00+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/mailyard\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Manual extraction\n"
+"POT-Creation-Date: 2026-07-13T09:19:48+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: mailyard\n"
 
-#: includes/class-settings.php
+#. Plugin Name of the plugin
+#: mailyard.php
+#: includes/class-abilities.php:154
+#: includes/class-settings.php:42
+#: includes/class-settings.php:43
 msgid "Mailyard"
 msgstr ""
 
-#: includes/class-plugin.php
-msgid "Settings"
+#. Plugin URI of the plugin
+#: mailyard.php
+msgid "https://mailyard.co"
+msgstr ""
+
+#. Description of the plugin
+#: mailyard.php
+msgid "Reliable email delivery for WordPress. Route emails through Amazon SES, Postmark, Resend, or any SMTP server with smart failover."
+msgstr ""
+
+#. Author of the plugin
+#: mailyard.php
+msgid "PlugPress"
+msgstr ""
+
+#. Author URI of the plugin
+#: mailyard.php
+msgid "https://plugpress.co"
+msgstr ""
+
+#: includes/class-abilities.php:91
+#: includes/class-abilities.php:180
+msgid "Delivery status"
+msgstr ""
+
+#: includes/class-abilities.php:92
+msgid "See the active provider, the fallback chain, and how many emails sent or failed this week."
+msgstr ""
+
+#: includes/class-abilities.php:97
+#: includes/class-abilities.php:207
+msgid "Check deliverability"
+msgstr ""
+
+#: includes/class-abilities.php:98
+msgid "Score SPF, DKIM, DMARC, and MX for your sending domains — with the exact DNS records to add."
+msgstr ""
+
+#: includes/class-abilities.php:103
+#: includes/class-abilities.php:235
+msgid "Read the email log"
+msgstr ""
+
+#: includes/class-abilities.php:104
+msgid "List recent emails with their status and error — the fastest way to find what failed."
+msgstr ""
+
+#: includes/class-abilities.php:109
+#: includes/class-abilities.php:273
+msgid "Open one logged email"
+msgstr ""
+
+#: includes/class-abilities.php:110
+msgid "Read a single logged email in full, including its body, to debug why it failed."
+msgstr ""
+
+#: includes/class-abilities.php:112
+msgid "Returns the message content of the email you ask for."
+msgstr ""
+
+#: includes/class-abilities.php:116
+#: includes/class-abilities.php:296
+msgid "Send a test email"
+msgstr ""
+
+#: includes/class-abilities.php:117
+msgid "Send a test through the live provider chain to confirm delivery works."
+msgstr ""
+
+#: includes/class-abilities.php:119
+msgid "Sends one real email to the address the assistant specifies."
+msgstr ""
+
+#: includes/class-abilities.php:155
+msgid "Email delivery, broadcast campaigns, and contacts."
+msgstr ""
+
+#: includes/class-abilities.php:181
+msgid "Report how WordPress email is being delivered: the active provider, the ordered fallback chain (with each connection's last test result), overall health, and the count of emails sent and failed in the last 7 days. Start here when email is not arriving."
+msgstr ""
+
+#: includes/class-abilities.php:208
+msgid "Check the DNS records that decide whether email reaches the inbox — SPF, DKIM, DMARC, and MX — for every domain Mailyard sends from. Returns a 0-100 score and letter grade per domain, plus, for each failing check, the exact DNS record to add. Use this when mail sends successfully but lands in spam."
+msgstr ""
+
+#: includes/class-abilities.php:217
+msgid "Bypass the 1-hour cache and re-query DNS live. Default false."
+msgstr ""
+
+#: includes/class-abilities.php:236
+msgid "List recently sent emails with recipient, subject, provider, status, and the error message when a send failed. Filter to failures only to find what is broken. Message bodies are not included — use mailyard/get-log for one specific email."
+msgstr ""
+
+#: includes/class-abilities.php:246
+msgid "Filter by status. Default: all."
+msgstr ""
+
+#: includes/class-abilities.php:250
+msgid "Match against recipient or subject."
+msgstr ""
+
+#: includes/class-abilities.php:254
+msgid "Max rows to return (1-100, default 20)."
+msgstr ""
+
+#: includes/class-abilities.php:274
+msgid "Read one logged email in full, including its message body and headers, to debug exactly why it failed. Get the id from mailyard/list-logs."
+msgstr ""
+
+#: includes/class-abilities.php:283
+msgid "The log row id."
+msgstr ""
+
+#: includes/class-abilities.php:297
+msgid "Send a test email through the live provider chain (with failover) to confirm delivery works end to end. Delivers a real email to the address given; defaults to the current user. Use after fixing a connection or DNS record."
+msgstr ""
+
+#: includes/class-abilities.php:306
+msgid "Recipient. Defaults to the current user's email."
+msgstr ""
+
+#: includes/class-abilities.php:392
+msgid "No email provider is connected — WordPress is falling back to the host mail server, which usually lands in spam."
+msgstr ""
+
+#. translators: 1: provider label, 2: number of backups, 3: failed count.
+#: includes/class-abilities.php:395
+#, php-format
+msgid "Sending through %1$s with %2$d backup provider(s). %3$d failure(s) in the last 7 days."
+msgstr ""
+
+#: includes/class-abilities.php:396
+msgid "the default mailer"
+msgstr ""
+
+#: includes/class-abilities.php:453
+msgid "A log id is required."
+msgstr ""
+
+#: includes/class-abilities.php:462
+msgid "Log entry not found."
+msgstr ""
+
+#: includes/class-abilities.php:488
+msgid "A valid email address is required."
 msgstr ""
 
 #. translators: %s = comma-separated list of conflicting plugin names (wrapped in <strong>)
-#: includes/class-conflicts.php
+#: includes/class-conflicts.php:65
+#, php-format
 msgid "Mailyard detected another SMTP / mail-routing plugin: %s. Running multiple at once causes unpredictable email delivery. Deactivate the other one before sending from this site."
 msgstr ""
 
-#: includes/class-rest-api.php
+#: includes/class-conflicts.php:77
+msgid "Dismiss"
+msgstr ""
+
+#: includes/class-deliverability.php:21
+msgid "Postmark → Sender Signatures → add the DKIM and Return-Path (pm-bounces) records shown there."
+msgstr ""
+
+#: includes/class-deliverability.php:22
+msgid "Postmark aligns via its Return-Path and DKIM, so no SPF change is needed."
+msgstr ""
+
+#: includes/class-deliverability.php:27
+msgid "AWS SES → Verified identities → enable Easy DKIM and add the 3 CNAME records."
+msgstr ""
+
+#: includes/class-deliverability.php:32
+msgid "Resend → Domains → add the SPF, DKIM and DMARC records shown for your domain."
+msgstr ""
+
+#: includes/class-deliverability.php:37
+msgid "Brevo → Senders & Domains → authenticate your domain and add the DKIM record."
+msgstr ""
+
+#: includes/class-deliverability.php:42
+msgid "Add the SPF include and DKIM record your SMTP host provides."
+msgstr ""
+
+#: includes/class-deliverability.php:49
+msgid "Add the SPF and DKIM records your email provider provides."
+msgstr ""
+
+#: includes/class-deliverability.php:144
+msgid "No SPF record found. Receivers can't confirm your server is allowed to send for this domain."
+msgstr ""
+
+#. translators: %s: SPF include mechanism, e.g. amazonses.com.
+#: includes/class-deliverability.php:147
+#, php-format
+msgid "Add a TXT record at the domain root: v=spf1 include:%s ~all"
+msgstr ""
+
+#: includes/class-deliverability.php:148
+msgid "Add a TXT record at the domain root starting with: v=spf1 … ~all (include your provider's mechanism)."
+msgstr ""
+
+#. translators: %s: SPF include mechanism, e.g. amazonses.com.
+#: includes/class-deliverability.php:161
+#, php-format
+msgid "SPF exists but doesn't include your provider (%s), so its mail may fail SPF."
+msgstr ""
+
+#: includes/class-deliverability.php:169
+msgid "SPF record found and valid."
+msgstr ""
+
+#. translators: %s: DKIM selector name.
+#: includes/class-deliverability.php:195
+#, php-format
+msgid "DKIM signing record detected (selector \"%s\")."
+msgstr ""
+
+#: includes/class-deliverability.php:202
+msgid "No DKIM record auto-detected. It may use a custom selector — verify it's set up with your provider."
+msgstr ""
+
+#: includes/class-deliverability.php:222
+msgid "No DMARC record. Without it, spoofed mail from your domain isn't reported or blocked."
+msgstr ""
+
+#. translators: 1: domain name (DMARC host), 2: domain name (reporting address).
+#: includes/class-deliverability.php:224
+#, php-format
+msgid "Add a TXT record at _dmarc.%1$s: v=DMARC1; p=none; rua=mailto:dmarc@%2$s"
+msgstr ""
+
+#: includes/class-deliverability.php:236
+msgid "DMARC is set to monitor-only (p=none). Once SPF/DKIM look stable in your reports, tighten to quarantine, then reject. Replace your DMARC record with:"
+msgstr ""
+
+#. translators: %s: DMARC policy, e.g. quarantine or reject.
+#: includes/class-deliverability.php:244
+#, php-format
+msgid "DMARC is enforced (p=%s)."
+msgstr ""
+
+#: includes/class-deliverability.php:261
+msgid "Domain has mail-exchange records."
+msgstr ""
+
+#: includes/class-deliverability.php:262
+msgid "No MX records. Replies to your mail may bounce, which can hurt reputation."
+msgstr ""
+
+#: includes/class-deliverability.php:263
+msgid "Add MX records (or use your provider/host's) so the domain can receive mail."
+msgstr ""
+
+#: includes/class-override.php:123
+#: includes/class-rest-api.php:274
+#: includes/class-rest-api.php:380
 msgid "Invalid email address."
 msgstr ""
 
-#: includes/class-rest-api.php
-msgid "Mailyard — Test Email"
+#. translators: %s: recipient email domain.
+#: includes/class-override.php:132
+#, php-format
+msgid "Invalid domain: %s has no mail server."
 msgstr ""
 
-#. translators: %s = recipient email address
-#: includes/class-rest-api.php
+#: includes/class-plugin.php:102
+#: includes/class-settings.php:73
+msgid "Settings"
+msgstr ""
+
+#: includes/class-rest-api.php:161
+#: includes/class-rest-api.php:424
+msgid "Unknown provider."
+msgstr ""
+
+#: includes/class-rest-api.php:227
+#: includes/class-rest-api.php:286
+msgid "Connection not found."
+msgstr ""
+
+#: includes/class-rest-api.php:291
+msgid "Connection could not be initialized — check credentials."
+msgstr ""
+
+#: includes/class-rest-api.php:292
+msgid "Connection could not be initialized."
+msgstr ""
+
+#: includes/class-rest-api.php:298
+msgid "Mailyard — Connection Test"
+msgstr ""
+
+#. translators: %s: recipient email address.
+#: includes/class-rest-api.php:314
+#: includes/class-rest-api.php:398
+#, php-format
 msgid "Test email sent to %s"
 msgstr ""
 
-#: includes/class-rest-api.php
+#: includes/class-rest-api.php:385
+msgid "Mailyard — Test Email"
+msgstr ""
+
+#: includes/class-rest-api.php:406
 msgid "Failed to send."
 msgstr ""
 
-#: includes/esp/class-phpmailer.php
-msgid "Default (PHP)"
+#: includes/class-rest-api.php:516
+msgid "Confirmation required. Type DELETE to erase all data."
 msgstr ""
 
-#: includes/esp/class-phpmailer.php
-msgid "wp_mail() failed."
+#: includes/class-settings.php:57
+msgid "Dashboard"
 msgstr ""
 
-#: includes/esp/class-ses.php
-msgid "Amazon SES"
+#: includes/class-settings.php:61
+msgid "Connections"
 msgstr ""
 
-#: includes/esp/class-ses.php
-msgid "Access Key ID"
+#: includes/class-settings.php:65
+msgid "Deliverability"
 msgstr ""
 
-#: includes/esp/class-ses.php
-msgid "Secret Access Key"
+#: includes/class-settings.php:69
+msgid "Logs"
 msgstr ""
 
-#: includes/esp/class-ses.php
-msgid "Region"
+#: includes/esp/class-brevo.php:40
+#: includes/esp/class-postmark.php:36
+#: includes/esp/class-resend.php:34
+#: includes/esp/class-ses.php:30
+msgid "Empty email body."
 msgstr ""
 
-#: includes/esp/class-postmark.php
-msgid "Postmark"
-msgstr ""
-
-#: includes/esp/class-postmark.php
-msgid "Server Token"
-msgstr ""
-
-#: includes/esp/class-postmark.php
-msgid "Message Stream"
-msgstr ""
-
-#: includes/esp/class-postmark.php
-msgid "Invalid response from Postmark."
-msgstr ""
-
-#: includes/esp/class-postmark.php
-msgid "Unknown Postmark error."
-msgstr ""
-
-#: includes/esp/class-resend.php
-msgid "Resend"
-msgstr ""
-
-#: includes/esp/class-resend.php
-msgid "API Key"
-msgstr ""
-
-#: includes/esp/class-resend.php
-msgid "Invalid response from Resend."
-msgstr ""
-
-#: includes/esp/class-resend.php
-msgid "Unknown Resend error."
-msgstr ""
-
-#: includes/esp/class-brevo.php
-msgid "Brevo"
-msgstr ""
-
-#. translators: %d = HTTP status code
-#: includes/esp/class-brevo.php
+#. translators: %d: HTTP status code returned by the Brevo API.
+#: includes/esp/class-brevo.php:83
+#, php-format
 msgid "Brevo error (HTTP %d)"
 msgstr ""
 
-#: includes/esp/class-smtp.php
-msgid "Custom SMTP"
+#: includes/esp/class-brevo.php:91
+msgid "Brevo"
 msgstr ""
 
-#: includes/esp/class-smtp.php
-msgid "SMTP Host"
+#: includes/esp/class-brevo.php:95
+#: includes/esp/class-resend.php:88
+msgid "API Key"
 msgstr ""
 
-#: includes/esp/class-smtp.php
-msgid "Port"
+#: includes/esp/class-default.php:40
+msgid "wp_mail() failed."
 msgstr ""
 
-#: includes/esp/class-smtp.php
-msgid "Encryption"
+#: includes/esp/class-default.php:47
+msgid "Default (PHP)"
 msgstr ""
 
-#: includes/esp/class-smtp.php
-msgid "Username"
+#: includes/esp/class-postmark.php:77
+msgid "Invalid response from Postmark."
 msgstr ""
 
-#: includes/esp/class-smtp.php
-msgid "Password"
+#: includes/esp/class-postmark.php:81
+msgid "Unknown Postmark error."
 msgstr ""
 
-#: includes/esp/class-smtp.php
+#: includes/esp/class-postmark.php:88
+msgid "Postmark"
+msgstr ""
+
+#: includes/esp/class-postmark.php:94
+msgid "Server Token"
+msgstr ""
+
+#: includes/esp/class-resend.php:73
+msgid "Invalid response from Resend."
+msgstr ""
+
+#: includes/esp/class-resend.php:77
+msgid "Unknown Resend error."
+msgstr ""
+
+#: includes/esp/class-resend.php:84
+msgid "Resend"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the Amazon SES API.
+#: includes/esp/class-ses.php:59
+#, php-format
+msgid "SES error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-ses.php:160
+msgid "Amazon SES"
+msgstr ""
+
+#: includes/esp/class-ses.php:164
+msgid "Access Key ID"
+msgstr ""
+
+#: includes/esp/class-ses.php:165
+msgid "Secret Access Key"
+msgstr ""
+
+#: includes/esp/class-ses.php:166
+msgid "Region"
+msgstr ""
+
+#: includes/esp/class-smtp.php:83
 msgid "SMTP send failed."
 msgstr ""
 
-#: includes/esp/class-postmark.php
-#: includes/esp/class-resend.php
-#: includes/esp/class-brevo.php
-#: includes/esp/class-ses.php
-msgid "Empty email body."
+#: includes/esp/class-smtp.php:90
+msgid "Custom SMTP"
+msgstr ""
+
+#: includes/esp/class-smtp.php:94
+msgid "SMTP Host"
+msgstr ""
+
+#: includes/esp/class-smtp.php:95
+msgid "Port"
+msgstr ""
+
+#: includes/esp/class-smtp.php:96
+msgid "Encryption"
+msgstr ""
+
+#: includes/esp/class-smtp.php:97
+msgid "Username"
+msgstr ""
+
+#: includes/esp/class-smtp.php:98
+msgid "Password"
 msgstr ""

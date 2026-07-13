@@ -4,7 +4,7 @@ Tags: smtp, wp-mail, email-log, email-deliverability, failover
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -162,19 +162,6 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 
 == Changelog ==
 
-= 1.3.0 =
-* **AI agents can now operate Mailyard.** Five tools on the WordPress Abilities API — delivery status, deliverability check (SPF/DKIM/DMARC/MX with the DNS fixes), read the email log, open one logged email, send a test — so an assistant can diagnose "why isn't my email arriving?" end to end.
-* **New Settings → Connect AI page**: a master switch plus a permission for every individual tool, a live check for WordPress 7.0 and an MCP bridge, and a step-by-step guide with copy-paste config for Claude Code, Claude Desktop, Cursor, Codex, and Windsurf.
-* Tools stay hidden until you install an MCP bridge, and API keys, credentials, and webhook secrets are never exposed to an assistant. Needs WordPress 7.0+; older WordPress is unaffected.
-
-= 1.2.0 =
-* Mailyard moved from Settings → Mailyard to its own top-level admin menu, with sections (Dashboard, Connections, Deliverability, Logs, Settings) as native submenus. Old Settings-page bookmarks redirect automatically.
-* New universal dashboard shell: the sidebar is now grouped, and family plugins (Mailyard Pro) plug their sections into the same dashboard — one menu for delivery and campaigns. Nothing changes when no add-on is installed.
-
-= 1.1.0 =
-* Mailyard is now the free parent product for the new Mailyard Pro campaigns add-on (separate plugin — nothing in Mailyard changed or got locked).
-* Added the Freemius SDK for the optional account surface and Pro licensing. Strictly opt-in; disclosed under External services.
-
 = 1.0.0 =
 * First release.
 * Six providers: Amazon SES, Postmark, Resend, Brevo, Custom SMTP, PHP Mail.
@@ -183,19 +170,13 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Bounce and spam-complaint webhooks for Postmark, Amazon SES, Resend, and Brevo, exposed through the `mailyard_bounce` action.
 * Deliverability checker for SPF, DKIM, DMARC, and MX.
 * Email logging with 30-day cleanup; attachments, CC, and BCC on every provider.
+* Top-level admin menu with a unified dashboard (Dashboard, Connections, Deliverability, Logs, Settings) that family plugins like Mailyard Pro plug into.
+* AI agents can operate Mailyard: five tools on the WordPress Abilities API — delivery status, deliverability check, read the email log, open one logged email, send a test — controlled from Settings → Connect AI with a master switch and per-tool permissions. Needs WordPress 7.0+; older WordPress is unaffected, and API keys, credentials, and webhook secrets are never exposed to an assistant.
+* Optional Freemius account surface for the Mailyard Pro campaigns add-on. Strictly opt-in; disclosed under External services.
 * Warns you if another SMTP plugin is active.
 * Uninstall leaves your data in place, with a one-click erase in Settings if you want it gone.
 
 == Upgrade Notice ==
-
-= 1.3.0 =
-Adds AI agent support (WordPress Abilities API) with a Connect AI control page — a master switch, per-tool permissions, and a guide for connecting Claude, Cursor, or Codex. Optional and off-limits until you install an MCP bridge.
-
-= 1.2.0 =
-Mailyard gets its own top-level admin menu and a unified dashboard that Mailyard Pro plugs into. Old Settings-page links redirect automatically.
-
-= 1.1.0 =
-Adds the Freemius account/licensing layer for the new Mailyard Pro add-on. No feature changes; everything stays free.
 
 = 1.0.0 =
 First release.

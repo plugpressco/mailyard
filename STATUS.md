@@ -3,32 +3,19 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-07-12)
-- **Mailyard is now the Freemius PARENT product** for the new **Mailyard Pro** (Outbees rebranded — see mailyard#4, plan issues mailyard#4-8 + outbees#5-11 on the board). Bumped to **1.1.0** on `feat/freemius-parent`:
-  - `includes/freemius.php` — `mailyard_fs()` parent init (`has_addons`, no paid plans), dormant until dashboard credentials are pasted; fires `mailyard_fs_loaded`, which the Pro add-on inits on (Pro sorts BEFORE mailyard in load order — don't remove that signal).
-  - composer now has a runtime dep (`freemius/wordpress-sdk ^2.7`) → `scripts/zip.js` ships `vendor/` (--no-dev install → zip → dev restore) with a hard integrity check (autoload.php + SDK start.php + build/admin.js in archive).
-  - readme.txt/site-copy: "no Pro version, ever" copy rewritten (free stays complete; Pro = separate campaigns plugin); Freemius added to External services; 1.1.0 changelog.
-- Committed the pending @plugpress/ui v0.8.3 pin bump + managed AGENTS.md separately.
-
-## Ship 2 (same day): universal dashboard — DONE on `feat/universal-shell` (→ 1.2.0)
-- Top-level menu at reserved slot **58.14** (B1, mailyard#5): submenus via the `mailyard_admin_submenus` filter, click interceptor, legacy options-general URL 302s with fragment.
-- Shell registry (B2, mailyard#6): `mailyard.shell.modules` wp.hooks filter, module contract in `src/shell/registry.js`, core module dogfoods it (Dashboard / Delivery / footer System groups), outlet keyed by module, `MAILYARD_SHELL_VERSION=1` + `mailyard_admin_enqueue` action. WP-submenu highlight sync added in B6.
-- Back-compat matrix verified in Playground; .org build carries zero Pro references (generic hooks only).
-
-## This session (2026-07-13): Abilities + Connect AI (mailyard#2) → 1.3.0
-- **5 delivery abilities** (`includes/class-abilities.php`, namespace `Mailyard`): `delivery-status`, `check-deliverability`, `list-logs`, `get-log`, `send-test` — all wrap EXISTING services (`Manager::enabled_connections()`, `Deliverability::scan_all()`, `Logger::query()`, `REST_API::send_test()`), none reimplement. Category `mailyard` registered at **priority 10** — Pro's is at 20 behind an `is_registered` guard, so free owns it and the 14 tools coexist in one namespace (Playground-verified, no `_doing_it_wrong`).
-- **Security**: chain output is a safe projection (canary API key in `conn['config']` verified NOT to leak); `list-logs` strips body/headers; `/diagnostics` (webhook secret) and `/data/erase-all` are deliberately NOT abilities.
-- **Connect AI page** (`src/views/ConnectAI.jsx`, core Settings tab): master switch + per-tool permissions (instant persist), WP-7.0/MCP-bridge status dots, and a `GuideDrawer` with copy-paste config for Claude Code/Desktop, Cursor, Codex, Windsurf. Backed by new `GET|POST mailyard/v1/ai` (catalog + toggles, whitelisted against the catalog; MCP server auto-detected by sniffing REST routes).
-- Graceful degradation: `Requires at least` stays **5.8** — the whole layer no-ops below WP 6.9 and the page says so. Master switch off → all abilities unregister (verified).
-
-## Settings IA (2026-07-13): one left-nav page, no product wrapper
-- Settings is a single left-nav page (Configure · Connect · Data groups); both plugins contribute FLAT sections via the new `mailyard.shell.settingsSections` filter (replaces settingsTabs). Free registers Delivery / Connect AI / Data & danger; Pro adds Brand, Campaigns, Compliance, API access.
-- Data & danger: stacked panels via `mailyard.shell.dataPanels` (Pro backup/restore above, product danger zones below); free's erase card now uses the design system's DangerZone component.
-- Unknown/retired section ids (old #/settings/marketing/*) redirect to Delivery.
+## Last session (2026-07-13)
+- **Version reset → 1.0.0.** User decision: the plugin has never shipped publicly, so the internal 1.1.0–1.3.0 bumps are rolled back and the first public release is **1.0.0**. Rule going forward: never bump the version without explicit user approval.
+- **Everything landed on `main`** (fast-forward merge of `feat/universal-shell`, which already contained `feat/freemius-parent`); PR review flow skipped at user's request — pushing main marks PRs #9/#10 merged.
+- readme.txt: Stable tag 1.0.0; changelog + upgrade notices collapsed into a single 1.0.0 "initial release" entry (failover, routing, webhooks, deliverability, logging, top-level dashboard, Connect AI/Abilities, Freemius opt-in).
+- Regenerated `languages/mailyard.pot` (was stale from 2026-05-27 with refs to the deleted `class-phpmailer.php`; now 100 strings incl. Abilities + Connect AI).
+- **Deliverability: new "How it works" GuideDrawer** in `src/views/Deliverability.jsx` (trigger button beside Re-scan) — explains the four checks (SPF/DKIM/DMARC/MX), the A–F scoring + How-to-fix rows, and the data path (server resolver → Cloudflare DoH fallback, 1-hour cache, DNS-only, nothing leaves the site).
+- Full production-readiness audit (security / quality / release): **0 blockers**. Hardening backlog candidates for board issues: mask connection secrets in `REST_API::get_connections()` (write-only on save), webhook payload authenticity (SNS Signature validation, provider signing secrets, server-trusted replay dedupe), React admin i18n (`__()` + `set_script_translations`).
+- Verified: WP Playground boot clean, admin page serves version 1.0.0; drawer compiled into `build/84.js`; `npm run zip` integrity passed → `mailyard-1.0.0.zip`.
 
 ## Next up
-- **User:** review/merge PR #9 (`feat/freemius-parent`) then `feat/universal-shell` on top; in-browser visual QA; new .org screenshots (top-level menu) before the SVN release.
-- Launch ops (mailyard#8): create Freemius parent+add-on products, paste the four ID/key values, then .org SVN release (can go straight to 1.2.0).
+- **User:** in-browser visual QA (incl. the new Deliverability drawer); new .org screenshots (top-level menu) — readme screenshot caption #5 (Settings) still describes the old UI, refresh it alongside the new images.
+- Launch ops (mailyard#8): create Freemius parent+add-on products, paste the four ID/key values, then .org SVN release at **1.0.0**.
+- File board issues for the hardening backlog above.
 
 ## Blockers / open questions
-- Push `plugpressco/plugpress-ui` to GitHub is done; all consumers install via `github:plugpressco/plugpress-ui#v0.2.0`.
+- None.

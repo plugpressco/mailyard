@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toast } from '@plugpress/ui';
+import { GuideDrawer, toast } from '@plugpress/ui';
 import useDeliverability from '@/hooks/useDeliverability';
 import ProviderIcon from '@/components/ProviderIcon';
 import { Card, Button, SectionTitle, PageHeader, ScoreRing } from '@/components/ui';
@@ -85,6 +85,7 @@ function DomainCard( { result } ) {
 
 export default function Deliverability() {
 	const { domains, loading, scanning, error, rescan } = useDeliverability();
+	const [ guideOpen, setGuideOpen ] = useState( false );
 
 	return (
 		<div>
@@ -92,10 +93,15 @@ export default function Deliverability() {
 				title="Deliverability"
 				subtitle="Will your mail land in the inbox? We check each sending domain's public DNS records — SPF, DKIM, DMARC & MX — and tell you exactly what to fix."
 				action={
-					<Button size="sm" variant="secondary" onClick={ rescan } disabled={ scanning || loading }>
-						{ scanning ? <SpinnerIcon className="h-3.5 w-3.5" /> : <RetryIcon className="h-3.5 w-3.5" /> }
-						{ scanning ? 'Scanning…' : 'Re-scan' }
-					</Button>
+					<div className="flex items-center gap-2">
+						<Button size="sm" variant="secondary" onClick={ () => setGuideOpen( true ) }>
+							How it works
+						</Button>
+						<Button size="sm" variant="secondary" onClick={ rescan } disabled={ scanning || loading }>
+							{ scanning ? <SpinnerIcon className="h-3.5 w-3.5" /> : <RetryIcon className="h-3.5 w-3.5" /> }
+							{ scanning ? 'Scanning…' : 'Re-scan' }
+						</Button>
+					</div>
 				}
 			/>
 
@@ -123,6 +129,39 @@ export default function Deliverability() {
 					) ) }
 				</>
 			) }
+
+			<GuideDrawer open={ guideOpen } onOpenChange={ setGuideOpen } title="How the deliverability check works">
+				<p>
+					Inbox providers like Gmail and Outlook decide whether to trust your mail by looking up
+					public DNS records on your sending domain. Mailyard reads the same records and grades
+					what it finds — so you fix problems <strong>before</strong> messages land in spam.
+				</p>
+
+				<h3>What we check</h3>
+				<p>
+					For every sending domain in your connections we look up four records:{ ' ' }
+					<strong>SPF</strong> — which servers are allowed to send for the domain,{ ' ' }
+					<strong>DKIM</strong> — the signing key your provider stamps on each message,{ ' ' }
+					<strong>DMARC</strong> — what receivers should do when a message fails those checks, and{ ' ' }
+					<strong>MX</strong> — whether the domain can receive replies and bounces.
+				</p>
+
+				<h3>How it's scored</h3>
+				<p>
+					Each record contributes to the domain's score and its A–F grade. Anything short of a pass
+					gets a <strong>How to fix</strong> row with the exact DNS record to add — copy it into
+					your DNS host (Cloudflare, Route 53, your registrar), give it a few minutes to propagate,
+					then re-scan.
+				</p>
+
+				<h3>Where the data comes from</h3>
+				<p>
+					Lookups are ordinary public DNS queries — your server's resolver first, with Cloudflare's
+					DNS-over-HTTPS as a fallback. No email content, API keys, or account data ever leaves
+					your site. Results are cached for an hour; <strong>Re-scan</strong> fetches fresh records
+					right away.
+				</p>
+			</GuideDrawer>
 		</div>
 	);
 }
