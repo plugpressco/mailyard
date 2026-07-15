@@ -4,7 +4,7 @@
  * Plugin URI:        https://mailyard.co
  * Description:       WP SMTP plugin with automatic email failover. Send via Amazon SES, Postmark, Resend, Brevo or any SMTP — with an email log and deliverability fixes.
  * Version:           1.0.0
- * Requires at least: 5.8
+ * Requires at least: 6.0
  * Tested up to:      7.0
  * Requires PHP:      7.4
  * Author:            PlugPress
@@ -29,16 +29,18 @@ define( 'MAILYARD_FILE', __FILE__ );
 define( 'MAILYARD_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MAILYARD_BASENAME', plugin_basename( __FILE__ ) );
 
-// Composer vendor (Freemius SDK). Optional at runtime: the plugin works
-// without it — the account surface simply stays dormant.
+// Composer vendor — dev tooling only (phpunit); not shipped in release
+// builds. The free plugin has no runtime composer dependencies.
 if ( file_exists( MAILYARD_DIR . 'vendor/autoload.php' ) ) {
 	require_once MAILYARD_DIR . 'vendor/autoload.php';
 }
 
 // Freemius — Mailyard is the free PARENT product; the Mailyard Pro add-on
-// attaches to it for licensing/updates. Must init at file scope so the
-// `mailyard_fs_loaded` signal fires before plugins_loaded (Pro defers its
-// own init onto it). Dormant until dashboard credentials are set.
+// attaches to it for licensing/updates. The free build does NOT bundle the
+// Freemius SDK — Pro ships it and loads first ('mailyard-pro/' sorts before
+// 'mailyard/'), so `fs_dynamic_init` exists here when Pro is active. Must
+// init at file scope so the `mailyard_fs_loaded` signal fires before
+// plugins_loaded (Pro defers its own init onto it). No-op without Pro.
 require_once MAILYARD_DIR . 'includes/freemius.php';
 
 require_once MAILYARD_DIR . 'includes/class-plugin.php';

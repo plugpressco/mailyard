@@ -9,12 +9,12 @@ const version = pkg.version || '1.0.0';
 const outFile = path.join( root, `${ name }-${ version }.zip` );
 
 // Files/dirs to exclude from the zip (plugin-root dev tooling + sources).
-// vendor/ SHIPS now — it carries the Freemius SDK (runtime dependency). The
-// zip step below reinstalls composer with --no-dev first so only runtime
-// packages are in the tree when it's archived.
+// vendor/ is dev-only (phpunit) — the free plugin has NO runtime composer
+// dependencies. The Freemius SDK ships inside Mailyard Pro, never here.
 const exclude = [
 	'node_modules/*',
-	'vendor/bin/*',
+	'vendor/*',
+	'vendor',
 	'.git/*',
 	'.github/*',
 	'.claude/*',
@@ -55,46 +55,43 @@ const run = ( cmd, opts = {} ) =>
 console.log( 'Building production assets...' );
 run( 'npm run build' );
 
-// 2. Prune composer to runtime-only packages (the Freemius SDK) so the
-// archived vendor/ carries no dev/test tooling.
-console.log( 'Installing runtime composer packages (--no-dev)...' );
-run( 'composer install --no-dev --optimize-autoloader --quiet' );
-
-// 3. Remove any previous zip.
+// 2. Remove any previous zip.
 if ( fs.existsSync( outFile ) ) {
 	fs.unlinkSync( outFile );
 }
 
-// 4. Create the zip with `mailyard/` as the root folder.
+// 3. Create the zip with `mailyard/` as the root folder.
 const parent = path.dirname( root );
 const folder = path.basename( root );
 const excludeFlags = exclude
 	.map( ( e ) => `-x "${ folder }/${ e }"` )
 	.join( ' ' );
 console.log( `\nZipping ${ name } v${ version }...` );
-try {
-	run(
-		`cd "${ parent }" && zip -rq "${ outFile }" "${ folder }/" ${ excludeFlags }`,
-		{ cwd: parent }
-	);
-} finally {
-	// 5. Restore dev dependencies regardless of zip outcome.
-	console.log( 'Restoring dev composer packages...' );
-	run( 'composer install --quiet' );
-}
+run(
+	`cd "${ parent }" && zip -rq "${ outFile }" "${ folder }/" ${ excludeFlags }`,
+	{ cwd: parent }
+);
 
-// 6. Integrity check — a zip without the composer autoloader or the Freemius
-// SDK fatals on activation for every user. Fail the build, never ship it.
+// 4. Integrity check. Must-haves fatal on activation if absent; must-NOT-
+// haves guard the free-build contract (no vendor tree, no Freemius SDK —
+// the SDK ships inside Mailyard Pro only). Fail the build, never ship it.
 const listing = execSync( `unzip -l "${ outFile }"`, { cwd: root } ).toString();
 const mustContain = [
-	`${ folder }/vendor/autoload.php`,
-	`${ folder }/vendor/freemius/wordpress-sdk/start.php`,
+	`${ folder }/mailyard.php`,
+	`${ folder }/includes/freemius.php`,
 	`${ folder }/build/admin.js`,
 ];
+const mustNotContain = [ `${ folder }/vendor/`, 'freemius/wordpress-sdk' ];
 const missing = mustContain.filter( ( f ) => ! listing.includes( f ) );
-if ( missing.length ) {
+const leaked = mustNotContain.filter( ( f ) => listing.includes( f ) );
+if ( missing.length || leaked.length ) {
 	fs.unlinkSync( outFile );
-	console.error( `\n✗ Zip integrity check failed — missing: ${ missing.join( ', ' ) }` );
+	if ( missing.length ) {
+		console.error( `\n✗ Zip integrity check failed — missing: ${ missing.join( ', ' ) }` );
+	}
+	if ( leaked.length ) {
+		console.error( `\n✗ Zip integrity check failed — must not ship: ${ leaked.join( ', ' ) }` );
+	}
 	process.exit( 1 );
 }
 

@@ -8,9 +8,11 @@
  * and so users get one account surface for the family. Usage tracking is
  * strictly opt-in and skippable — required for WordPress.org.
  *
- * The credentials below are blank until the product exists in the Freemius
- * dashboard. While blank, this file is a no-op — Mailyard runs exactly as it
- * did before Freemius existed.
+ * The free build does NOT bundle the Freemius SDK — it would be 3.5 MB of
+ * dead weight for free-only users. The SDK ships inside Mailyard Pro, which
+ * loads first, so `fs_dynamic_init` exists here exactly when it's needed.
+ * Without Pro (or while the credentials below are blank) this file is a
+ * no-op — Mailyard runs exactly as it did before Freemius existed.
  *
  * The `mailyard_fs_loaded` action at the bottom is the add-on's init signal:
  * Mailyard Pro sorts BEFORE Mailyard in the active-plugins load order
@@ -42,7 +44,8 @@ if ( ! function_exists( 'mailyard_fs' ) ) {
 				return null;
 			}
 
-			// SDK is auto-loaded through Composer (freemius/wordpress-sdk).
+			// SDK is provided by the Mailyard Pro add-on (loads before us);
+			// the free build ships without it.
 			if ( ! function_exists( 'fs_dynamic_init' ) ) {
 				return null;
 			}
