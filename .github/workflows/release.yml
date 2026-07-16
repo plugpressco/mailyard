@@ -59,21 +59,18 @@ jobs:
       # npm needs a PAT (Contents: read on plugpressco/plugpress-ui) stored as
       # the GH_PACKAGES_TOKEN secret. Same setup as plugin-check.yml.
       - name: Authenticate private @plugpress/ui
-        env:
-          GH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
         run: |
-          if [ -z "$GH_TOKEN" ]; then
+          if [ -z "${{ secrets.GH_PACKAGES_TOKEN }}" ]; then
             echo "::error::GH_PACKAGES_TOKEN secret is not set — required to install the private @plugpress/ui dependency."
             exit 1
           fi
-          # Let gh inject git credentials — a classic OAuth/PAT token does NOT
-          # authenticate via an x-access-token:<token>@ URL. npm resolves
-          # @plugpress/ui to the ssh://git@ form, so rewrite it to plain https
-          # and gh's credential helper supplies the token. Same as
+          # Embed the token in git config so it's present in the later build/zip
+          # steps too (that's where npm resolves @plugpress/ui). npm uses the
+          # ssh://git@ form, so rewrite it; --add keeps both insteadOf values on
+          # the one url key. Relies on persist-credentials:false above. Same as
           # plugin-check.yml.
-          gh auth setup-git
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
 
       - name: Install build tooling
         run: npm ci
