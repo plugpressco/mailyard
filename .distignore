@@ -1,13 +1,13 @@
 # Files and folders excluded from the distributed plugin (WP.org SVN deploy
 # via 10up/action-wordpress-plugin-deploy, and any `wp dist-archive` use).
 #
-# Patterns are ANCHORED (leading /) on purpose: an unanchored `src` or
-# `scripts` would also strip vendor/freemius/**/src and fatal the plugin.
+# Patterns are ANCHORED (leading /) on purpose: an unanchored `src` would also
+# strip build/**/src or any nested src/ and risk fataling the plugin.
 #
-# vendor/ SHIPS — it carries the Freemius SDK (runtime dependency). Run
-# `composer install --no-dev` before deploying so only runtime packages are
-# in the tree. build/ SHIPS too (compiled admin app); readme.txt points to
-# the GitHub repo for the unminified src/.
+# vendor/ does NOT ship — it holds dev tooling only (phpunit); the free build
+# has no runtime composer deps and the Freemius SDK ships inside Mailyard Pro.
+# build/ SHIPS (compiled admin app); readme.txt points to the GitHub repo for
+# the unminified src/.
 
 /.git
 /.github
@@ -19,7 +19,7 @@
 /tests
 /bin
 /docs
-/vendor/bin
+/vendor
 /package.json
 /package-lock.json
 /composer.json

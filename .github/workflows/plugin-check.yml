@@ -36,18 +36,20 @@ jobs:
             echo "::error::GH_PACKAGES_TOKEN secret is not set — required to install the private @plugpress/ui dependency."
             exit 1
           fi
+          # Two insteadOf values on ONE url key — the second needs --add, or it
+          # overwrites the first. npm resolves @plugpress/ui to the ssh://git@
+          # form, so that rewrite must survive.
           git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
 
       - name: Build admin assets
         run: |
           npm ci
           npm run build
 
-      - name: Runtime composer only (vendor/ ships the Freemius SDK)
-        run: composer install --no-dev --optimize-autoloader --no-interaction
-
       - name: Run Plugin Check
         uses: WordPress/plugin-check-action@v1
         with:
-          exclude-directories: 'node_modules,src,scripts,tests,bin,docs'
+          # vendor/ is dev-only (phpunit) and never ships — exclude it so the
+          # check scans exactly what the zip carries.
+          exclude-directories: 'node_modules,src,scripts,tests,bin,docs,vendor'

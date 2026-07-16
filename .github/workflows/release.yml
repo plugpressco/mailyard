@@ -59,15 +59,18 @@ jobs:
             echo "::error::GH_PACKAGES_TOKEN secret is not set — required to install the private @plugpress/ui dependency."
             exit 1
           fi
+          # Two insteadOf values on ONE url key — the second needs --add, or it
+          # overwrites the first. npm resolves @plugpress/ui to the ssh://git@
+          # form, so that rewrite must survive. Same as plugin-check.yml.
           git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
 
       - name: Install build tooling
         run: npm ci
 
-      # scripts/zip.js builds the admin assets, prunes composer to runtime
-      # packages, zips, and integrity-checks that vendor/autoload.php, the
-      # Freemius SDK, and build/admin.js made it into the archive.
+      # scripts/zip.js builds the admin assets, zips, and integrity-checks that
+      # build/admin.js made it in and that vendor/ + the Freemius SDK did NOT
+      # (the free build ships no runtime composer deps; Pro ships the SDK).
       - name: Build plugin zip
         run: npm run zip
 
@@ -78,12 +81,8 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: true
 
-      # zip.js restores dev composer packages when it finishes; prune again so
-      # the tree rsynced to SVN carries only the runtime vendor (Freemius SDK).
-      - name: Prune composer for SVN deploy
-        if: env.HAS_SVN == 'true'
-        run: composer install --no-dev --optimize-autoloader --no-interaction
-
+      # vendor/ never ships (excluded in .distignore), so no composer prune is
+      # needed before the SVN rsync.
       - name: Deploy to WordPress.org SVN
         if: env.HAS_SVN == 'true'
         uses: 10up/action-wordpress-plugin-deploy@stable
