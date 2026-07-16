@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Don't leave the repo-scoped GITHUB_TOKEN in git config — it can't
+          # read the private @plugpress/ui repo and would shadow the credential
+          # set below when npm resolves the git dependency.
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@v2
         with:
