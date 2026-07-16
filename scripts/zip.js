@@ -10,7 +10,7 @@ const outFile = path.join( root, `${ name }-${ version }.zip` );
 
 // Files/dirs to exclude from the zip (plugin-root dev tooling + sources).
 // vendor/ is dev-only (phpunit) — the free plugin has NO runtime composer
-// dependencies. The Freemius SDK ships inside Mailyard Pro, never here.
+// dependencies.
 const exclude = [
 	'node_modules/*',
 	'vendor/*',
@@ -73,12 +73,11 @@ run(
 );
 
 // 4. Integrity check. Must-haves fatal on activation if absent; must-NOT-
-// haves guard the free-build contract (no vendor tree, no Freemius SDK —
-// the SDK ships inside Mailyard Pro only). Fail the build, never ship it.
+// haves guard the free-build contract (no vendor tree). Fail the build,
+// never ship it.
 const listing = execSync( `unzip -l "${ outFile }"`, { cwd: root } ).toString();
 const mustContain = [
 	`${ folder }/mailyard.php`,
-	`${ folder }/includes/freemius.php`,
 	`${ folder }/build/admin.js`,
 ];
 const mustNotContain = [ `${ folder }/vendor/`, 'freemius/wordpress-sdk' ];
