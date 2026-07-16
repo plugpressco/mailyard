@@ -3,6 +3,15 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
+## Last session (2026-07-17)
+- **Freemius fully removed from Mailyard** (commit `7481ed9`, direct to `main`) — user call: Mailyard ships with zero Freemius wiring. Deleted `includes/freemius.php` (the parent-product `fs_dynamic_init` scaffold, `MAILYARD_FS_ID`/`PUBLIC_KEY`, `mailyard_fs()`, `mailyard_fs_loaded` signal); dropped its `require` + comment block from `mailyard.php`; removed it from `scripts/zip.js` must-contain + comments (kept the `freemius/wordpress-sdk` must-NOT-contain guard); removed the Freemius third-party disclosure from `readme.txt`. Zip now 337 KB.
+- **Plugin Check now green on `main`** (commit `14185b0`). It was failing on two blocking errors — `wp_register_ability()` / `wp_register_ability_category()` (Abilities API, WP 6.9+) called while the header said WP 6.0.
+  - Fix: **`Requires at least` 6.0 → 7.0** (`mailyard.php` + `readme.txt`); 7.0 > 6.9 clears both. Version stays **1.0.0**.
+  - Silenced the 5 `$wpdb` false-positive warnings: `class-logger.php` (added `PluginCheck.Security.DirectDB.UnescapedDBParameter` to the ignore lists; wrapped `daily_stats` in `phpcs:disable/enable` for the `{$t}` interpolation), `class-abilities.php` (`esc_sql()` the table name in `get_log()` + corrected ignore codes).
+- **The @plugpress/ui private-repo CI auth is resolved** — the `GH_PACKAGES_TOKEN` secret is in place; plugin-check + release workflows build the private dep cleanly (both green this session).
+- **PR #10 (`feat/universal-shell`) closed** — its content was already an ancestor of `main` (HEAD `c13e57d`); closed without merge, nothing lost. PR #9 was already merged.
+- Package is release-ready; WP.org submission still blocked on the user-side items below.
+
 ## Last session (2026-07-16)
 - **Free build no longer bundles the Freemius SDK** (commit `0c95827`, direct to `main`). The free plugin has zero runtime composer deps; the SDK (~3.5 MB) ships inside Mailyard Pro, which loads first, so `fs_dynamic_init` exists exactly when needed. `includes/freemius.php` stays a no-op without Pro.
   - `composer.json`/`lock`: dropped `freemius/wordpress-sdk` runtime require (dev tooling only now).
@@ -24,11 +33,10 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
-- **User:** create a fine-grained PAT (Contents: read on `plugpressco/plugpress-ui`) and add it as the `GH_PACKAGES_TOKEN` org secret — CI builds (plugin-check, release) fail with a clear error until then because @plugpress/ui is private.
-- **User:** close PR #10; visual QA (incl. Deliverability drawer); produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
+- **User:** visual QA (incl. Deliverability drawer); produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
 - Submit slug `mailyard` to WordPress.org; after approval add `SVN_USERNAME`/`SVN_PASSWORD` repo secrets.
-- Freemius launch ops (mailyard#8): create parent+add-on products, paste the four ID/key values.
 - **Release = `git tag v1.0.0 && git push --follow-tags`** (after .org approval so the tag deploys to SVN in the same run; tagging earlier still produces the GitHub Release zip).
+- Freemius was **removed** from the free plugin this session — if Mailyard Pro (add-on) later needs licensing, that wiring lives entirely in Pro, not here. `mailyard#8` (parent+add-on product setup) is moot for the free plugin.
 
 ## Blockers / open questions
 - None.
