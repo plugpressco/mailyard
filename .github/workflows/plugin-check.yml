@@ -31,16 +31,21 @@ jobs:
       # (fine-grained, Contents: read on plugpressco/plugpress-ui) stored as
       # the GH_PACKAGES_TOKEN org/repo secret.
       - name: Authenticate private @plugpress/ui
+        env:
+          GH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
         run: |
-          if [ -z "${{ secrets.GH_PACKAGES_TOKEN }}" ]; then
+          if [ -z "$GH_TOKEN" ]; then
             echo "::error::GH_PACKAGES_TOKEN secret is not set — required to install the private @plugpress/ui dependency."
             exit 1
           fi
-          # Two insteadOf values on ONE url key — the second needs --add, or it
-          # overwrites the first. npm resolves @plugpress/ui to the ssh://git@
-          # form, so that rewrite must survive.
-          git config --global url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --global --add url."https://x-access-token:${{ secrets.GH_PACKAGES_TOKEN }}@github.com/".insteadOf "git@github.com:"
+          # Let gh inject git credentials — a classic OAuth/PAT token does NOT
+          # authenticate via an x-access-token:<token>@ URL. npm resolves
+          # @plugpress/ui to the ssh://git@ form, so rewrite it to plain https
+          # and gh's credential helper supplies the token. --add so both
+          # insteadOf values survive on the one url key.
+          gh auth setup-git
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Build admin assets
         run: |
