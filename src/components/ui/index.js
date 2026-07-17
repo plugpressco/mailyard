@@ -134,7 +134,13 @@ export function Select( { label, hint, required, error, size, options = [], tool
 				id={ id }
 				name={ id }
 				error={ !! error }
-				className={ cx( size === 'sm' && 'h-7 text-xs', className ) }
+				className={ cx(
+					// w-full needs max-w-full with it: wp-admin core clamps
+					// bare <select>s to max-width 25rem.
+					'w-full max-w-full',
+					size === 'sm' && 'h-7 text-xs',
+					className
+				) }
 				{ ...props }
 			>
 				{ options.map( ( o ) => (

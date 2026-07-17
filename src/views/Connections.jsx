@@ -337,7 +337,8 @@ function SortableCard( { conn, index, testing, onToggle, onRemove, onEdit, onTes
 				{ testing ? 'Testing…' : 'Test' }
 			</button>
 			<Toggle label={ `Toggle ${ conn.name }` } on={ conn.enabled } onChange={ () => onToggle( conn.id ) } />
-			<div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+			{ /* Always visible — hover-only actions are undiscoverable. */ }
+			<div className="flex gap-0.5">
 				<Button variant="ghost" size="icon" onClick={ () => onEdit( conn ) } aria-label={ `Edit ${ conn.name }` }>
 					<GearIcon className="h-4 w-4" />
 				</Button>

@@ -86,3 +86,10 @@
   border-top: 1px solid var(--pp-border);
   padding-top: var(--pp-space-3);
 }
+
+/* wp-admin's `.wp-core-ui select { max-width: 25rem }` clamps selects to 400px,
+ * beating single-class utilities on specificity. Inside the app, form selects
+ * size like every other control (full field width). */
+#mailyard-admin select.pp-control {
+  max-width: 100%;
+}
