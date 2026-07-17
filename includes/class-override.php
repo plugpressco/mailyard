@@ -152,6 +152,7 @@ class Override {
 
 			if ( $result->is_success() ) {
 				$logger->log( array_merge( $log_base, array( 'status' => 'sent' ) ) );
+				do_action( 'mailyard_send_succeeded', $to, $slug );
 				return true;
 			}
 

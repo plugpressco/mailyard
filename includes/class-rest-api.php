@@ -39,6 +39,7 @@ class REST_API {
 		$this->route( $ns, '/test-email',          array( 'POST' => 'send_test' ) );
 		$this->route( $ns, '/onboarding/complete', array( 'POST' => 'complete_onboarding' ) );
 		$this->route( $ns, '/logs',                array( 'GET'  => 'get_logs' ) );
+		$this->route( $ns, '/logs/(?P<id>\d+)/resend', array( 'POST' => 'resend_log' ) );
 		$this->route( $ns, '/deliverability',      array( 'GET'  => 'get_deliverability' ) );
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
 		$this->route( $ns, '/data/erase-all',      array( 'POST' => 'erase_all_data' ) );
@@ -530,6 +531,32 @@ class REST_API {
 			'page'     => absint( $request->get_param( 'page' ) ?? 1 ),
 			'per_page' => absint( $request->get_param( 'per_page' ) ?? 20 ),
 		) ) );
+	}
+
+	/**
+	 * Re-send a previously-failed (or any) logged email. Replays the stored
+	 * message through wp_mail(), which routes back through the current failover
+	 * chain and logs a fresh attempt. Returns whether the resend succeeded.
+	 */
+	public function resend_log( $request ) {
+		$id  = (int) $request->get_param( 'id' );
+		$row = Logger::instance()->get( $id );
+
+		if ( ! $row ) {
+			return new \WP_Error( 'not_found', __( 'That log entry no longer exists.', 'mailyard' ), array( 'status' => 404 ) );
+		}
+
+		$to      = array_filter( array_map( 'trim', explode( ',', (string) $row['to'] ) ) );
+		$headers = '' !== (string) $row['headers']
+			? array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) $row['headers'] ) ) )
+			: array();
+
+		$ok = wp_mail( $to, (string) $row['subject'], (string) $row['body'], $headers );
+
+		return rest_ensure_response( array(
+			'ok'     => (bool) $ok,
+			'status' => $ok ? 'sent' : 'failed',
+		) );
 	}
 
 	private function connections(): array {

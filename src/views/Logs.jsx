@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Drawer } from '@plugpress/ui';
+import { Drawer, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
+import { post } from '@/lib/api';
 import useLogs from '@/hooks/useLogs';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
-import { Card, Input, SectionTitle, PageHeader, TableSkeleton } from '@/components/ui';
+import {
+	Button,
+	Card,
+	Input,
+	SectionTitle,
+	PageHeader,
+	TableSkeleton,
+} from '@/components/ui';
 import { SearchIcon } from '@/components/Icons';
 import { LIVE_PROVIDERS } from '@/lib/providers';
 
@@ -15,19 +23,31 @@ export default function Logs() {
 	const [ query, setQuery ] = useState( '' );
 	const [ selected, setSelected ] = useState( null );
 
-	const { logs, loading, error } = useLogs( { status: filter, search: query } );
+	const { logs, loading, error, refetch } = useLogs( {
+		status: filter,
+		search: query,
+	} );
 
 	// Close the drawer with Escape.
 	useEffect( () => {
-		if ( ! selected ) return;
-		const onKey = ( e ) => { if ( e.key === 'Escape' ) setSelected( null ); };
+		if ( ! selected ) {
+			return;
+		}
+		const onKey = ( e ) => {
+			if ( e.key === 'Escape' ) {
+				setSelected( null );
+			}
+		};
 		window.addEventListener( 'keydown', onKey );
 		return () => window.removeEventListener( 'keydown', onKey );
 	}, [ selected ] );
 
 	return (
 		<div>
-			<PageHeader title="Logs" subtitle="Every email sent through Mailyard." />
+			<PageHeader
+				title="Logs"
+				subtitle="Every email sent through Mailyard."
+			/>
 
 			<div className="mb-3 flex items-center justify-between gap-2">
 				<div className="inline-flex gap-1 rounded-lg bg-ink-100 p-1">
@@ -37,7 +57,9 @@ export default function Logs() {
 							onClick={ () => setFilter( v ) }
 							className={ cn(
 								'cursor-pointer rounded-md border-none px-3 py-1 text-[11.5px] font-medium capitalize transition-colors duration-150',
-								filter === v ? 'bg-surface text-ink-900 shadow-sm' : 'bg-transparent text-ink-500 hover:text-ink-800'
+								filter === v
+									? 'bg-surface text-ink-900 shadow-sm'
+									: 'bg-transparent text-ink-500 hover:text-ink-800'
 							) }
 						>
 							{ v }
@@ -68,8 +90,19 @@ export default function Logs() {
 					<table className="w-full border-collapse text-xs">
 						<thead>
 							<tr>
-								{ [ 'To', 'Subject', 'Via', 'Status', 'Time' ].map( ( h ) => (
-									<th key={ h } className="border-b border-ink-200/50 px-3.5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-ink-400">{ h }</th>
+								{ [
+									'To',
+									'Subject',
+									'Via',
+									'Status',
+									'Time',
+								].map( ( h ) => (
+									<th
+										key={ h }
+										className="border-b border-ink-200/50 px-3.5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-ink-400"
+									>
+										{ h }
+									</th>
 								) ) }
 							</tr>
 						</thead>
@@ -88,13 +121,21 @@ export default function Logs() {
 					</table>
 					{ logs.length === 0 && (
 						<div className="py-9 text-center text-[12.5px] text-ink-400">
-							{ filter === 'all' ? 'No emails logged yet.' : `No ${ filter } emails.` }
+							{ filter === 'all'
+								? 'No emails logged yet.'
+								: `No ${ filter } emails.` }
 						</div>
 					) }
 				</Card>
 			) }
 
-			{ selected && <LogDrawer row={ selected } onClose={ () => setSelected( null ) } /> }
+			{ selected && (
+				<LogDrawer
+					row={ selected }
+					onClose={ () => setSelected( null ) }
+					onResent={ refetch }
+				/>
+			) }
 		</div>
 	);
 }
@@ -111,13 +152,19 @@ function LogRow( { row: r, index, total, isActive, onSelect } ) {
 				index < total - 1 && 'border-b border-ink-200/40'
 			) }
 		>
-			<td className="px-3.5 py-[9px] font-mono text-[12px] text-ink-700">{ r.to }</td>
-			<td className="max-w-[260px] truncate px-3.5 py-[9px] text-ink-500">{ r.subject }</td>
+			<td className="px-3.5 py-[9px] font-mono text-[12px] text-ink-700">
+				{ r.to }
+			</td>
+			<td className="max-w-[260px] truncate px-3.5 py-[9px] text-ink-500">
+				{ r.subject }
+			</td>
 			<td className="px-3.5 py-[9px]">
 				{ provider ? (
 					<div className="flex items-center gap-[5px]">
 						<ProviderIcon id={ r.provider } size={ 16 } />
-						<span className="text-[11px] text-ink-500">{ provider.name }</span>
+						<span className="text-[11px] text-ink-500">
+							{ provider.name }
+						</span>
 					</div>
 				) : (
 					<span className="text-ink-400">—</span>
@@ -126,13 +173,37 @@ function LogRow( { row: r, index, total, isActive, onSelect } ) {
 			<td className="px-3.5 py-[9px]">
 				<StatusPill status={ r.status }>{ r.status }</StatusPill>
 			</td>
-			<td className="px-3.5 py-[9px] text-[11px] text-ink-400">{ r.time || r.created_at }</td>
+			<td className="px-3.5 py-[9px] text-[11px] text-ink-400">
+				{ r.time || r.created_at }
+			</td>
 		</tr>
 	);
 }
 
-function LogDrawer( { row: r, onClose } ) {
+function LogDrawer( { row: r, onClose, onResent } ) {
 	const provider = LIVE_PROVIDERS.find( ( p ) => p.id === r.provider );
+	const [ resending, setResending ] = useState( false );
+	const [ showRaw, setShowRaw ] = useState( false );
+
+	const resend = () => {
+		setResending( true );
+		post( `logs/${ r.id }/resend` )
+			.then( ( res ) => {
+				if ( res?.ok ) {
+					toast.success( 'Email resent successfully.' );
+				} else {
+					toast.error(
+						'Resend failed — check the new log entry for details.'
+					);
+				}
+				onResent?.();
+				onClose();
+			} )
+			.catch( ( err ) =>
+				toast.error( err?.message || 'Resend request failed.' )
+			)
+			.finally( () => setResending( false ) );
+	};
 
 	return (
 		<Drawer
@@ -150,13 +221,50 @@ function LogDrawer( { row: r, onClose } ) {
 						<span>{ provider.name }</span>
 					</div>
 				) }
-				<span className="ml-auto text-ink-400">{ r.time || r.created_at }</span>
+				<span className="ml-auto text-ink-400">
+					{ r.time || r.created_at }
+				</span>
 			</div>
 
-			{ r.status === 'failed' && r.error && (
+			{ r.status === 'failed' && ( r.error_human || r.error ) && (
 				<div className="mb-4 rounded-lg bg-danger-light px-3 py-2.5 text-[12px] text-danger">
-					<SectionTitle className="mb-0.5 text-danger">Error</SectionTitle>
-					{ r.error }
+					<SectionTitle className="mb-0.5 text-danger">
+						{ r.error_human?.title || 'Error' }
+					</SectionTitle>
+					{ r.error_human?.guidance && (
+						<p className="mb-0 leading-relaxed">
+							{ r.error_human.guidance }
+						</p>
+					) }
+					{ r.error && (
+						<div className="mt-2">
+							<button
+								type="button"
+								onClick={ () => setShowRaw( ( v ) => ! v ) }
+								className="text-[11px] font-medium underline underline-offset-2 opacity-80 hover:opacity-100"
+							>
+								{ showRaw
+									? 'Hide technical details'
+									: 'Show technical details' }
+							</button>
+							{ showRaw && (
+								<div className="mt-1.5 break-all rounded border border-danger/20 bg-white/60 p-2 font-mono text-[10.5px]">
+									{ r.error }
+								</div>
+							) }
+						</div>
+					) }
+				</div>
+			) }
+
+			{ r.status === 'failed' && (
+				<div className="mb-4">
+					<Button size="sm" onClick={ resend } disabled={ resending }>
+						{ resending ? 'Resending…' : 'Resend email' }
+					</Button>
+					<p className="mt-1.5 mb-0 text-[11px] text-ink-400">
+						Replays this message through your current connections.
+					</p>
 				</div>
 			) }
 
