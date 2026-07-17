@@ -48,28 +48,20 @@ class Settings {
 			'58.14'
 		);
 
-		// SPA sections as native submenus for deep-linking. Entries are
-		// order-aware so extenders slot in by weight instead of appending
-		// after Settings — the flyout mirrors the SPA sidebar (Dashboard,
-		// Marketing 20s, Delivery 30s, Settings last at 90).
+		// One native submenu entry per SECTION, not per SPA page — the WP menu
+		// stays a clean top-level map (Dashboard, Delivery, Marketing via Pro,
+		// Settings); fine-grained navigation lives in the app's own sidebar.
+		// Keys are the SPA hash route each entry lands on.
 		$submenus = array(
-			'dashboard'      => array(
+			'dashboard'   => array(
 				'label' => __( 'Dashboard', 'mailyard' ),
 				'order' => 10,
 			),
-			'connections'    => array(
-				'label' => __( 'Connections', 'mailyard' ),
-				'order' => 30,
+			'connections' => array(
+				'label' => __( 'Delivery', 'mailyard' ),
+				'order' => 15,
 			),
-			'deliverability' => array(
-				'label' => __( 'Deliverability', 'mailyard' ),
-				'order' => 31,
-			),
-			'logs'           => array(
-				'label' => __( 'Logs', 'mailyard' ),
-				'order' => 32,
-			),
-			'settings'       => array(
+			'settings'    => array(
 				'label' => __( 'Settings', 'mailyard' ),
 				'order' => 90,
 			),

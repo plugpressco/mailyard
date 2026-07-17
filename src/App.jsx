@@ -26,9 +26,16 @@ export default function App() {
 
 	// Mirror the active route onto the WP admin submenu highlight for
 	// programmatic navigation (menu CLICKS are handled by the PHP-side
-	// interceptor). Generic over every registered section, Pro's included.
+	// interceptor). The WP submenu holds one entry per SECTION, so SPA
+	// routes map onto their section's entry before matching.
 	useEffect( () => {
-		const seg = route.split( '/' )[ 0 ] || 'dashboard';
+		const SECTION = {
+			deliverability: 'connections',
+			logs: 'connections',
+			contacts: 'campaigns',
+		};
+		let seg = route.split( '/' )[ 0 ] || 'dashboard';
+		seg = SECTION[ seg ] || seg;
 		const items = document.querySelectorAll( '#adminmenu .wp-submenu li' );
 		if ( ! items.length ) {
 			return;
