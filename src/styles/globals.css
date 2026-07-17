@@ -75,3 +75,14 @@
 .smtp-spin {
   animation: smtp-spin 1s linear infinite;
 }
+
+/*
+ * Settings was moved out of the nav's footer cluster into the main menu
+ * (see coreModule.jsx). Re-create the divider that the footer border used to
+ * give it, above the last nav group (Settings sorts last at order 90).
+ */
+#mailyard-admin .pp-nav__group:last-of-type {
+  margin-top: var(--pp-space-3);
+  border-top: 1px solid var(--pp-border);
+  padding-top: var(--pp-space-3);
+}

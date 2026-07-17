@@ -24,7 +24,7 @@ class Data_Deleter {
 		// 2. Delete known options explicitly.
 		delete_option( Options::SETTINGS );
 		delete_option( Options::CONNECTIONS );
-		delete_option( Options::ONBOARDED );
+		delete_option( 'mailyard_onboarded' ); // Legacy — onboarding was removed.
 		delete_option( Options::TABLE_VERSION );
 
 		// 2b. Belt-and-braces: remove any other mailyard_* options that slipped

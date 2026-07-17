@@ -37,7 +37,6 @@ class REST_API {
 
 		$this->route( $ns, '/dashboard',           array( 'GET'  => 'get_dashboard' ) );
 		$this->route( $ns, '/test-email',          array( 'POST' => 'send_test' ) );
-		$this->route( $ns, '/onboarding/complete', array( 'POST' => 'complete_onboarding' ) );
 		$this->route( $ns, '/logs',                array( 'GET'  => 'get_logs' ) );
 		$this->route( $ns, '/logs/(?P<id>\d+)/resend', array( 'POST' => 'resend_log' ) );
 		$this->route( $ns, '/deliverability',      array( 'GET'  => 'get_deliverability' ) );
@@ -415,46 +414,6 @@ class REST_API {
 			. '<h2 style="margin:18px 0 8px;font-size:20px;color:#131318">Your email is working.</h2>'
 			. '<p style="margin:0 0 16px;font-size:14px;color:#6E6E80;line-height:1.6">This confirms Mailyard is delivering email correctly.</p>'
 			. '<p style="margin:0;font-size:12px;color:#A0A0B0">Sent to ' . esc_html( $to ) . '</p></div>';
-	}
-
-	public function complete_onboarding( $request ) {
-		$input    = $request->get_json_params();
-		$provider = sanitize_key( $input['provider'] ?? '' );
-
-		if ( ! in_array( $provider, Options::providers(), true ) ) {
-			return new \WP_Error( 'invalid_provider', __( 'Unknown provider.', 'mailyard' ), array( 'status' => 400 ) );
-		}
-
-		$conns    = $this->connections();
-		$new_conn = array(
-			'id'         => wp_generate_uuid4(),
-			'provider'   => $provider,
-			'name'       => sanitize_text_field( $input['provider_name'] ?? $provider ),
-			'from_email' => sanitize_email( $input['from_email'] ?? '' ),
-			'from_name'  => sanitize_text_field( $input['from_name'] ?? '' ),
-			'config'     => $this->sanitize_config( $input['config'] ?? array() ),
-			'from_match'       => array(),  // Catch-all: the first connection serves every sender.
-			'purpose'          => 'any',
-			'enabled'          => true,
-			'priority'         => 0,
-			'last_test_at'     => 0,
-			'last_test_status' => '',
-			'last_test_error'  => '',
-		);
-
-		$conns[] = $new_conn;
-		$this->save_connections( $conns );
-
-		$settings               = get_option( Options::SETTINGS, array() );
-		$settings['active']     = $new_conn['provider'];
-		$settings['from_email'] = $new_conn['from_email'];
-		$settings['from_name']  = $new_conn['from_name'];
-		$settings['logging']    = true; // Always on by default.
-
-		update_option( Options::SETTINGS, $settings );
-		update_option( Options::ONBOARDED, true );
-
-		return rest_ensure_response( array( 'success' => true, 'connection' => $new_conn ) );
 	}
 
 	public function get_deliverability( $request ) {

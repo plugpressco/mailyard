@@ -49,7 +49,6 @@ const coreModule = {
 		{
 			id: 'system',
 			order: 90,
-			footer: true,
 			items: [ { id: 'settings', label: 'Settings', icon: GearIcon, route: 'settings', order: 10 } ],
 		},
 	],
