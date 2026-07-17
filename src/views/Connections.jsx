@@ -7,13 +7,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Dialog, toast } from '@plugpress/ui';
+import { cn } from '@/lib/utils';
 import useConnections from '@/hooks/useConnections';
 import { post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
 import { Card, Button, Toggle, Input, Select, SegmentedControl, TagInput, SectionTitle, PageHeader, ConnectionsSkeleton } from '@/components/ui';
 import { PlusIcon, GearIcon, XIcon, GripIcon, LinkIcon, ChevronRightIcon, SpinnerIcon } from '@/components/Icons';
-import { LIVE_PROVIDERS, PURPOSES } from '@/lib/providers';
+import { LIVE_PROVIDERS, PURPOSES, SMTP_PRESETS } from '@/lib/providers';
 
 function relative( unixSec ) {
 	if ( ! unixSec ) return null;
@@ -41,8 +42,10 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 	const [ fromMatch, setFromMatch ] = useState( [] );
 	const [ purpose, setPurpose ] = useState( 'any' );
 	const [ showRouting, setShowRouting ] = useState( false );
+	const [ smtpPreset, setSmtpPreset ] = useState( null );
 
 	useEffect( () => {
+		setSmtpPreset( null );
 		if ( conn ) {
 			setName( conn.name || provider.name );
 			setConfig( conn.config || {} );
@@ -64,6 +67,11 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 	}, [ conn, provider ] );
 
 	const updateField = ( key, value ) => setConfig( ( prev ) => ( { ...prev, [ key ]: value } ) );
+
+	const applyPreset = ( preset ) => {
+		setSmtpPreset( preset.id );
+		setConfig( ( prev ) => ( { ...prev, ...preset.values } ) );
+	};
 
 	const credentialsFilled = ! provider.fields
 		.filter( ( f ) => f.required )
@@ -97,6 +105,32 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 					<div className="px-5 pt-4 pb-1">
 						<SectionTitle>Credentials</SectionTitle>
 					</div>
+					{ provider.id === 'smtp' && (
+						<div className="px-5 pt-3">
+							<div className="flex flex-wrap gap-1.5">
+								{ SMTP_PRESETS.map( ( preset ) => (
+									<button
+										key={ preset.id }
+										type="button"
+										onClick={ () => applyPreset( preset ) }
+										className={ cn(
+											'rounded-full border px-3 py-1 text-[12px] font-medium transition-colors',
+											smtpPreset === preset.id
+												? 'border-brand bg-brand-light text-brand-text'
+												: 'border-ink-200 bg-surface text-ink-600 hover:border-ink-300'
+										) }
+									>
+										{ preset.name }
+									</button>
+								) ) }
+							</div>
+							{ smtpPreset && SMTP_PRESETS.find( ( p ) => p.id === smtpPreset )?.note && (
+								<p className="mt-2 mb-0 text-[11.5px] text-ink-500">
+									{ SMTP_PRESETS.find( ( p ) => p.id === smtpPreset ).note }
+								</p>
+							) }
+						</div>
+					) }
 					<div className="flex flex-col gap-3.5 px-5 pb-5 pt-3">
 						{ provider.fields.map( ( field ) =>
 							field.type === 'select' ? (
@@ -139,7 +173,7 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 				</div>
 				<div className="flex flex-col gap-3.5 px-5 pb-5 pt-3">
 					<Input label="Connection name" required placeholder={ provider.name } hint="A label to tell this connection apart — e.g. “Postmark · Transactional”." value={ name } onChange={ ( e ) => setName( e.target.value ) } />
-					<Input label="From Email" required type="email" placeholder="hello@yourdomain.com" hint="This email or its domain must be verified with your provider." value={ fromEmail } onChange={ ( e ) => setFromEmail( e.target.value ) } />
+					<Input label="From Email" required type="email" placeholder="hello@yourdomain.com" hint="This email or its domain must be verified with your provider." tooltip="Recipients see this as the sender. If it (or its domain) isn't verified with your provider, messages get rejected or land in spam." value={ fromEmail } onChange={ ( e ) => setFromEmail( e.target.value ) } />
 					<Input label="From Name" placeholder="Your Site Name" hint="The name that appears in the recipient's inbox." value={ fromName } onChange={ ( e ) => setFromName( e.target.value ) } />
 				</div>
 			</Card>
