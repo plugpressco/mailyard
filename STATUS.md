@@ -3,6 +3,16 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
+## UX pass (2026-07-17) — branch `feat/smtp-ux-pass` (not merged)
+
+A design review scored 13 SMTP-plugin UX suggestions against the codebase (most already shipped: test-connection, health card, deliverability score, tabbed IA, confirm modals). Built the three chosen batches; **OAuth (#9) deferred** as a separate larger project. Three commits on `feat/smtp-ux-pass`:
+
+- **Sidebar collapse** (`20b53ac`) — enabled `@plugpress/ui` `AppNav` `collapsible storageKey="mailyard"` in `Sidebar.jsx` (matches waggle): toggle, 224→56px animation, `localStorage['pp-nav:mailyard']`, tooltips, <782px auto-collapse. ~3 lines.
+- **Reliability** (`f64cdca`) — **#6** `Errors::humanize()` (one PHP map, `includes/class-errors.php`) turns raw SMTP/ESP errors into title+guidance, fed into the log view (`error_human` via `shape_row`) + the notice; **#11** `Failure_Notice` records `mailyard_send_failed`, auto-clears on a new `mailyard_send_succeeded` action (added in `class-override.php`) or connection/settings save, shows a dismissible admin notice + View-log link; **#5** `POST /logs/{id}/resend` replays the stored message via `wp_mail`, with a Resend button + humanized/collapsible error in the Logs drawer. Verified live (humanize maps auth/conn/rate; record+clear; route registered).
+- **Setup polish** (`21f8d7d`) — **#1** `SMTP_PRESETS` (Gmail/Outlook/SendGrid/Zoho) autofill host/port/encryption as chips in the wizard + Connections; **#3** `Setup.jsx` rebuilt as a 4-step wizard (Provider→Credentials→Sender→Test&finish) with a save-then-test step; **#8** self-contained `HelpTip` threaded as a `tooltip` prop through `Field`/`Input`/`Select`.
+
+**Notes:** dev site (`wp/plug-press`) is **SQLite** — MySQL paths (real sends) aren't fully exercisable locally; the PHPUnit CI suite is the real gate. Build clean across all three; `ui/index.js` + `Connections.jsx` carry pre-existing prettier debt (not touched). Branch is local, no PR. Visual QA (collapsed rail, wizard flow, tooltips) best done in-browser by the user.
+
 ## Last session (2026-07-17)
 - **Freemius fully removed from Mailyard** (commit `7481ed9`, direct to `main`) — user call: Mailyard ships with zero Freemius wiring. Deleted `includes/freemius.php` (the parent-product `fs_dynamic_init` scaffold, `MAILYARD_FS_ID`/`PUBLIC_KEY`, `mailyard_fs()`, `mailyard_fs_loaded` signal); dropped its `require` + comment block from `mailyard.php`; removed it from `scripts/zip.js` must-contain + comments (kept the `freemius/wordpress-sdk` must-NOT-contain guard); removed the Freemius third-party disclosure from `readme.txt`. Zip now 337 KB.
 - **Plugin Check now green on `main`** (commit `14185b0`). It was failing on two blocking errors — `wp_register_ability()` / `wp_register_ability_category()` (Abilities API, WP 6.9+) called while the header said WP 6.0.
