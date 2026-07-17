@@ -52,6 +52,9 @@ export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
 	return (
 		<AppNav
 			aria-label="Mailyard"
+			collapsible
+			storageKey="mailyard"
+			collapseLabel="Collapse menu"
 			brand={
 				<>
 					<MailyardMark size={ 26 } className="shrink-0 text-brand" />
