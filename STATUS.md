@@ -3,6 +3,17 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
+## Last session (2026-07-20)
+- **Issue #12 fixed** (commit `c5dd633`, direct to `main`) — Mailyard now works through Saddle's MCP server:
+  - `mcp_route()` recognises `saddle/v1/mcp`; new `mailyard_mcp_route` filter lets a bridge self-declare its route.
+  - Enrolled `mailyard/*` in free Saddle's `saddle_integrations` wrapper engine (inert without Saddle) — tools surface as `saddle/mailyard-*`; Mailyard Pro's campaign tools ride along on the shared prefix (15 wrapped tools on the dev site).
+  - `send-test-email` is now `annotations.destructive = true` (per the issue's recommendation), so Saddle injects its confirm-token step before a real email goes out.
+  - `saddle_system_context` gets one delivery-triage line; Connect AI names Saddle as a supported bridge.
+  - Verified live on `wp/plug-press` with Saddle activated (then deactivated again): wrappers registered, `adapterActive: true` with the Saddle endpoint, destructive flag in the wrapper meta, `delivery-status` executes. Saddle-side cosmetic companion (Permissions UI "Other" lane) still unfiled.
+- **Issue #3 closed** (commit `fef625c`) — the ui bump itself was long done (now v0.10.4); deleted the stale shadcn `components.json` (+ its dead `zip.js` exclude). The tailwind palette dedupe was **deliberately skipped**: the literal hexes are intentional post-redesign (alpha modifiers need them; the `ink` ramp is used throughout `src/`).
+- Issues #8 (external launch ops, partly moot since Freemius removal) and #1 (first-Friday-only) left open — not code, not due.
+- `src/views/ConnectAI.jsx` carries ~40 pre-existing prettier errors (like `ui/index.js`/`Connections.jsx`); my added lines are clean, debt not touched.
+
 ## Last session (2026-07-17)
 - **Freemius fully removed from Mailyard** (commit `7481ed9`, direct to `main`) — user call: Mailyard ships with zero Freemius wiring. Deleted `includes/freemius.php` (the parent-product `fs_dynamic_init` scaffold, `MAILYARD_FS_ID`/`PUBLIC_KEY`, `mailyard_fs()`, `mailyard_fs_loaded` signal); dropped its `require` + comment block from `mailyard.php`; removed it from `scripts/zip.js` must-contain + comments (kept the `freemius/wordpress-sdk` must-NOT-contain guard); removed the Freemius third-party disclosure from `readme.txt`. Zip now 337 KB.
 - **Plugin Check now green on `main`** (commit `14185b0`). It was failing on two blocking errors — `wp_register_ability()` / `wp_register_ability_category()` (Abilities API, WP 6.9+) called while the header said WP 6.0.
@@ -33,7 +44,8 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
-- **User:** visual QA (incl. Deliverability drawer); produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
+- **User:** visual QA (incl. Deliverability drawer + the new Saddle notice on Connect AI); review/merge `feat/smtp-ux-pass`; produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
+- File the Saddle-side cosmetic companion issue (wrapped `mailyard-*` tools land in the "Other" lane of Saddle's Permissions UI).
 - Submit slug `mailyard` to WordPress.org; after approval add `SVN_USERNAME`/`SVN_PASSWORD` repo secrets.
 - **Release = `git tag v1.0.0 && git push --follow-tags`** (after .org approval so the tag deploys to SVN in the same run; tagging earlier still produces the GitHub Release zip).
 - Freemius was **removed** from the free plugin this session — if Mailyard Pro (add-on) later needs licensing, that wiring lives entirely in Pro, not here. `mailyard#8` (parent+add-on product setup) is moot for the free plugin.
