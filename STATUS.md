@@ -3,6 +3,12 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
+## Last session (2026-07-20, later)
+- **`feat/smtp-ux-pass` merged into `main`** (merge commit `2a45883`, 8 commits) — user call: finish all free-plugin work; scope is free Mailyard only, no Pro. Only conflict was `STATUS.md` (kept main's log; the branch's self-describing "not merged" block dropped). Contents: humanized SMTP errors (`class-errors.php`) + send-failure admin notice (`class-failure-notice.php`) + resend-failed route; SMTP presets + field tooltips (`HelpTip`); **onboarding/`Setup.jsx` removed entirely**; new logo mark (360×360 path, also `.wordpress.org/icon.svg`); dashboard hierarchy/design pass; WP submenu now one entry per section (Dashboard · Delivery · Marketing · Settings).
+- Verified post-merge: `npm run build` compiles (2 pre-existing size warnings), `php -l` clean on all touched includes, `npm run zip` → `mailyard-1.0.0.zip` (339 KB) integrity green.
+- **Stale branches deleted** (local + origin): `feat/freemius-parent`, `feat/universal-shell` (both fully contained in main, zero unique commits), and `feat/smtp-ux-pass` after merge.
+- All code work is done; remaining items are user-side (screenshots/banners, WP.org slug submission) — see Next up.
+
 ## Last session (2026-07-20)
 - **Issue #12 fixed** (commit `c5dd633`, direct to `main`) — Mailyard now works through Saddle's MCP server:
   - `mcp_route()` recognises `saddle/v1/mcp`; new `mailyard_mcp_route` filter lets a bridge self-declare its route.
@@ -44,7 +50,7 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
-- **User:** visual QA (incl. Deliverability drawer + the new Saddle notice on Connect AI); review/merge `feat/smtp-ux-pass`; produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
+- **User:** visual QA of the merged UX pass (collapsed rail, presets/tooltips, resend-failed, new nav + no-onboarding flow, Deliverability drawer, Saddle notice on Connect AI); produce `.wordpress.org` banners + PNG icons + 6 screenshots per `.wordpress.org/README.md`.
 - File the Saddle-side cosmetic companion issue (wrapped `mailyard-*` tools land in the "Other" lane of Saddle's Permissions UI).
 - Submit slug `mailyard` to WordPress.org; after approval add `SVN_USERNAME`/`SVN_PASSWORD` repo secrets.
 - **Release = `git tag v1.0.0 && git push --follow-tags`** (after .org approval so the tag deploys to SVN in the same run; tagging earlier still produces the GitHub Release zip).
