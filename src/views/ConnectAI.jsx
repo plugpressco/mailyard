@@ -251,7 +251,8 @@ export default function ConnectAI() {
 						>
 							WordPress MCP Adapter
 						</a>{ ' ' }
-						plugin — then reload. See “How to connect”.
+						plugin, or PlugPress’s Saddle — then reload. See “How to
+						connect”.
 					</div>
 				) }
 			</Card>
@@ -269,9 +270,15 @@ export default function ConnectAI() {
 						<a href="https://github.com/wordpress/mcp-adapter" target="_blank" rel="noopener noreferrer">
 							WordPress MCP Adapter
 						</a>{ ' ' }
-						plugin, then reload this page.
+						plugin or PlugPress’s Saddle, then reload this page.
 					</Notice>
 				) }
+
+				<Notice tone="info">
+					Connecting through Saddle? Mailyard’s tools appear there as{ ' ' }
+					<code>saddle/mailyard-*</code>, with Saddle’s own permission
+					tiers and activity log on top of the toggles above.
+				</Notice>
 
 				<h3>1 · Create a credential</h3>
 				<p>

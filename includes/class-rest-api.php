@@ -97,9 +97,23 @@ class REST_API {
 	 * active — Mailyard ships no MCP transport of its own.
 	 */
 	private function mcp_route(): string {
+		/**
+		 * Let an MCP bridge declare its own REST route instead of being sniffed.
+		 *
+		 * @param string $route Route relative to the REST root, e.g. 'saddle/v1/mcp'. Empty to fall through to detection.
+		 */
+		$declared = apply_filters( 'mailyard_mcp_route', '' );
+		if ( is_string( $declared ) && '' !== $declared ) {
+			return ltrim( $declared, '/' );
+		}
+
 		foreach ( array_keys( rest_get_server()->get_routes() ) as $route ) {
 			$route = ltrim( (string) $route, '/' );
-			if ( preg_match( '#^mcp/[a-z0-9_-]*server#i', $route ) || false !== strpos( $route, 'wpmcp/streamable' ) ) {
+			if (
+				preg_match( '#^mcp/[a-z0-9_-]*server#i', $route )
+				|| 'saddle/v1/mcp' === $route
+				|| false !== strpos( $route, 'wpmcp/streamable' )
+			) {
 				return $route;
 			}
 		}

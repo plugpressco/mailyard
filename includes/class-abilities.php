@@ -142,6 +142,45 @@ class Abilities {
 		}
 		add_action( 'wp_abilities_api_categories_init', array( $this, 'register_category' ) );
 		add_action( 'wp_abilities_api_init', array( $this, 'register_abilities' ) );
+
+		// Saddle bridge: both filters are inert when Saddle isn't active.
+		add_filter( 'saddle_integrations', array( $this, 'enroll_in_saddle' ) );
+		add_filter( 'saddle_system_context', array( $this, 'saddle_context' ) );
+	}
+
+	/**
+	 * Enroll mailyard/* in free Saddle's integration-wrapper engine, so each
+	 * ability is re-registered as a real `saddle/mailyard-*` tool — Saddle
+	 * hard-filters its MCP surface to its own namespace, so this is the only
+	 * path to its clients. Saddle re-runs our permission_callback on execute
+	 * and derives its read/write tier + confirm gate from our annotations.
+	 *
+	 * @param array $integrations slug => { prefix, title }.
+	 * @return array
+	 */
+	public function enroll_in_saddle( $integrations ): array {
+		$integrations             = (array) $integrations;
+		$integrations['mailyard'] = array(
+			'prefix' => 'mailyard/',
+			'title'  => 'Mailyard',
+		);
+		return $integrations;
+	}
+
+	/**
+	 * One line of delivery-triage guidance on Saddle's system context, on top
+	 * of its auto-generated "Mailyard is installed…" line. Only when the log
+	 * tool actually made it through the wrapper engine.
+	 *
+	 * @param string $context System context so far.
+	 * @return string
+	 */
+	public function saddle_context( $context ): string {
+		$context = (string) $context;
+		if ( ! function_exists( 'wp_get_abilities' ) || ! isset( wp_get_abilities()['saddle/mailyard-list-logs'] ) ) {
+			return $context;
+		}
+		return rtrim( $context ) . "\n\nFor email delivery problems: start with saddle/mailyard-list-logs filtered to failures, then saddle/mailyard-check-deliverability for the DNS side (SPF/DKIM/DMARC).\n";
 	}
 
 	public function register_category(): void {
@@ -317,9 +356,12 @@ class Abilities {
 					),
 				),
 				'meta'                => array(
+					// destructive: it emails a REAL address the assistant picks.
+					// Bridges that gate on it (Saddle) add a confirm step; one
+					// extra round-trip is the right price for that.
 					'annotations'  => array(
 						'readonly'    => false,
-						'destructive' => false,
+						'destructive' => true,
 					),
 					'show_in_rest' => true,
 					'mcp'          => array( 'public' => true ),
