@@ -6,6 +6,47 @@ export const PURPOSES = [
 	{ value: 'marketing', label: 'Marketing' },
 ];
 
+// One-click SMTP presets — prefill host/port/encryption for common providers so
+// the user only needs to add credentials. They all resolve to the generic `smtp`
+// provider; "Custom" clears the prefill for anything else.
+export const SMTP_PRESETS = [
+	{
+		id: 'gmail',
+		name: 'Gmail',
+		values: { host: 'smtp.gmail.com', port: '587', encryption: 'tls' },
+		note: 'Use an app password (Google Account → Security → App passwords), not your login password.',
+		docs: 'https://support.google.com/mail/answer/185833',
+	},
+	{
+		id: 'outlook',
+		name: 'Outlook / Microsoft 365',
+		values: { host: 'smtp.office365.com', port: '587', encryption: 'tls' },
+		note: 'Use your full email as the username and an app password if 2FA is on.',
+		docs: 'https://support.microsoft.com/office/pop-imap-and-smtp-settings-8361e398-8af4-4e97-b147-6c6c4ac95353',
+	},
+	{
+		id: 'sendgrid',
+		name: 'SendGrid',
+		values: { host: 'smtp.sendgrid.net', port: '587', encryption: 'tls', username: 'apikey' },
+		note: 'Username is literally "apikey"; the password is your SendGrid API key.',
+		docs: 'https://www.twilio.com/docs/sendgrid/for-developers/sending-email/integrating-with-the-smtp-api',
+	},
+	{
+		id: 'zoho',
+		name: 'Zoho Mail',
+		values: { host: 'smtp.zoho.com', port: '587', encryption: 'tls' },
+		note: 'Generate an app-specific password in Zoho Mail settings.',
+		docs: 'https://www.zoho.com/mail/help/zoho-smtp.html',
+	},
+	{
+		id: 'custom',
+		name: 'Other / Custom',
+		values: {},
+		note: '',
+		docs: null,
+	},
+];
+
 export const LIVE_PROVIDERS = [
 	{
 		id: 'ses',

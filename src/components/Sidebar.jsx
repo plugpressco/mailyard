@@ -30,7 +30,7 @@ function activeRoute( groups, route ) {
  * Renders ONLY registered groups — when Mailyard Pro isn't active its groups
  * simply don't exist; there are no locked or placeholder entries.
  */
-export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
+export default function Sidebar( { groups, route, onNavigate } ) {
 	const items = groups.map( ( group ) => ( {
 		heading: group.label,
 		footer: !! group.footer,
@@ -44,14 +44,12 @@ export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
 		} ),
 	} ) );
 
-	const versionLine = modules
-		.filter( ( m ) => m.version )
-		.map( ( m ) => `${ m.versionLabel || m.id } v${ m.version }` )
-		.join( ' · ' );
-
 	return (
 		<AppNav
 			aria-label="Mailyard"
+			collapsible
+			storageKey="mailyard"
+			collapseLabel="Collapse menu"
 			brand={
 				<>
 					<MailyardMark size={ 26 } className="shrink-0 text-brand" />
@@ -74,7 +72,6 @@ export default function Sidebar( { groups, modules = [], route, onNavigate } ) {
 					<span className="pp-nav__label">Help &amp; docs</span>
 				</a>
 			}
-			meta={ versionLine || undefined }
 		/>
 	);
 }

@@ -10,7 +10,6 @@ class Options {
 	// wp_options keys.
 	const SETTINGS       = 'mailyard_settings';
 	const CONNECTIONS    = 'mailyard_connections';
-	const ONBOARDED      = 'mailyard_onboarded';
 	const TABLE_VERSION  = 'mailyard_log_table_version';
 	const WEBHOOK_SECRET = 'mailyard_webhook_secret';
 

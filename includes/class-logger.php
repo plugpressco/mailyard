@@ -231,7 +231,7 @@ class Logger {
 	}
 
 	private function shape_row( array $row ): array {
-		return array(
+		$shaped = array(
 			'id'         => (int) $row['id'],
 			'to'         => $row['to_email'],
 			'subject'    => $row['subject'],
@@ -243,6 +243,29 @@ class Logger {
 			'time'       => human_time_diff( strtotime( $row['created_at'] ), current_time( 'U' ) ) . ' ago',
 			'created_at' => $row['created_at'],
 		);
+
+		// Human-readable guidance for failures (single source: Errors::humanize).
+		if ( 'failed' === $row['status'] && '' !== (string) $row['error_message'] ) {
+			$shaped['error_human'] = Errors::humanize( (string) $row['error_message'], (string) $row['provider'] );
+		}
+
+		return $shaped;
+	}
+
+	/**
+	 * Fetch a single log row (shaped) by id, or null. Used by the resend action.
+	 *
+	 * @param int $id Log row id.
+	 * @return array|null
+	 */
+	public function get( int $id ) {
+		global $wpdb;
+		$table = esc_sql( self::table() );
+		$row   = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			ARRAY_A
+		);
+		return $row ? $this->shape_row( $row ) : null;
 	}
 
 	private function insert( array $data ) {

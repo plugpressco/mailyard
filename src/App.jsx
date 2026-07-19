@@ -1,20 +1,15 @@
-import { useState, useCallback, useEffect, useMemo, lazy, Suspense, Fragment } from 'react';
+import { useState, useCallback, useEffect, useMemo, Suspense, Fragment } from 'react';
 import { AppShell, Toaster } from '@plugpress/ui';
 import Sidebar from './components/Sidebar';
 import { DashboardSkeleton } from './components/ui';
 import { collectModules, matchModule, mergeGroups } from './shell/registry';
 import coreModule from './shell/coreModule';
 
-const Setup = lazy( () => import( './views/Setup' ) );
-
 function getRoute() {
 	return window.location.hash.replace( /^#\/?/, '' );
 }
 
 export default function App() {
-	const [ onboarded, setOnboarded ] = useState(
-		() => window.mailyard?.onboarded ?? false
-	);
 	const [ route, setRoute ] = useState( getRoute );
 
 	// Collected ONCE at mount: extenders (Mailyard Pro) registered their
@@ -31,9 +26,16 @@ export default function App() {
 
 	// Mirror the active route onto the WP admin submenu highlight for
 	// programmatic navigation (menu CLICKS are handled by the PHP-side
-	// interceptor). Generic over every registered section, Pro's included.
+	// interceptor). The WP submenu holds one entry per SECTION, so SPA
+	// routes map onto their section's entry before matching.
 	useEffect( () => {
-		const seg = route.split( '/' )[ 0 ] || 'dashboard';
+		const SECTION = {
+			deliverability: 'connections',
+			logs: 'connections',
+			contacts: 'campaigns',
+		};
+		let seg = route.split( '/' )[ 0 ] || 'dashboard';
+		seg = SECTION[ seg ] || seg;
 		const items = document.querySelectorAll( '#adminmenu .wp-submenu li' );
 		if ( ! items.length ) {
 			return;
@@ -59,19 +61,6 @@ export default function App() {
 	const navigate = useCallback( ( id ) => {
 		window.location.hash = '#/' + id;
 	}, [] );
-
-	const handleSetupComplete = useCallback( () => {
-		setOnboarded( true );
-	}, [] );
-
-	if ( ! onboarded ) {
-		return (
-			<Suspense fallback={ <DashboardSkeleton /> }>
-				<Toaster />
-				<Setup onComplete={ handleSetupComplete } />
-			</Suspense>
-		);
-	}
 
 	const active = matchModule( modules, route ) || coreModule;
 	const Provider = active.Provider || Fragment;

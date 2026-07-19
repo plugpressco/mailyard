@@ -48,28 +48,20 @@ class Settings {
 			'58.14'
 		);
 
-		// SPA sections as native submenus for deep-linking. Entries are
-		// order-aware so extenders slot in by weight instead of appending
-		// after Settings — the flyout mirrors the SPA sidebar (Dashboard,
-		// Marketing 20s, Delivery 30s, Settings last at 90).
+		// One native submenu entry per SECTION, not per SPA page — the WP menu
+		// stays a clean top-level map (Dashboard, Delivery, Marketing via Pro,
+		// Settings); fine-grained navigation lives in the app's own sidebar.
+		// Keys are the SPA hash route each entry lands on.
 		$submenus = array(
-			'dashboard'      => array(
+			'dashboard'   => array(
 				'label' => __( 'Dashboard', 'mailyard' ),
 				'order' => 10,
 			),
-			'connections'    => array(
-				'label' => __( 'Connections', 'mailyard' ),
-				'order' => 30,
+			'connections' => array(
+				'label' => __( 'Delivery', 'mailyard' ),
+				'order' => 15,
 			),
-			'deliverability' => array(
-				'label' => __( 'Deliverability', 'mailyard' ),
-				'order' => 31,
-			),
-			'logs'           => array(
-				'label' => __( 'Logs', 'mailyard' ),
-				'order' => 32,
-			),
-			'settings'       => array(
+			'settings'    => array(
 				'label' => __( 'Settings', 'mailyard' ),
 				'order' => 90,
 			),
@@ -147,9 +139,8 @@ class Settings {
 
 		// The React app talks to the plugin over the REST API via @wordpress/api-fetch,
 		// which supplies its own X-WP-Nonce (wp_rest) middleware. We expose the REST
-		// root + nonce so the client can authenticate, plus the onboarding flag.
+		// root + nonce so the client can authenticate.
 		wp_localize_script( 'mailyard-admin', 'mailyard', array(
-			'onboarded'    => (bool) get_option( Options::ONBOARDED, false ),
 			'restUrl'      => esc_url_raw( rest_url( Options::REST_NS ) ),
 			'nonce'        => wp_create_nonce( 'wp_rest' ),
 			'version'      => MAILYARD_VERSION,
@@ -202,8 +193,8 @@ class Settings {
 	 * hover/current, so the brand blue would fight every admin colour scheme.
 	 */
 	private function menu_icon(): string {
-		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
-			. '<path fill="#a7aaad" d="M50 0C77.6142 7.99448e-07 100 22.3858 100 50C100 77.6142 77.6142 100 50 100C22.3858 100 1.12106e-06 77.6142 0 50C0 22.3858 22.3858 0 50 0ZM13.5225 40.7559C11.9745 41.2977 10.9135 42.7295 10.8467 44.3682C10.7798 46.0067 11.7202 47.5203 13.2188 48.1865L39.9375 60.0615L51.8135 86.7812C52.4797 88.2798 53.9932 89.2202 55.6318 89.1533C57.2705 89.0865 58.7023 88.0255 59.2441 86.4775L81.1094 24.0049C80.9164 24.5449 80.6043 25.0519 80.1719 25.4844L45.7969 59.8594C44.2348 61.4215 41.7027 61.4215 40.1406 59.8594C38.5785 58.2973 38.5785 55.7652 40.1406 54.2031L74.5156 19.8281C74.9479 19.3959 75.4545 19.0837 75.9941 18.8906L13.5225 40.7559Z"/>'
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360">'
+			. '<path fill="#a7aaad" fill-rule="evenodd" clip-rule="evenodd" d="M180 0C279.411 1.64109e-06 360 80.5888 360 180C360 279.411 279.411 360 180 360C80.5888 360 1.56177e-06 279.411 0 180C0 80.5887 80.5887 0 180 0ZM52.1162 156.537C50.5682 157.079 49.5073 158.511 49.4404 160.149C49.3736 161.788 50.314 163.302 51.8125 163.968L151.656 208.343L196.032 308.188C196.698 309.686 198.212 310.626 199.851 310.56C201.489 310.493 202.921 309.432 203.463 307.884L282.203 82.9111C282.01 83.4511 281.698 83.9582 281.266 84.3906L157.516 208.141C155.954 209.703 153.421 209.703 151.859 208.141C150.297 206.579 150.297 204.046 151.859 202.484L275.609 78.7344C276.042 78.3021 276.548 77.9899 277.088 77.7969L52.1162 156.537Z"/>'
 			. '</svg>';
 
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode

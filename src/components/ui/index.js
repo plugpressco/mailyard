@@ -23,6 +23,7 @@ import {
 	SectionTitle as PPSectionTitle,
 	cx,
 } from '@plugpress/ui';
+import HelpTip from '@/components/HelpTip';
 
 export { default as ScoreRing } from './ScoreRing';
 // VolumeChart is intentionally NOT re-exported here — import it directly so
@@ -61,11 +62,12 @@ export function Card( { hover, className, ...props } ) {
 	);
 }
 
-export function FieldLabel( { htmlFor, required, children } ) {
+export function FieldLabel( { htmlFor, required, tooltip, children } ) {
 	return (
 		<Label htmlFor={ htmlFor }>
 			{ children }
 			{ required && <span className="ml-0.5 text-danger" aria-hidden="true">*</span> }
+			{ tooltip && <HelpTip content={ tooltip } /> }
 		</Label>
 	);
 }
@@ -79,17 +81,17 @@ export function SectionTitle( { children, className } ) {
 }
 
 // Label + control + hint/error wrapper. Pass the control as children.
-export function Field( { label, hint, error, required, htmlFor, className, children } ) {
+export function Field( { label, hint, error, required, htmlFor, tooltip, className, children } ) {
 	return (
 		<div className={ cx( 'pp-field', className ) }>
-			{ label && <FieldLabel htmlFor={ htmlFor } required={ required }>{ label }</FieldLabel> }
+			{ label && <FieldLabel htmlFor={ htmlFor } required={ required } tooltip={ tooltip }>{ label }</FieldLabel> }
 			{ children }
 			{ error ? <Hint error>{ error }</Hint> : hint ? <Hint>{ hint }</Hint> : null }
 		</div>
 	);
 }
 
-export function Input( { label, hint, required, error, size, icon, className, id: propId, ...props } ) {
+export function Input( { label, hint, required, error, size, icon, tooltip, className, id: propId, ...props } ) {
 	const autoId = useId();
 	const id = propId || autoId;
 	const input = (
@@ -102,7 +104,7 @@ export function Input( { label, hint, required, error, size, icon, className, id
 		/>
 	);
 	return (
-		<Field label={ label } hint={ hint } error={ error } required={ required } htmlFor={ id }>
+		<Field label={ label } hint={ hint } error={ error } required={ required } htmlFor={ id } tooltip={ tooltip }>
 			{ icon ? (
 				<div className="relative">
 					<span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400">{ icon }</span>
@@ -123,16 +125,22 @@ export function Textarea( { label, hint, required, error, className, id: propId,
 	);
 }
 
-export function Select( { label, hint, required, error, size, options = [], className, id: propId, ...props } ) {
+export function Select( { label, hint, required, error, size, options = [], tooltip, className, id: propId, ...props } ) {
 	const autoId = useId();
 	const id = propId || autoId;
 	return (
-		<Field label={ label } hint={ hint } error={ error } required={ required } htmlFor={ id }>
+		<Field label={ label } hint={ hint } error={ error } required={ required } htmlFor={ id } tooltip={ tooltip }>
 			<NativeSelect
 				id={ id }
 				name={ id }
 				error={ !! error }
-				className={ cx( size === 'sm' && 'h-7 text-xs', className ) }
+				className={ cx(
+					// w-full needs max-w-full with it: wp-admin core clamps
+					// bare <select>s to max-width 25rem.
+					'w-full max-w-full',
+					size === 'sm' && 'h-7 text-xs',
+					className
+				) }
 				{ ...props }
 			>
 				{ options.map( ( o ) => (

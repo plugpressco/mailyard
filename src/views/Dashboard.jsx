@@ -46,9 +46,20 @@ function PanelHead( { title, action, onAction } ) {
 }
 
 function ChainPanel( { chain, onNavigate } ) {
+	const backups = Math.max( 0, chain.length - 1 );
+	const title = (
+		<>
+			Delivery chain
+			{ chain.length > 0 && (
+				<span className="ml-1.5 font-normal text-ink-400">
+					· { chain.length === 1 ? 'no backup' : `${ backups } backup` }
+				</span>
+			) }
+		</>
+	);
 	return (
 		<Card className="overflow-hidden p-0">
-			<PanelHead title="Delivery chain" action="Manage" onAction={ () => onNavigate( 'connections' ) } />
+			<PanelHead title={ title } action="Manage" onAction={ () => onNavigate( 'connections' ) } />
 			{ chain.length === 0 ? (
 				<div className="px-4 py-8 text-center text-[12px] text-ink-400">No connections yet.</div>
 			) : (
@@ -87,7 +98,7 @@ function ActivityFeed( { items, onNavigate } ) {
 							<span className="hidden w-48 shrink-0 truncate font-mono text-[12px] text-ink-700 sm:block">{ it.to }</span>
 							<span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-800">{ it.subject || '(no subject)' }</span>
 							<ProviderIcon id={ it.provider } size={ 16 } />
-							<span className="w-20 shrink-0 text-right text-[11px] text-ink-400">{ it.time }</span>
+							<span className="w-24 shrink-0 whitespace-nowrap text-right text-[11px] text-ink-400">{ it.time }</span>
 						</div>
 					) ) }
 				</div>
@@ -175,9 +186,11 @@ export default function Dashboard( { onNavigate } ) {
 				subtitle="Your sending health, volume, and recent activity at a glance."
 				action={
 					<div className="flex items-center gap-2.5">
-						<span className={ `inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ meta.cls }` }>
-							<span className={ `h-1.5 w-1.5 rounded-full ${ meta.dot }` } /> { meta.label }
-						</span>
+						{ health === 'healthy' && (
+							<span className={ `inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ meta.cls }` }>
+								<span className={ `h-1.5 w-1.5 rounded-full ${ meta.dot }` } /> { meta.label }
+							</span>
+						) }
 						<Button size="sm" onClick={ () => setTestOpen( ( v ) => ! v ) }>
 							<SendIcon className="h-3.5 w-3.5" /> Send test
 						</Button>
@@ -185,14 +198,32 @@ export default function Dashboard( { onNavigate } ) {
 				}
 			/>
 
+			{ /* Degraded health earns a full-width banner, not a tiny pill —
+			     it's the single most important thing on this screen. */ }
+			{ ! loading && health !== 'healthy' && (
+				<div className={ `mb-5 flex items-center gap-2.5 rounded-xl px-4 py-3 text-[12.5px] font-medium ${ meta.cls }` }>
+					<span className={ `h-2 w-2 shrink-0 rounded-full ${ meta.dot }` } />
+					<span className="min-w-0 flex-1">
+						{ health === 'down'
+							? 'No delivery — there is no enabled connection, so email is not being sent.'
+							: 'Some recent emails failed to send.' }
+					</span>
+					<button
+						onClick={ () => onNavigate( health === 'down' ? 'connections' : 'logs' ) }
+						className="shrink-0 cursor-pointer border-none bg-transparent font-semibold underline underline-offset-2 hover:opacity-80"
+					>
+						{ health === 'down' ? 'Add a connection' : 'View logs' }
+					</button>
+				</div>
+			) }
+
 			{ testOpen && <SendTestPanel onClose={ () => setTestOpen( false ) } onSent={ refresh } /> }
 
-			<div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+			<div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
 				<Kpi label="Sent · 7d" value={ sent7 } sub="delivered emails" />
 				<Kpi label="Failed · 7d" value={ failed7 } sub={ failed7 > 0 ? 'needs attention' : 'all clear' } tone={ failed7 > 0 ? 'text-danger' : 'text-ink-900' } />
 				<Kpi label="Success rate" value={ `${ rate }%` } sub="last 7 days" tone={ rate >= 98 ? 'text-success' : rate >= 90 ? 'text-warning' : 'text-danger' } />
 				<Kpi label="Deliverability" value={ worst ? worst.grade : '—' } sub={ worst ? worst.domain : 'not scanned' } tone={ worst ? GRADE_TONE[ worst.grade ] : 'text-ink-400' } />
-				<Kpi label="Providers" value={ chain.length } sub={ chain.length === 1 ? 'no backup' : `${ Math.max( 0, chain.length - 1 ) } backup` } />
 			</div>
 
 			<div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -213,13 +244,19 @@ export default function Dashboard( { onNavigate } ) {
 
 			<ActivityFeed items={ recent } onNavigate={ onNavigate } />
 
-			{ widgets.map( ( { id, Component } ) => (
-				<div key={ id } className="mt-4">
-					<Suspense fallback={ null }>
-						<Component />
-					</Suspense>
+			{ /* Add-on widgets (Mailyard Pro) live in their own zone below a
+			     divider so they read as an extension, not a second dashboard. */ }
+			{ widgets.length > 0 && (
+				<div className="mt-8 border-t border-ink-200 pt-6">
+					{ widgets.map( ( { id, Component } ) => (
+						<div key={ id } className="mt-4 first:mt-0">
+							<Suspense fallback={ null }>
+								<Component />
+							</Suspense>
+						</div>
+					) ) }
 				</div>
-			) ) }
+			) }
 		</div>
 	);
 }

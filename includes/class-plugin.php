@@ -91,6 +91,7 @@ class Plugin {
 
 		Logger::instance()->init();
 		( new Override() )->init();
+		( new Failure_Notice() )->init();
 	}
 
 	public function run_cleanup(): void {
@@ -120,8 +121,10 @@ class Plugin {
 		require_once $includes . 'class-options.php';
 		require_once $includes . 'class-manager.php';
 		require_once $includes . 'class-deliverability.php';
+		require_once $includes . 'class-errors.php';
 		require_once $includes . 'class-logger.php';
 		require_once $includes . 'class-override.php';
+		require_once $includes . 'class-failure-notice.php';
 		require_once $includes . 'class-data-deleter.php';
 		require_once $includes . 'class-rest-api.php';
 		require_once $includes . 'class-abilities.php';

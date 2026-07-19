@@ -39,7 +39,9 @@ const coreModule = {
 		{
 			id: 'delivery',
 			label: 'Delivery',
-			order: 30,
+			// Before Pro's Marketing group (order 20): the free plugin's core
+			// delivery features lead the nav; add-ons slot in below.
+			order: 15,
 			items: [
 				{ id: 'connections', label: 'Connections', icon: RouteIcon, route: 'connections', order: 10 },
 				{ id: 'deliverability', label: 'Deliverability', icon: ShieldIcon, route: 'deliverability', order: 20 },
@@ -49,7 +51,6 @@ const coreModule = {
 		{
 			id: 'system',
 			order: 90,
-			footer: true,
 			items: [ { id: 'settings', label: 'Settings', icon: GearIcon, route: 'settings', order: 10 } ],
 		},
 	],
