@@ -33,7 +33,6 @@ const exclude = [
 	'webpack.config.js',
 	'tailwind.config.js',
 	'postcss.config.js',
-	'components.json',
 	'docs/*',
 	'docs',
 	'*.webp',
