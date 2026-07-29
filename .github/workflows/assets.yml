@@ -3,8 +3,15 @@ name: WP.org assets & readme
 # Sync readme.txt and .wordpress.org/ assets (icon, banners, screenshots) to
 # the WordPress.org SVN repo between releases — no version bump needed.
 # Skips cleanly until the plugin is approved and the SVN secrets exist.
+#
+# This is a surgical svn commit of ONLY trunk/readme.txt, the stable tag's
+# readme.txt, and assets/. The 10up asset-update action can't work here: it
+# rsyncs the whole git tree over trunk and aborts on any drift, and trunk
+# ALWAYS drifts from git because releases deploy built files (build/) that
+# git doesn't track. Code changes still only ship via release.yml (tags).
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
     paths:
@@ -17,18 +24,52 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HAS_SVN: ${{ secrets.SVN_USERNAME != '' && secrets.SVN_PASSWORD != '' }}
+      SLUG: mailyard
     steps:
       - uses: actions/checkout@v4
 
-      - name: Sync to SVN
+      - name: Sync readme + assets to SVN
         if: env.HAS_SVN == 'true'
-        uses: 10up/action-wordpress-plugin-asset-update@stable
         env:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          SLUG: mailyard
-          ASSETS_DIR: .wordpress.org
-          README_NAME: readme.txt
+        run: |
+          set -euo pipefail
+          command -v svn >/dev/null || { sudo apt-get update -q && sudo apt-get install -y -q subversion; }
+
+          STABLE="$(grep -m1 -oE 'Stable tag:[[:space:]]*[0-9.]+' readme.txt | grep -oE '[0-9.]+')"
+          echo "Stable tag: $STABLE"
+
+          # Sparse checkout: just assets/, trunk/readme.txt, tags/$STABLE/readme.txt.
+          svn checkout --quiet "https://plugins.svn.wordpress.org/$SLUG" svn-wp --depth immediates
+          cd svn-wp
+          svn update --quiet --set-depth infinity assets
+          svn update --quiet trunk/readme.txt
+          if svn info "https://plugins.svn.wordpress.org/$SLUG/tags/$STABLE" >/dev/null 2>&1; then
+            svn update --quiet --set-depth empty "tags/$STABLE"
+            svn update --quiet "tags/$STABLE/readme.txt"
+            cp "$GITHUB_WORKSPACE/readme.txt" "tags/$STABLE/readme.txt"
+          else
+            echo "::warning::tags/$STABLE not found in SVN — updating trunk readme only."
+          fi
+          cp "$GITHUB_WORKSPACE/readme.txt" trunk/readme.txt
+
+          rsync -rc --delete "$GITHUB_WORKSPACE/.wordpress.org/" assets/
+          svn add --force --quiet assets
+          # wp.org needs mime types on assets or banners/icons render as text.
+          svn propset --quiet svn:mime-type image/png assets/*.png 2>/dev/null || true
+          svn propset --quiet svn:mime-type image/jpeg assets/*.jpg 2>/dev/null || true
+          svn propset --quiet svn:mime-type image/svg+xml assets/*.svg 2>/dev/null || true
+
+          svn status
+          if svn status | grep -qE '^[AMDR!]'; then
+            svn status | { grep '^!' || true; } | awk '{print $2}' | while read -r missing; do svn delete --quiet "$missing"; done
+            svn commit -m "Sync readme + assets from GitHub (${GITHUB_SHA:0:7})" \
+              --no-auth-cache --non-interactive \
+              --username "$SVN_USERNAME" --password "$SVN_PASSWORD"
+          else
+            echo "Nothing to commit — SVN already matches."
+          fi
 
       - name: Sync skipped
         if: env.HAS_SVN != 'true'
