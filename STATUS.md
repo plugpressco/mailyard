@@ -3,7 +3,10 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-07-20, later)
+## Last session (2026-07-29) — v1.0.1 RELEASED to WordPress.org
+- **1.0.1 shipped**: commit `baeb49b` (Reply-To "Name <email>" parsing fix + Content-Type detection via `wp_mail_content_type` in Override) pushed, tagged `v1.0.1`. Release workflow green in 2m35s: tag↔version check ✓, `mailyard-1.0.1.zip` (339 KB, integrity check passed) attached to the GitHub Release ✓, **deployed to WordPress.org SVN ✓ — wp.org now serves 1.0.1** (last_updated 2026-07-29 4:04pm GMT). Local `npm run zip` build was verified before tagging.
+
+## Earlier session (2026-07-20, later)
 - **`feat/smtp-ux-pass` merged into `main`** (merge commit `2a45883`, 8 commits) — user call: finish all free-plugin work; scope is free Mailyard only, no Pro. Only conflict was `STATUS.md` (kept main's log; the branch's self-describing "not merged" block dropped). Contents: humanized SMTP errors (`class-errors.php`) + send-failure admin notice (`class-failure-notice.php`) + resend-failed route; SMTP presets + field tooltips (`HelpTip`); **onboarding/`Setup.jsx` removed entirely**; new logo mark (360×360 path, also `.wordpress.org/icon.svg`); dashboard hierarchy/design pass; WP submenu now one entry per section (Dashboard · Delivery · Marketing · Settings).
 - Verified post-merge: `npm run build` compiles (2 pre-existing size warnings), `php -l` clean on all touched includes, `npm run zip` → `mailyard-1.0.0.zip` (339 KB) integrity green.
 - **Stale branches deleted** (local + origin): `feat/freemius-parent`, `feat/universal-shell` (both fully contained in main, zero unique commits), and `feat/smtp-ux-pass` after merge.
