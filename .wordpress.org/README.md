@@ -16,7 +16,7 @@ Both skip until the `SVN_USERNAME` / `SVN_PASSWORD` repo secrets are set
 | --- | --- |
 | `icon.svg` | Directory icon (brand mark, `#2395E7`). WP.org serves SVG icons directly. |
 | `icon-128x128.png` / `icon-256x256.png` | PNG fallbacks, rendered from `icon.svg` (`rsvg-convert -w 128 -h 128 icon.svg -o icon-128x128.png`, same for 256). |
-| `banner-772x250.png` / `banner-1544x500.png` | Directory header banner — white plugpress-theme paper, mark + `mailyard` lockup, failover route drawing into an envelope, tagline "SMTP with a backup plan." Source: `src/banner-light.html`. |
+| `banner-772x250.png` / `banner-1544x500.png` | Directory header banner — light blue-grey tint (`#F5F8FB`, so the banner has edges on wp.org's white page), wordmark-led `mailyard` lockup (no circle mark — the plugin icon right below it is the same mark), failover route drawing into an envelope, tagline "SMTP with a backup plan." Source: `src/banner-light.html`. |
 
 ## Banner source & render pipeline
 

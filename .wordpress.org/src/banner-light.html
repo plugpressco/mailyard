@@ -17,14 +17,14 @@
   html, body { width: 1544px; height: 500px; overflow: hidden; }
   body {
     position: relative;
-    background: #ffffff;
+    background: #F5F8FB;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
   .stage { position: absolute; inset: 0; }
   .words {
     position: absolute;
-    left: 372px; top: 0; height: 500px;
+    left: 140px; top: 0; height: 500px;
     display: flex; flex-direction: column; justify-content: center;
   }
   .name {
@@ -35,29 +35,22 @@
   .tag {
     margin-top: 24px;
     font: 400 31px/1 'Space Mono';
-    color: #6F6F6F;
+    color: #5F6B76;
   }
 </style>
 </head>
 <body>
   <svg class="stage" width="1544" height="500" viewBox="0 0 1544 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <path id="mark" fill-rule="evenodd" clip-rule="evenodd" d="M180 0C279.411 1.64109e-06 360 80.5888 360 180C360 279.411 279.411 360 180 360C80.5888 360 1.56177e-06 279.411 0 180C0 80.5887 80.5887 0 180 0ZM52.1162 156.537C50.5682 157.079 49.5073 158.511 49.4404 160.149C49.3736 161.788 50.314 163.302 51.8125 163.968L151.656 208.343L196.032 308.188C196.698 309.686 198.212 310.626 199.851 310.56C201.489 310.493 202.921 309.432 203.463 307.884L282.203 82.9111C282.01 83.4511 281.698 83.9582 281.266 84.3906L157.516 208.141C155.954 209.703 153.421 209.703 151.859 208.141C150.297 206.579 150.297 204.046 151.859 202.484L275.609 78.7344C276.042 78.3021 276.548 77.9899 277.088 77.7969L52.1162 156.537Z"/>
-    </defs>
-
-    <!-- brand mark -->
-    <use href="#mark" transform="translate(148 162) scale(0.48889)" fill="#2395E7"/>
-
     <!-- delivery route: origin -> fork -> envelope; failover arc rejoins before delivery -->
-    <circle cx="948" cy="250" r="8" fill="#2395E7"/>
-    <path d="M956 250 H 1312" stroke="#2395E7" stroke-width="5" stroke-linecap="round"/>
-    <path d="M1082 250 C 1128 250, 1132 324, 1186 324 C 1240 324, 1248 250, 1294 250"
-          stroke="#8A8A8A" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 13"/>
-    <circle cx="1082" cy="250" r="9" fill="#ffffff" stroke="#2395E7" stroke-width="4"/>
+    <circle cx="880" cy="250" r="8" fill="#2395E7"/>
+    <path d="M888 250 H 1312" stroke="#2395E7" stroke-width="5" stroke-linecap="round"/>
+    <path d="M1040 250 C 1094 250, 1098 330, 1160 330 C 1222 330, 1232 250, 1286 250"
+          stroke="#94A3B0" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 14"/>
+    <circle cx="1040" cy="250" r="9" fill="#F5F8FB" stroke="#2395E7" stroke-width="4"/>
 
     <!-- envelope -->
-    <rect x="1318" y="203" width="130" height="94" rx="10" stroke="#171717" stroke-width="3"/>
-    <path d="M1325 213 L 1383 260 L 1441 213" stroke="#171717" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="1318" y="203" width="130" height="94" rx="10" stroke="#171717" stroke-width="4"/>
+    <path d="M1325 213 L 1383 260 L 1441 213" stroke="#171717" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 
   <div class="words">

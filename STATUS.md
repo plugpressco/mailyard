@@ -3,7 +3,13 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-07-29, later) — readme SEO rewrite + plugpress.co/mailyard links + wp.org banner shipped
+## Last session (2026-07-30) — banner redesign: tint + refine
+
+- **WP.org banner reworked** after reviewing it on the live plugin page (user asked "what issue you see?" — verdict: white banner on wp.org's white page had no edges; the big circle mark sat directly above the identical plugin icon; the dotted failover arc (3px, `1 13` dashes) was illegible). User picked "tint + refine" over dark-banner/full-redesign.
+- Changes (all in `src/banner-light.html`, re-rendered both PNGs via the documented headless-Chrome pipeline): background `#fff` → **`#F5F8FB`** (light blue-grey, gives the banner edges); **circle mark removed** — wordmark-led lockup at `left: 140px` (balanced margins); failover arc now **5px `0.1 14` round-cap dots in `#94A3B0`** (reads as a route); envelope stroke 3px → 4px to match; fork-circle fill matches new bg; tagline `#6F6F6F` → `#5F6B76`. Verified in a scratchpad mock of the wp.org page (banner + icon + title) before committing. `banner-dark.html` untouched.
+- Push to `main` touching `.wordpress.org/**` auto-syncs to wp.org SVN via `assets.yml` (verified-working since `2795676`).
+
+## Earlier session (2026-07-29, later) — readme SEO rewrite + plugpress.co/mailyard links + wp.org banner shipped
 
 - **WP.org banner designed & shipped** (user picked from 2 rendered concepts): "light" — white plugpress-theme paper, blue mark + lowercase `mailyard` (Bricolage Grotesque 800, −0.03em), Space Mono tagline **"SMTP with a backup plan."** (no "WordPress"/"WP" — trademark rule from Saddle's round-1 review), and a failover route drawing (solid `#2395E7` line → envelope, dotted gray fallback arc forking and rejoining). Runner-up dark Saddle-shelf-mate concept kept at `.wordpress.org/src/banner-dark.html`. Pipeline: HTML comps + theme woff2 via headless Chrome (`--force-device-scale-factor` 1 / 0.5 for the two sizes; rsvg can't do woff2) — documented in `.wordpress.org/README.md`. Also rendered the missing `icon-128x128.png`/`icon-256x256.png` from icon.svg. Only screenshots remain on the assets checklist.
 
