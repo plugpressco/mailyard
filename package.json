@@ -1,6 +1,6 @@
 {
   "name": "mailyard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "build": "composer install --no-interaction && wp-scripts build",

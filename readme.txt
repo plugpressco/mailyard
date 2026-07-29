@@ -4,7 +4,7 @@ Tags: smtp, email, email-log, deliverability, transactional-email
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -182,6 +182,10 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 6. Settings → Connect AI — the master switch and per-tool permissions for AI agents.
 
 == Changelog ==
+
+= 1.0.1 =
+* Fix: Reply-To headers in "Name <email>" form are reduced to the bare address before reaching ESP drivers — replies to form-notification emails no longer bounce.
+* Fix: emails without an explicit Content-Type header now follow `wp_mail_content_type` (plain text by default), preserving line breaks in plain-text messages.
 
 = 1.0.0 =
 * Initial release.

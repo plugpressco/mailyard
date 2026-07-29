@@ -232,14 +232,27 @@ class Override {
 			$type = strtolower( trim( explode( ';', $value )[0] ) );
 			return 'text/plain' !== $type;
 		}
-		return true;
+
+		// No Content-Type header: resolve it the way wp_mail() itself would —
+		// plain text unless a plugin opts into HTML via the filter. Defaulting
+		// to HTML here collapses \n-formatted plain-text bodies into one line.
+		$type = strtolower( trim( (string) apply_filters( 'wp_mail_content_type', 'text/plain' ) ) );
+		return 'text/plain' !== $type;
 	}
 
+	// Callers may set "Reply-To: Name <email>"; the ESP drivers expect a bare
+	// address (they run sanitize_email(), which mangles a name+brackets string
+	// into an invalid-but-plausible address). Extract the address only.
 	private function parse_reply_to( $headers ): string {
 		foreach ( $this->normalize_headers( $headers ) as $name => $value ) {
-			if ( 'reply-to' === $name ) {
-				return trim( $value );
+			if ( 'reply-to' !== $name ) {
+				continue;
 			}
+			$value = trim( $value );
+			if ( preg_match( '/<([^<>]+)>/', $value, $m ) ) {
+				$value = trim( $m[1] );
+			}
+			return is_email( $value ) ? $value : '';
 		}
 		return '';
 	}

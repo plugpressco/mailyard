@@ -3,7 +3,7 @@
  * Plugin Name:       Mailyard
  * Plugin URI:        https://mailyard.co
  * Description:       WP SMTP plugin with automatic email failover. Send via Amazon SES, Postmark, Resend, Brevo or any SMTP — with an email log and deliverability fixes.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 7.0
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MAILYARD_VERSION', '1.0.0' );
+define( 'MAILYARD_VERSION', '1.0.1' );
 
 // Universal admin-shell API version. Extenders (Mailyard Pro) check this to
 // decide between shell mode (register into Mailyard's dashboard) and their
