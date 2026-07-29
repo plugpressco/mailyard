@@ -3,7 +3,9 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-07-29, later) — readme SEO/compact rewrite + plugpress.co/mailyard links
+## Last session (2026-07-29, later) — readme SEO rewrite + plugpress.co/mailyard links + wp.org banner shipped
+
+- **WP.org banner designed & shipped** (user picked from 2 rendered concepts): "light" — white plugpress-theme paper, blue mark + lowercase `mailyard` (Bricolage Grotesque 800, −0.03em), Space Mono tagline **"SMTP with a backup plan."** (no "WordPress"/"WP" — trademark rule from Saddle's round-1 review), and a failover route drawing (solid `#2395E7` line → envelope, dotted gray fallback arc forking and rejoining). Runner-up dark Saddle-shelf-mate concept kept at `.wordpress.org/src/banner-dark.html`. Pipeline: HTML comps + theme woff2 via headless Chrome (`--force-device-scale-factor` 1 / 0.5 for the two sizes; rsvg can't do woff2) — documented in `.wordpress.org/README.md`. Also rendered the missing `icon-128x128.png`/`icon-256x256.png` from icon.svg. Only screenshots remain on the assets checklist.
 
 - **readme.txt rewritten compact** (user ask: compact, SMTP-keyword SEO, real Pro upsell): title/short-description/tags untouched (already lead with the `smtp` keyword family); Description + FAQ tightened ~40% — feature H3s collapsed into a keyword-rich "What you get" bullet list plus three short differentiator sections (failover / deliverability / MCP). **External services, Installation, Screenshots, Changelog byte-identical** (compliance sections deliberately untouched).
 - **Mailyard Pro section is now a real 6-bullet feature list** (broadcast campaigns, Notion-style editor, Claude AI writing assistant BYO key, contacts/groups/segments + CSV, open tracking + analytics, RFC 8058 / GDPR compliance) — and **no longer advertises Automations** (removed from Pro 2026-07-17; the old one-liner still sold it).
