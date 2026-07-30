@@ -104,6 +104,22 @@ class Manager {
 		return $enabled;
 	}
 
+	// Resolve a connection's ESP config with provider specifics derived in one
+	// place — Postmark's message stream follows the connection's purpose
+	// (marketing → broadcast, otherwise transactional) unless explicitly set.
+	// Both the failover chain and the connection test MUST connect through
+	// this, so a test can never send on a different stream than real mail.
+	public function connection_config( array $conn ): array {
+		$config = $conn['config'] ?? array();
+		$slug   = sanitize_key( $conn['provider'] ?? '' );
+
+		if ( 'postmark' === $slug && empty( $config['stream'] ) ) {
+			$config['stream'] = ( 'marketing' === ( $conn['purpose'] ?? 'any' ) ) ? 'broadcast' : 'outbound';
+		}
+
+		return $config;
+	}
+
 	// Pair each raw connection with its connected ESP, dropping unknown providers
 	// and ones whose credentials fail to connect.
 	private function build_entries( array $conns ): array {
@@ -113,16 +129,9 @@ class Manager {
 			if ( ! isset( $this->providers[ $slug ] ) ) {
 				continue;
 			}
-			$config = $conn['config'] ?? array();
-
-			// Postmark's message stream is derived from the connection's purpose
-			// (marketing → broadcast, otherwise transactional) unless explicitly set.
-			if ( 'postmark' === $slug && empty( $config['stream'] ) ) {
-				$config['stream'] = ( 'marketing' === ( $conn['purpose'] ?? 'any' ) ) ? 'broadcast' : 'outbound';
-			}
 
 			$esp = $this->providers[ $slug ];
-			if ( ! $esp->connect( $config ) ) {
+			if ( ! $esp->connect( $this->connection_config( $conn ) ) ) {
 				continue;
 			}
 			$out[] = array( 'slug' => $slug, 'esp' => $esp, 'conn' => $conn );

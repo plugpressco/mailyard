@@ -301,7 +301,10 @@ class REST_API {
 		}
 
 		$esp = Manager::instance()->get( $conn['provider'] );
-		if ( ! $esp || ! $esp->connect( $conn['config'] ?? array() ) ) {
+		// connection_config() derives provider specifics (Postmark stream from
+		// purpose) — raw config here made Marketing connections test on the
+		// transactional stream, hiding routing mistakes until a real campaign.
+		if ( ! $esp || ! $esp->connect( Manager::instance()->connection_config( $conn ) ) ) {
 			$this->record_test_result( $id, 'failed', __( 'Connection could not be initialized — check credentials.', 'mailyard' ) );
 			return rest_ensure_response( array( 'success' => false, 'message' => __( 'Connection could not be initialized.', 'mailyard' ) ) );
 		}
