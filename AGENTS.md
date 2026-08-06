@@ -11,3 +11,9 @@ admin UI, read the usage guide shipped with the package:
 It covers setup, the design rules you must follow, the component inventory, and why UI changes
 don't appear until the pinned tag is bumped and the plugin is rebuilt.
 <!-- END @plugpress/ui -->
+
+## GitHub workflow
+
+Read `CLAUDE.md` in this repo before starting any task. It defines the required
+GitHub workflow — issue → branch → commit → **push** → PR → CI → merge — and the
+definition of done. Those rules apply to every agent working here, not just Claude.
