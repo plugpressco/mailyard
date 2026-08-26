@@ -14,7 +14,8 @@
  * no MCP transport of its own.
  *
  * The whole layer is a silent no-op on WordPress older than 6.9 (the API's
- * functions simply don't exist), which is why the plugin still supports 5.8.
+ * functions simply don't exist) — a defensive guard only, since the plugin's
+ * own floor is WP 7.0.
  *
  * @package Mailyard
  */
