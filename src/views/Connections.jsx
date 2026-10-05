@@ -112,8 +112,12 @@ function ConfigPage( { provider, conn, onSave, onBack, saving, onConnect, connec
 		setConfig( ( prev ) => ( { ...prev, ...preset.values } ) );
 	};
 
+	// Fields set in wp-config.php: shown as managed there, never required here.
+	const locked = window.mailyard?.locked?.[ provider.id ] || [];
+	const lockedHint = ( key ) => `Set in wp-config.php as MAILYARD_${ provider.id.toUpperCase() }_${ key.toUpperCase() }.`;
+
 	const credentialsFilled = ! provider.fields
-		.filter( ( f ) => f.required )
+		.filter( ( f ) => f.required && ! locked.includes( f.key ) )
 		.some( ( f ) => ! config[ f.key ]?.toString().trim() );
 
 	// App-only Microsoft takes a client secret OR a certificate.
@@ -210,6 +214,16 @@ function ConfigPage( { provider, conn, onSave, onBack, saving, onConnect, connec
 									value={ config[ field.key ] || field.options?.[ 0 ]?.value || '' }
 									onChange={ ( e ) => updateField( field.key, e.target.value ) }
 									options={ field.options }
+								/>
+							) : locked.includes( field.key ) ? (
+								<Input
+									key={ field.key }
+									label={ field.label }
+									hint={ lockedHint( field.key ) }
+									placeholder="Managed in wp-config.php"
+									value=""
+									disabled
+									onChange={ () => {} }
 								/>
 							) : (
 								<Input

@@ -182,6 +182,14 @@ class Options {
 	// option out of the autoload set so credentials aren't loaded on every page.
 	// With encryption on (Settings → Security), secret fields are sealed here.
 	public static function save_connections( array $conns ): void {
+		// Shared from the main site: write there (an OAuth driver refreshing
+		// its tokens mid-send), never into a stale local copy.
+		$source = self::shared_source();
+		if ( $source ) {
+			$main = get_blog_option( $source, self::SETTINGS, array() );
+			update_blog_option( $source, self::CONNECTIONS, ! empty( $main['encrypt'] ) ? Crypto::map_secrets( $conns, true ) : $conns );
+			return;
+		}
 		if ( ! empty( self::settings()['encrypt'] ) ) {
 			$conns = Crypto::map_secrets( $conns, true );
 		}

@@ -110,7 +110,21 @@ class Settings {
 			'version'       => MAILYARD_VERSION,
 			'adminEmail'    => (string) get_option( 'admin_email' ),
 			'oauthRedirect' => OAuth::redirect_uri(),
+			'locked'        => $this->locked_fields(),
 		) );
+	}
+
+	// provider slug => field keys set in wp-config.php (MAILYARD_{PROVIDER}_{FIELD}),
+	// so the connection editor can show them as managed there.
+	private function locked_fields(): object {
+		$out = array();
+		foreach ( array_keys( Manager::instance()->all() ) as $slug ) {
+			$keys = array_keys( Manager::instance()->constant_fields( $slug ) );
+			if ( $keys ) {
+				$out[ $slug ] = $keys;
+			}
+		}
+		return (object) $out;
 	}
 
 	public function render() {

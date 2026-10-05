@@ -14,7 +14,9 @@ export default function AlertsSettings() {
 	const { settings, loading, save } = useSettings();
 	const [ form, setForm ] = useState( { alert_email: false, alert_to: '', alert_webhook: '', weekly_summary: false } );
 	const [ testing, setTesting ] = useState( null );
-	const dirty = useRef( false );
+	// Bumped by user edits only — hydrating from a save's response must not
+	// trigger another save.
+	const [ changeCount, setChangeCount ] = useState( 0 );
 	const timer = useRef( null );
 
 	useEffect( () => {
@@ -29,7 +31,7 @@ export default function AlertsSettings() {
 
 	// Debounced auto-save, only after the user changed something.
 	useEffect( () => {
-		if ( ! dirty.current ) return;
+		if ( changeCount === 0 ) return;
 		clearTimeout( timer.current );
 		timer.current = setTimeout( () => {
 			save( { ...form, alert_to: form.alert_to.trim(), alert_webhook: form.alert_webhook.trim() } )
@@ -37,11 +39,11 @@ export default function AlertsSettings() {
 				.catch( () => toast.error( 'Failed to save' ) );
 		}, 600 );
 		return () => clearTimeout( timer.current );
-	}, [ form ] ); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [ changeCount ] ); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const set = ( key, value ) => {
-		dirty.current = true;
 		setForm( ( f ) => ( { ...f, [ key ]: value } ) );
+		setChangeCount( ( c ) => c + 1 );
 	};
 
 	const test = ( channel ) => {
