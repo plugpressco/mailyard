@@ -38,6 +38,7 @@ class REST_API {
 		$this->route( $ns, '/dashboard',           array( 'GET'  => 'get_dashboard' ) );
 		$this->route( $ns, '/test-email',          array( 'POST' => 'send_test' ) );
 		$this->route( $ns, '/logs',                array( 'GET'  => 'get_logs' ) );
+		$this->route( $ns, '/logs/export',         array( 'GET'  => 'export_logs' ) );
 		$this->route( $ns, '/logs/(?P<id>\d+)/resend', array( 'POST' => 'resend_log' ) );
 		$this->route( $ns, '/deliverability',      array( 'GET'  => 'get_deliverability' ) );
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
@@ -155,7 +156,7 @@ class REST_API {
 
 		// Credentials are NOT stored here — they live on each connection's
 		// 'config' field under mailyard_connections (non-autoloaded).
-		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails', 'alert_email', 'alert_to', 'alert_webhook', 'weekly_summary' );
+		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails', 'alert_email', 'alert_to', 'alert_webhook', 'weekly_summary', 'log_retention' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $input[ $key ] ) ) {
@@ -368,6 +369,9 @@ class REST_API {
 			'chain'        => $chain_view,
 			'health'       => $offline ? 'offline' : $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ),
 			'series'       => $logger->daily_stats( 14 ),
+			'top_errors'   => array_map( function ( $row ) {
+				return $row + array( 'human' => Errors::humanize( $row['error'], '' ) );
+			}, $logger->top_errors( 7, 3 ) ),
 			'recent'       => $recent['items'] ?? array(),
 		) );
 	}
@@ -566,12 +570,26 @@ class REST_API {
 	}
 
 	public function get_logs( $request ) {
-		return rest_ensure_response( Logger::instance()->query( array(
-			'status'   => sanitize_key( $request->get_param( 'status' ) ?? 'all' ),
-			'search'   => sanitize_text_field( $request->get_param( 'search' ) ?? '' ),
+		return rest_ensure_response( Logger::instance()->query( $this->log_filters( $request ) + array(
 			'page'     => absint( $request->get_param( 'page' ) ?? 1 ),
 			'per_page' => absint( $request->get_param( 'per_page' ) ?? 20 ),
 		) ) );
+	}
+
+	// The filtered log as CSV text; the browser turns it into a download.
+	public function export_logs( $request ) {
+		return rest_ensure_response( array(
+			'filename' => 'mailyard-log-' . gmdate( 'Y-m-d' ) . '.csv',
+			'csv'      => Logger::instance()->export_csv( $this->log_filters( $request ) ),
+		) );
+	}
+
+	private function log_filters( $request ): array {
+		return array(
+			'status'   => sanitize_key( $request->get_param( 'status' ) ?? 'all' ),
+			'provider' => sanitize_key( $request->get_param( 'provider' ) ?? 'all' ),
+			'search'   => sanitize_text_field( $request->get_param( 'search' ) ?? '' ),
+		);
 	}
 
 	/**
@@ -670,6 +688,8 @@ class REST_API {
 			case 'alert_email':
 			case 'weekly_summary':
 				return (bool) $value;
+			case 'log_retention':
+				return in_array( (int) $value, array( 0, 7, 30, 90 ), true ) ? (int) $value : Plugin::LOG_RETAIN_DAYS;
 			case 'alert_webhook':
 				$url = esc_url_raw( trim( (string) $value ), array( 'https', 'http' ) );
 				return wp_http_validate_url( $url ) ? $url : '';

@@ -3,7 +3,7 @@ import { Dialog, DangerZone as PPDangerZone, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
 import { post } from '@/lib/api';
-import { Card, Input, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
+import { Card, Input, Select, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
 import ToggleRow from '@/components/ToggleRow';
 
 const ConnectAI = lazy( () => import( './ConnectAI' ) );
@@ -109,6 +109,7 @@ function DeliverySettings() {
 	const [ fromName, setFromName ] = useState( '' );
 	const [ returnPath, setReturnPath ] = useState( '' );
 	const [ logging, setLogging ] = useState( true );
+	const [ retention, setRetention ] = useState( '30' );
 	const [ background, setBackground ] = useState( false );
 	const [ offline, setOffline ] = useState( false );
 
@@ -123,6 +124,7 @@ function DeliverySettings() {
 		setFromName( settings.from_name ?? '' );
 		setReturnPath( settings.return_path ?? '' );
 		setLogging( settings.logging ?? true );
+		setRetention( String( settings.log_retention ?? 30 ) );
 		setBackground( !! settings.background );
 		setOffline( !! settings.offline );
 	}, [ settings ] );
@@ -143,6 +145,7 @@ function DeliverySettings() {
 				from_name:  fromName.trim(),
 				return_path: returnPath.trim(),
 				logging,
+				log_retention: Number( retention ),
 				background,
 				offline,
 			} )
@@ -203,7 +206,20 @@ function DeliverySettings() {
 					description="Store every outgoing email in the Email log for debugging and review."
 					on={ logging }
 					onChange={ ( v ) => { setLogging( v ); trigger( v ? 'Logging enabled' : 'Logging disabled' ); } }
-				/>
+				>
+					<Select
+						label="Keep logs for"
+						options={ [
+							{ value: '7', label: '7 days' },
+							{ value: '30', label: '30 days' },
+							{ value: '90', label: '90 days' },
+							{ value: '0', label: 'Forever' },
+						] }
+						value={ retention }
+						onChange={ ( e ) => { setRetention( e.target.value ); trigger( 'Log retention updated' ); } }
+						className="max-w-[200px]"
+					/>
+				</ToggleRow>
 				<ToggleRow
 					title="Offline mode"
 					description="Log every email without sending any. For staging and development sites."

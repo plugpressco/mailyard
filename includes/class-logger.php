@@ -139,6 +139,11 @@ class Logger {
 			$values[] = sanitize_key( $args['status'] );
 		}
 
+		if ( ! empty( $args['provider'] ) && 'all' !== $args['provider'] ) {
+			$where[]  = 'provider = %s';
+			$values[] = sanitize_key( $args['provider'] );
+		}
+
 		if ( ! empty( $args['search'] ) ) {
 			$like     = '%' . $wpdb->esc_like( sanitize_text_field( $args['search'] ) ) . '%';
 			$where[]  = '(to_email LIKE %s OR subject LIKE %s)';
@@ -238,6 +243,37 @@ class Logger {
 			);
 		}
 		return $out;
+	}
+
+	/**
+	 * The filtered log as CSV — newest first, at most $limit rows, without
+	 * bodies or headers (those stay in the admin, one message at a time).
+	 *
+	 * @param array $args  Same filters as query().
+	 * @param int   $limit Row cap.
+	 */
+	public function export_csv( array $args, int $limit = 10000 ): string {
+		$out = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		fputcsv( $out, array( 'id', 'date', 'to', 'subject', 'provider', 'status', 'error' ), ',', '"', '\\' );
+		$pages = (int) ceil( $limit / 100 );
+		for ( $page = 1; $page <= $pages; $page++ ) {
+			$rows = $this->query( array_merge( $args, array( 'page' => $page, 'per_page' => 100 ) ) )['items'];
+			foreach ( $rows as $r ) {
+				// Leading = + - @ would run as a formula in a spreadsheet.
+				$cells = array_map( static function ( $v ) {
+					$v = (string) $v;
+					return preg_match( '/^[=+\-@\t\r]/', $v ) ? "'" . $v : $v;
+				}, array( $r['id'], $r['created_at'], $r['to'], $r['subject'], $r['provider'], $r['status'], $r['error'] ) );
+				fputcsv( $out, $cells, ',', '"', '\\' );
+			}
+			if ( count( $rows ) < 100 ) {
+				break;
+			}
+		}
+		rewind( $out );
+		$csv = (string) stream_get_contents( $out );
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return $csv;
 	}
 
 	// Delete logs older than N days.

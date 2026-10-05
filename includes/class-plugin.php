@@ -119,8 +119,13 @@ class Plugin {
 		update_option( Options::CONNECTIONS, $conns, false );
 	}
 
+	// Settings → Delivery picks 7, 30 (default) or 90 days, or 0 to keep logs
+	// forever.
 	public function run_cleanup(): void {
-		Logger::instance()->cleanup( self::LOG_RETAIN_DAYS );
+		$days = (int) ( Options::settings()['log_retention'] ?? self::LOG_RETAIN_DAYS );
+		if ( $days > 0 ) {
+			Logger::instance()->cleanup( $days );
+		}
 	}
 
 	public function plugin_action_links( array $links ): array {

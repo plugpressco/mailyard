@@ -175,6 +175,10 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Add: Offline mode — every email is logged, none are sent. For staging and development sites.
 * Add: PHP Mail as a connection — your server's own mail, no setup, handy as the last backup in the chain.
 * Add: The email log shows each message's Cc, Bcc and Reply-To.
+* Add: Email log filters by provider, paging, and CSV export.
+* Add: Keep logs for 7, 30 or 90 days, or forever.
+* Add: Dashboard panel with the week's most common failure reasons, in plain words.
+* Update: Any logged email can be resent, not only failed ones.
 * Add: Send test names the provider that delivered it, and says so when a backup had to take over.
 * Update: Simpler admin — one sidebar (Dashboard, Connections, Email log, Deliverability, Settings), mirrored in the WordPress menu.
 * Update: Connections no longer have a Marketing/Transactional purpose; every enabled connection carries all mail. A connection that was set to Marketing only is switched off on update (its settings are kept).

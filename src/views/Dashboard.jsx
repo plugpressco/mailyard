@@ -112,6 +112,24 @@ function ActivityFeed( { items, onNavigate } ) {
 	);
 }
 
+// The most common reasons sends failed this week, in plain words.
+function TopErrors( { rows, onNavigate } ) {
+	return (
+		<Card className="mb-4 overflow-hidden p-0">
+			<PanelHead title="Why emails failed · 7 days" action="View failures" onAction={ () => onNavigate( 'logs' ) } />
+			{ rows.map( ( r, i ) => (
+				<div key={ i } className="flex items-start gap-3 border-b border-ink-100 px-4 py-2.5 last:border-0">
+					<span className="w-8 shrink-0 font-mono text-[12px] font-semibold text-danger">{ r.count }×</span>
+					<div className="min-w-0 flex-1">
+						<div className="text-[12.5px] font-medium text-ink-900">{ r.human?.title || r.error }</div>
+						{ r.human?.guidance && <div className="mt-0.5 text-[11.5px] leading-relaxed text-ink-500">{ r.human.guidance }</div> }
+					</div>
+				</div>
+			) ) }
+		</Card>
+	);
+}
+
 function SendTestPanel( { onClose, onSent } ) {
 	const [ to, setTo ] = useState( '' );
 	const [ state, setState ] = useState( null );
@@ -233,6 +251,8 @@ export default function Dashboard( { onNavigate } ) {
 				</Card>
 				<ChainPanel chain={ chain } onNavigate={ onNavigate } />
 			</div>
+
+			{ data?.top_errors?.length > 0 && <TopErrors rows={ data.top_errors } onNavigate={ onNavigate } /> }
 
 			<ActivityFeed items={ recent } onNavigate={ onNavigate } />
 		</div>

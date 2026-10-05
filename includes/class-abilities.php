@@ -270,7 +270,7 @@ class Abilities {
 					'properties' => array(
 						'status' => array(
 							'type'        => 'string',
-							'enum'        => array( 'all', 'sent', 'failed' ),
+							'enum'        => array( 'all', 'sent', 'failed', 'pending', 'offline' ),
 							'description' => __( 'Filter by status. Default: all.', 'mailyard' ),
 						),
 						'search' => array(
