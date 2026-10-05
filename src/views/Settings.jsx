@@ -3,9 +3,11 @@ import { Dialog, DangerZone as PPDangerZone, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
 import { post } from '@/lib/api';
-import { Card, Toggle, Input, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
+import { Card, Input, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
+import ToggleRow from '@/components/ToggleRow';
 
 const ConnectAI = lazy( () => import( './ConnectAI' ) );
+const AlertsSettings = lazy( () => import( './AlertsSettings' ) );
 
 // Confirm modal for the irreversible "Delete all data" action. Uses the
 // design system's Dialog (focus trap, esc, aria). The destructive button
@@ -93,18 +95,6 @@ function DataDanger() {
 					onCancel={ () => ! erasing && setOpen( false ) }
 				/>
 			) }
-		</div>
-	);
-}
-
-function ToggleRow( { title, description, on, onChange } ) {
-	return (
-		<div className="flex items-center justify-between gap-6 px-5 py-4">
-			<div>
-				<div className="text-[13px] font-semibold text-ink-900">{ title }</div>
-				<div className="mt-[1px] text-[12px] text-ink-400">{ description }</div>
-			</div>
-			<Toggle label={ title } on={ on } onChange={ onChange } />
 		</div>
 	);
 }
@@ -317,6 +307,7 @@ const SECTION_GROUPS = [
 /** Every settings section, in rail order. */
 const SECTIONS = [
 	{ id: 'delivery', label: 'Delivery', group: 'configure', Component: DeliverySettings },
+	{ id: 'alerts', label: 'Alerts', group: 'configure', Component: AlertsSettings },
 	{ id: 'wordpress-emails', label: 'WordPress emails', group: 'configure', Component: WordPressEmails },
 	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', Component: ConnectAI },
 	{ id: 'data', label: 'Data & danger', group: 'data', Component: DataDanger },

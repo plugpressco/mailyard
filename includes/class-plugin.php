@@ -75,6 +75,7 @@ class Plugin {
 
 	public function on_deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_CLEANUP );
+		wp_clear_scheduled_hook( Alerts::SUMMARY_HOOK );
 	}
 
 	public function on_init(): void {
@@ -94,6 +95,7 @@ class Plugin {
 		Logger::instance()->init();
 		( new Override() )->init();
 		( new WP_Emails() )->init();
+		( new Alerts() )->init();
 		( new Failure_Notice() )->init();
 	}
 
@@ -155,6 +157,7 @@ class Plugin {
 		require_once $includes . 'class-logger.php';
 		require_once $includes . 'class-override.php';
 		require_once $includes . 'class-wp-emails.php';
+		require_once $includes . 'class-alerts.php';
 		require_once $includes . 'class-failure-notice.php';
 		require_once $includes . 'class-data-deleter.php';
 		require_once $includes . 'class-importer.php';

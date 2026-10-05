@@ -166,6 +166,9 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 = 1.1.0 =
 * Add: Six more providers — Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend and Maileroo.
 * Add: One-click import from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP — provider, credentials and sender come over, including FluentSMTP's backup and per-sender routing.
+* Add: Failure alerts by email — sent by your server's own mailer, so they arrive even when the provider is what broke. Also when a backup has to take over. At most one per hour.
+* Add: Alerts on Slack, Discord, Microsoft Teams or any JSON webhook, with a test button. Individual emails are never posted.
+* Add: Weekly summary — what went out, what failed, the most common errors. Nothing on a quiet week.
 * Add: WordPress emails — switch off the notifications WordPress sends by itself (new users, password and email changes, comments, auto-update reports). Password resets always go out.
 * Add: Return path — send bounces to their own mailbox (SMTP and PHP Mail), per message via the `mailyard_return_path` filter.
 * Add: Background sending — the page answers first and the email goes out right after, shown as Pending in the log until then.

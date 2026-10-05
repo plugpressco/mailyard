@@ -183,6 +183,27 @@ class Logger {
 		);
 	}
 
+	// Failed sends in the last N seconds (for alert wording).
+	public function count_failed_since( int $seconds ): int {
+		global $wpdb;
+		$t = esc_sql( self::table() );
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$t} WHERE status = 'failed' AND created_at >= DATE_SUB(NOW(), INTERVAL %d SECOND)", max( 1, $seconds ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+	}
+
+	// The most common failure messages of the last N days: [{ error, count }].
+	public function top_errors( int $days = 7, int $limit = 5 ): array {
+		global $wpdb;
+		$t    = esc_sql( self::table() );
+		$rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			"SELECT error_message AS error, COUNT(*) AS count FROM {$t} WHERE status = 'failed' AND error_message <> '' AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY) GROUP BY error_message ORDER BY count DESC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			max( 1, $days ),
+			max( 1, $limit )
+		), ARRAY_A );
+		return array_map( static function ( $r ) {
+			return array( 'error' => (string) $r['error'], 'count' => (int) $r['count'] );
+		}, (array) $rows );
+	}
+
 	// Per-day sent/failed counts for the last N days (oldest first), gaps filled
 	// with zeros. Powers the dashboard send-volume chart.
 	public function daily_stats( int $days = 14 ): array {

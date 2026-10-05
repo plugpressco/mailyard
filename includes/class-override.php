@@ -48,6 +48,24 @@ class Override {
 		}
 	}
 
+	/**
+	 * Run $fn with Mailyard standing aside: wp_mail() inside it goes out through
+	 * WordPress's own mailer and isn't logged. For alerts about a failing
+	 * provider, which must not travel through that provider.
+	 *
+	 * @param callable $fn Work that sends mail.
+	 * @return mixed Whatever $fn returns.
+	 */
+	public static function unrouted( callable $fn ) {
+		$was           = self::$sending;
+		self::$sending = true;
+		try {
+			return $fn();
+		} finally {
+			self::$sending = $was;
+		}
+	}
+
 	// { status, provider, error } of the last intercepted send, or empty when
 	// wp_mail() fell through to WordPress (no usable connection).
 	public static function last_outcome(): array {
@@ -179,7 +197,18 @@ class Override {
 				if ( $result->is_success() ) {
 					$this->record( $log, $log_id, 'sent', $link['slug'], '' );
 					self::$last['failed'] = $failures;
+					self::$sending        = false;
 					do_action( 'mailyard_send_succeeded', $log['to'], $link['slug'] );
+					if ( $failures ) {
+						/**
+						 * A backup delivered after earlier connections failed.
+						 *
+						 * @param string $to       Recipients.
+						 * @param string $provider The provider that delivered.
+						 * @param array  $failures [{ provider, error }] in chain order.
+						 */
+						do_action( 'mailyard_send_rescued', $log['to'], $link['slug'], $failures );
+					}
 					return true;
 				}
 

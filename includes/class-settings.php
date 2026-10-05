@@ -105,9 +105,10 @@ class Settings {
 		// which supplies its own X-WP-Nonce (wp_rest) middleware. We expose the REST
 		// root + nonce so the client can authenticate.
 		wp_localize_script( 'mailyard-admin', 'mailyard', array(
-			'restUrl' => esc_url_raw( rest_url( Options::REST_NS ) ),
-			'nonce'   => wp_create_nonce( 'wp_rest' ),
-			'version' => MAILYARD_VERSION,
+			'restUrl'    => esc_url_raw( rest_url( Options::REST_NS ) ),
+			'nonce'      => wp_create_nonce( 'wp_rest' ),
+			'version'    => MAILYARD_VERSION,
+			'adminEmail' => (string) get_option( 'admin_email' ),
 		) );
 	}
 

@@ -43,6 +43,8 @@ class REST_API {
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
 		$this->route( $ns, '/data/erase-all',      array( 'POST' => 'erase_all_data' ) );
 
+		$this->route( $ns, '/alerts/test', array( 'POST' => 'test_alert' ) );
+
 		// Importer: other SMTP plugins' saved setups.
 		$this->route( $ns, '/import', array(
 			'GET'  => 'get_imports',
@@ -153,7 +155,7 @@ class REST_API {
 
 		// Credentials are NOT stored here — they live on each connection's
 		// 'config' field under mailyard_connections (non-autoloaded).
-		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails' );
+		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails', 'alert_email', 'alert_to', 'alert_webhook', 'weekly_summary' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $input[ $key ] ) ) {
@@ -535,6 +537,22 @@ class REST_API {
 		return rest_ensure_response( array( 'success' => true ) );
 	}
 
+	// Send a sample alert by email or to the saved webhook, and say how it went.
+	public function test_alert( $request ) {
+		$input   = (array) $request->get_json_params();
+		$channel = 'webhook' === ( $input['channel'] ?? '' ) ? 'webhook' : 'email';
+		$target  = 'webhook' === $channel
+			? esc_url_raw( trim( (string) ( $input['target'] ?? '' ) ), array( 'https', 'http' ) )
+			: sanitize_email( (string) ( $input['target'] ?? '' ) );
+		$result  = ( new Alerts() )->test( $channel, $target );
+		return rest_ensure_response( array(
+			'success' => ! is_wp_error( $result ),
+			'message' => is_wp_error( $result )
+				? $result->get_error_message()
+				: ( 'webhook' === $channel ? __( 'Test alert posted.', 'mailyard' ) : __( 'Test alert sent by your server’s own mailer.', 'mailyard' ) ),
+		) );
+	}
+
 	public function get_imports() {
 		return rest_ensure_response( ( new Importer() )->detect() );
 	}
@@ -647,7 +665,14 @@ class REST_API {
 				return sanitize_key( $value );
 			case 'from_email':
 			case 'return_path':
+			case 'alert_to':
 				return sanitize_email( $value );
+			case 'alert_email':
+			case 'weekly_summary':
+				return (bool) $value;
+			case 'alert_webhook':
+				$url = esc_url_raw( trim( (string) $value ), array( 'https', 'http' ) );
+				return wp_http_validate_url( $url ) ? $url : '';
 			case 'disabled_emails':
 				return WP_Emails::sanitize( $value );
 			case 'from_name':
