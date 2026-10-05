@@ -43,6 +43,7 @@ class Plugin {
 		if ( is_admin() ) {
 			Settings::instance()->init();
 			Conflicts::instance()->init();
+			( new OAuth() )->init();
 			add_filter( 'plugin_action_links_' . MAILYARD_BASENAME, array( $this, 'plugin_action_links' ) );
 		}
 	}
@@ -152,10 +153,16 @@ class Plugin {
 		require_once $includes . 'esp/class-mailjet.php';
 		require_once $includes . 'esp/class-mailersend.php';
 		require_once $includes . 'esp/class-maileroo.php';
+		require_once $includes . 'esp/class-mime.php';
+		require_once $includes . 'esp/class-gmail.php';
+		require_once $includes . 'esp/class-microsoft.php';
+		require_once $includes . 'esp/class-microsoft-app.php';
+		require_once $includes . 'esp/class-zoho.php';
 		require_once $includes . 'esp/class-smtp.php';
 
 		require_once $includes . 'class-options.php';
 		require_once $includes . 'class-crypto.php';
+		require_once $includes . 'class-oauth.php';
 		require_once $includes . 'class-manager.php';
 		require_once $includes . 'class-deliverability.php';
 		require_once $includes . 'class-errors.php';

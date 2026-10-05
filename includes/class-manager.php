@@ -30,6 +30,10 @@ class Manager {
 			'mailjet'                 => new ESP\Mailjet(),
 			'mailersend'              => new ESP\MailerSend(),
 			'maileroo'                => new ESP\Maileroo(),
+			'gmail'                   => new ESP\Gmail(),
+			'microsoft'               => new ESP\Microsoft(),
+			'microsoft_app'           => new ESP\Microsoft_App(),
+			'zoho'                    => new ESP\Zoho(),
 			'smtp'                    => new ESP\SMTP(),
 			Options::DEFAULT_PROVIDER => new ESP\Default_Mail(),
 		);
@@ -109,12 +113,14 @@ class Manager {
 	// Resolve a connection's ESP config. Both the failover chain and the
 	// connection test MUST connect through this, so a test can never send with
 	// different settings than real mail. wp-config constants win over stored
-	// values (see constant_fields()).
+	// values (see constant_fields()); `_connection_id` lets OAuth drivers save
+	// refreshed tokens back to the connection they came from.
 	public function connection_config( array $conn ): array {
 		$config = is_array( $conn['config'] ?? null ) ? $conn['config'] : array();
 		foreach ( $this->constant_fields( (string) ( $conn['provider'] ?? '' ) ) as $key => $value ) {
 			$config[ $key ] = $value;
 		}
+		$config['_connection_id'] = (string) ( $conn['id'] ?? '' );
 		return $config;
 	}
 

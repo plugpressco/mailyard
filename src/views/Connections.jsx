@@ -12,7 +12,7 @@ import useConnections from '@/hooks/useConnections';
 import { get, post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
-import { Card, Button, Toggle, Input, Select, TagInput, SectionTitle, PageHeader, ConnectionsSkeleton } from '@/components/ui';
+import { Card, Button, Toggle, Input, Select, Textarea, TagInput, SectionTitle, PageHeader, ConnectionsSkeleton } from '@/components/ui';
 import { PlusIcon, GearIcon, XIcon, GripIcon, LinkIcon, ChevronRightIcon } from '@/components/Icons';
 import { LIVE_PROVIDERS, SMTP_PRESETS } from '@/lib/providers';
 
@@ -34,7 +34,49 @@ function ArrowLeftIcon( props ) {
 	);
 }
 
-function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
+// The redirect URI an OAuth app must allow, with a copy button.
+function RedirectUri() {
+	const uri = window.mailyard?.oauthRedirect || '';
+	const copy = () => {
+		navigator.clipboard?.writeText( uri )
+			.then( () => toast.success( 'Redirect URI copied' ) )
+			.catch( () => toast.error( 'Copy failed — select the text instead' ) );
+	};
+	return (
+		<div>
+			<div className="mb-1 text-[12px] font-medium text-ink-700">Redirect URI</div>
+			<div className="flex items-center gap-2">
+				<code className="min-w-0 flex-1 truncate rounded-md border border-ink-200/70 bg-canvas px-2.5 py-1.5 font-mono text-[11.5px] text-ink-700" title={ uri }>
+					{ uri }
+				</code>
+				<Button size="sm" variant="secondary" onClick={ copy }>Copy</Button>
+			</div>
+			<p className="mt-1 mb-0 text-[11.5px] text-ink-400">Add this exact address to your app’s allowed redirect URIs.</p>
+		</div>
+	);
+}
+
+// Account status for a saved sign-in connection, with (Re)connect.
+function AccountCard( { conn, provider, onConnect, connecting } ) {
+	return (
+		<Card className="mb-3 flex items-center gap-3 px-5 py-4">
+			<div className="min-w-0 flex-1">
+				<SectionTitle>Account</SectionTitle>
+				<div className="mt-1 flex items-center gap-1.5 text-[12.5px]">
+					<span className={ `h-2 w-2 rounded-full ${ conn.connected ? 'bg-success' : 'bg-ink-300' }` } />
+					<span className={ conn.connected ? 'text-ink-800' : 'text-ink-500' }>
+						{ conn.connected ? `Connected — emails go out through your ${ provider.name } account.` : 'Not connected yet.' }
+					</span>
+				</div>
+			</div>
+			<Button size="sm" variant={ conn.connected ? 'secondary' : undefined } disabled={ connecting } onClick={ () => onConnect( conn.id ) }>
+				{ connecting ? 'Opening…' : conn.connected ? 'Reconnect' : 'Connect account' }
+			</Button>
+		</Card>
+	);
+}
+
+function ConfigPage( { provider, conn, onSave, onBack, saving, onConnect, connecting } ) {
 	const [ name, setName ] = useState( '' );
 	const [ config, setConfig ] = useState( {} );
 	const [ fromEmail, setFromEmail ] = useState( '' );
@@ -74,7 +116,14 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 		.filter( ( f ) => f.required )
 		.some( ( f ) => ! config[ f.key ]?.toString().trim() );
 
-	const canSave = credentialsFilled && fromEmail.trim() && name.trim();
+	// App-only Microsoft takes a client secret OR a certificate.
+	const credentialOk = provider.id !== 'microsoft_app' || !! ( config.client_secret?.trim() || config.certificate?.trim() );
+
+	const canSave = credentialsFilled && credentialOk && fromEmail.trim() && name.trim();
+
+	// A sign-in provider that isn't connected yet goes straight to its
+	// consent screen after saving.
+	const connectAfterSave = provider.oauth && ! conn?.connected;
 
 	return (
 		<div className="max-w-[600px]">
@@ -97,11 +146,21 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 				</div>
 			</div>
 
+			{ provider.oauth && conn && (
+				<AccountCard conn={ conn } provider={ provider } onConnect={ onConnect } connecting={ connecting } />
+			) }
+
 			{ provider.fields.length > 0 && (
 				<Card className="mb-3 overflow-hidden">
 					<div className="px-5 pt-4 pb-1">
-						<SectionTitle>Credentials</SectionTitle>
+						<SectionTitle>{ provider.oauth ? 'App credentials' : 'Credentials' }</SectionTitle>
+						{ provider.setup && <p className="mt-1.5 mb-0 text-[12px] leading-relaxed text-ink-500">{ provider.setup }</p> }
 					</div>
+					{ provider.oauth && (
+						<div className="px-5 pt-3">
+							<RedirectUri />
+						</div>
+					) }
 					{ provider.id === 'smtp' && (
 						<div className="px-5 pt-3">
 							<div className="flex flex-wrap gap-1.5">
@@ -130,7 +189,19 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 					) }
 					<div className="flex flex-col gap-3.5 px-5 pb-5 pt-3">
 						{ provider.fields.map( ( field ) =>
-							field.type === 'select' ? (
+							field.type === 'textarea' ? (
+								<Textarea
+									key={ field.key }
+									label={ field.label }
+									required={ field.required }
+									hint={ field.hint }
+									placeholder={ field.placeholder }
+									rows={ 6 }
+									className="font-mono text-[11px]"
+									value={ config[ field.key ] || '' }
+									onChange={ ( e ) => updateField( field.key, e.target.value ) }
+								/>
+							) : field.type === 'select' ? (
 								<Select
 									key={ field.key }
 									label={ field.label }
@@ -209,9 +280,9 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 				<Button
 					className="flex-1 justify-center"
 					disabled={ ! canSave || saving }
-					onClick={ () => canSave && onSave( { name, config, from_email: fromEmail, from_name: fromName, from_match: fromMatch } ) }
+					onClick={ () => canSave && onSave( { name, config, from_email: fromEmail, from_name: fromName, from_match: fromMatch }, { connect: connectAfterSave } ) }
 				>
-					{ saving ? 'Saving…' : conn ? 'Save changes' : 'Save & enable connection' }
+					{ saving ? 'Saving…' : connectAfterSave ? 'Save & connect account' : conn ? 'Save changes' : 'Save & enable connection' }
 				</Button>
 			</div>
 		</div>
@@ -283,7 +354,9 @@ function ImportOffers( { onImported } ) {
 		post( 'import', { source: offer.source } )
 			.then( ( res ) => {
 				toast.success(
-					res.enabled
+					res.connect > 0
+						? `Imported from ${ offer.name }. The account sign-in can’t be copied — open the connection and click Connect account.`
+						: res.enabled
 						? `Imported from ${ offer.name } — send a test to confirm it works.`
 						: `Imported from ${ offer.name }, switched off — enable it when you're ready.`
 				);
@@ -332,6 +405,8 @@ function SortableCard( { conn, index, testing, onToggle, onRemove, onEdit, onTes
 		: ok ? `Tested · ${ relative( conn.last_test_at ) }`
 		: `Test failed · ${ relative( conn.last_test_at ) }`;
 	const badgeCls = ok ? 'text-success' : 'text-danger';
+	// A sign-in connection without an account is skipped by the chain.
+	const needsSignin = LIVE_PROVIDERS.find( ( p ) => p.id === conn.provider )?.oauth && ! conn.connected;
 
 	return (
 		<div
@@ -362,6 +437,11 @@ function SortableCard( { conn, index, testing, onToggle, onRemove, onEdit, onTes
 					<span>{ conn.from_email || 'Not configured' }</span>
 					{ Array.isArray( conn.from_match ) && conn.from_match.length > 0 && (
 						<span className="truncate text-ink-500">· { conn.from_match.join( ', ' ) }</span>
+					) }
+					{ needsSignin && (
+						<button onClick={ () => onEdit( conn ) } className="cursor-pointer border-none bg-transparent p-0 text-[11.5px] font-medium text-danger underline underline-offset-2">
+							Not connected — connect account
+						</button>
 					) }
 					{ badge && (
 						<span className={ `inline-flex items-center gap-1 ${ badgeCls }` }>
@@ -401,6 +481,24 @@ export default function Connections() {
 	const [ confirmDelete, setConfirmDelete ] = useState( null );
 	const [ testConn, setTestConn ] = useState( null );
 	const [ testingId, setTestingId ] = useState( null );
+	const [ connecting, setConnecting ] = useState( false );
+
+	// Back from a provider's sign-in: say how it went, once, then tidy the URL.
+	useEffect( () => {
+		const params = new URLSearchParams( window.location.search );
+		const outcome = params.get( 'mailyard_oauth' );
+		if ( ! outcome ) {
+			return;
+		}
+		if ( 'ok' === outcome ) {
+			toast.success( 'Account connected — send a test to confirm it works.' );
+		} else {
+			toast.error( params.get( 'message' ) || 'The account couldn’t be connected.' );
+		}
+		params.delete( 'mailyard_oauth' );
+		params.delete( 'message' );
+		window.history.replaceState( null, '', `${ window.location.pathname }?${ params.toString() }${ window.location.hash }` );
+	}, [] );
 
 	// Open the test dialog for a connection (lets the user pick the recipient
 	// so a single suppressed address can't block testing).
@@ -492,18 +590,30 @@ export default function Connections() {
 		setConfigSaving( false );
 	};
 
-	const handleConfigSave = useCallback( ( { name, config, from_email, from_name, from_match } ) => {
+	// Send the browser to the provider's consent screen; it comes back to
+	// OAuth's callback, which returns here with the outcome.
+	const connectAccount = useCallback( ( id ) => {
+		setConnecting( true );
+		return post( `connections/${ id }/authorize` )
+			.then( ( res ) => { window.location.assign( res.url ); } )
+			.catch( ( err ) => { toast.error( err?.message || 'Couldn’t start the sign-in' ); setConnecting( false ); } );
+	}, [] );
+
+	const handleConfigSave = useCallback( ( { name, config, from_email, from_name, from_match }, { connect } = {} ) => {
 		setConfigSaving( true );
-		if ( editingConn ) {
-			update( editingConn.id, { name, config, from_email, from_name, from_match } )
-				.then( () => { toast.success( `${ name } updated` ); closeConfig(); } )
-				.catch( () => { toast.error( 'Failed to update' ); setConfigSaving( false ); } );
-		} else if ( configProvider ) {
-			create( { provider: configProvider.id, name, config, from_email, from_name, from_match, enabled: true } )
-				.then( () => { toast.success( `${ name } connected` ); closeConfig(); } )
-				.catch( () => { toast.error( 'Failed to save' ); setConfigSaving( false ); } );
-		}
-	}, [ editingConn, configProvider, create, update ] );
+		const saved = editingConn
+			? update( editingConn.id, { name, config, from_email, from_name, from_match } )
+			: create( { provider: configProvider.id, name, config, from_email, from_name, from_match, enabled: true } );
+		saved
+			.then( ( conn ) => {
+				if ( connect && conn?.id ) {
+					return connectAccount( conn.id );
+				}
+				toast.success( editingConn ? `${ name } updated` : `${ name } connected` );
+				closeConfig();
+			} )
+			.catch( () => { toast.error( editingConn ? 'Failed to update' : 'Failed to save' ); setConfigSaving( false ); } );
+	}, [ editingConn, configProvider, create, update, connectAccount ] );
 
 	if ( configProvider ) {
 		return (
@@ -513,6 +623,8 @@ export default function Connections() {
 				onSave={ handleConfigSave }
 				onBack={ closeConfig }
 				saving={ configSaving }
+				onConnect={ connectAccount }
+				connecting={ connecting }
 			/>
 		);
 	}

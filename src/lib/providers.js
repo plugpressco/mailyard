@@ -167,6 +167,72 @@ export const LIVE_PROVIDERS = [
 			{ key: 'api_key', label: 'Sending Key', type: 'password', required: true, placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxx', hint: 'Found in Maileroo → Domains → your domain → Sending Keys.' },
 		],
 	},
+	// Sign-in providers (`oauth`): no password is stored. The user creates an
+	// OAuth app, pastes its credentials, saves, then clicks Connect account.
+	{
+		id: 'gmail',
+		name: 'Gmail',
+		desc: 'Gmail & Google Workspace',
+		oauth: true,
+		dashboard: 'https://console.cloud.google.com/apis/credentials',
+		setup: 'In Google Cloud Console, enable the Gmail API, then create an OAuth client ID of type “Web application” and add the redirect URI below.',
+		fields: [
+			{ key: 'client_id', label: 'Client ID', type: 'text', required: true, placeholder: '1234567890-abc.apps.googleusercontent.com' },
+			{ key: 'client_secret', label: 'Client Secret', type: 'password', required: true, placeholder: 'GOCSPX-xxxxxxxxxxxxxxxx' },
+		],
+	},
+	{
+		id: 'microsoft',
+		name: 'Microsoft 365',
+		desc: 'Outlook & Microsoft 365',
+		oauth: true,
+		dashboard: 'https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
+		setup: 'In Entra ID → App registrations, register a Web app with the redirect URI below, add the delegated Microsoft Graph permission Mail.Send, and create a client secret.',
+		fields: [
+			{ key: 'client_id', label: 'Application (client) ID', type: 'text', required: true, placeholder: '00000000-0000-0000-0000-000000000000' },
+			{ key: 'client_secret', label: 'Client Secret', type: 'password', required: true, placeholder: 'Secret value (not the secret ID)' },
+			{ key: 'tenant', label: 'Tenant', type: 'text', placeholder: 'common', hint: 'Leave as “common” unless the app is single-tenant — then use its Directory (tenant) ID.' },
+		],
+	},
+	{
+		id: 'microsoft_app',
+		name: 'Microsoft 365 app-only',
+		desc: 'No sign-in — for client sites',
+		dashboard: 'https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade',
+		setup: 'In Entra ID → App registrations, give the app the Microsoft Graph APPLICATION permission Mail.Send with admin consent, then add a certificate or a client secret. Emails go out as the mailbox below — a shared mailbox works.',
+		fields: [
+			{ key: 'tenant', label: 'Directory (tenant) ID', type: 'text', required: true, placeholder: '00000000-0000-0000-0000-000000000000' },
+			{ key: 'client_id', label: 'Application (client) ID', type: 'text', required: true, placeholder: '00000000-0000-0000-0000-000000000000' },
+			{ key: 'mailbox', label: 'Send from mailbox', type: 'email', required: true, placeholder: 'noreply@yourcompany.com' },
+			{ key: 'client_secret', label: 'Client Secret', type: 'password', placeholder: 'Secret value', hint: 'Use a client secret or a certificate — one is enough.' },
+			{ key: 'certificate', label: 'Certificate + private key (PEM)', type: 'textarea', placeholder: '-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----', hint: 'Paste both blocks together. The key must not have a password.' },
+		],
+	},
+	{
+		id: 'zoho',
+		name: 'Zoho Mail',
+		desc: 'Zoho Mail mailbox',
+		oauth: true,
+		dashboard: 'https://api-console.zoho.com/',
+		setup: 'In the Zoho API Console, add a “Server-based Application” with the redirect URI below. Pick the data center your Zoho account lives in.',
+		fields: [
+			{ key: 'client_id', label: 'Client ID', type: 'text', required: true, placeholder: '1000.XXXXXXXXXXXXXXXX' },
+			{ key: 'client_secret', label: 'Client Secret', type: 'password', required: true },
+			{
+				key: 'dc', label: 'Data center', type: 'select', required: true,
+				options: [
+					{ value: 'zoho.com', label: 'United States (zoho.com)' },
+					{ value: 'zoho.eu', label: 'Europe (zoho.eu)' },
+					{ value: 'zoho.in', label: 'India (zoho.in)' },
+					{ value: 'zoho.com.au', label: 'Australia (zoho.com.au)' },
+					{ value: 'zoho.jp', label: 'Japan (zoho.jp)' },
+					{ value: 'zohocloud.ca', label: 'Canada (zohocloud.ca)' },
+					{ value: 'zoho.sa', label: 'Saudi Arabia (zoho.sa)' },
+					{ value: 'zoho.com.cn', label: 'China (zoho.com.cn)' },
+				],
+			},
+		],
+	},
 	{
 		id: 'smtp',
 		name: 'Custom SMTP',

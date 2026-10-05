@@ -23,7 +23,7 @@ That is Mailyard, and all of it is free. No locked buttons, no upgrade nags. Plu
 = What it does =
 
 * **A backup that takes over.** The moment a send fails, your backup provider tries the same email.
-* **Twelve ways to send.** Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, custom SMTP, or plain PHP mail.
+* **Sixteen ways to send.** Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, Gmail, Microsoft 365 (signed in or app-only), Zoho Mail, custom SMTP, or plain PHP mail.
 * **A log of every email.** Every send and every failure, with the provider's exact error. Logs delete themselves after 30 days.
 * **A deliverability checker.** Your SPF, DKIM, DMARC, and MX records, graded A–F, with the exact DNS record to add.
 * **Sender routing.** Receipts through Postmark, newsletters through Brevo — the right provider per sender, automatically.
@@ -39,7 +39,8 @@ Setup takes a minute: pick a provider, paste a key, send a test. If another SMTP
 * **Postmark** — best inbox placement, made for stores
 * **Amazon SES** — cheapest at high volume
 * **Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo** — already have an account with one? Use it
-* **Custom SMTP** — any SMTP server, Gmail app passwords included
+* **Gmail, Microsoft 365, Zoho Mail** — send from the mailbox you already have, signed in with OAuth (no password stored)
+* **Custom SMTP** — any SMTP server
 * **PHP mail** — your host's server; no setup, but don't count on it
 
 = Source code =
@@ -85,6 +86,15 @@ Terms and Privacy: https://www.mailersend.com/legal
 
 Maileroo — email delivery API, used if you pick Maileroo. Each email goes to `https://smtp.maileroo.com/api/v2/emails`.
 Terms: https://maileroo.com/terms-conditions — Privacy: https://maileroo.com/privacy-policy
+
+Google (Gmail API and Google sign-in) — used if you pick Gmail. When you click Connect account, your browser signs in at `https://accounts.google.com`, and Mailyard exchanges and refreshes the sign-in at `https://oauth2.googleapis.com/token`. Each email goes to `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`. No password is stored.
+Terms: https://policies.google.com/terms — Privacy: https://policies.google.com/privacy
+
+Microsoft (Microsoft Graph and the Microsoft identity platform) — used if you pick Microsoft 365. Signing in (or, for app-only, the app's own credentials) goes to `https://login.microsoftonline.com`; each email goes to `https://graph.microsoft.com/v1.0/me/sendMail` (or `/users/{mailbox}/sendMail` for app-only). No password is stored.
+Terms: https://www.microsoft.com/servicesagreement — Privacy: https://privacy.microsoft.com/privacystatement
+
+Zoho (Zoho Mail API and Zoho accounts) — used if you pick Zoho Mail. Signing in and token refresh go to `https://accounts.{your data center}` (for example accounts.zoho.com); Mailyard reads your mailbox's account ID and verified addresses from, and sends each email (and its attachments) to, `https://mail.{your data center}/api/accounts`. No password is stored.
+Terms: https://www.zoho.com/terms.html — Privacy: https://www.zoho.com/privacy.html
 
 Custom SMTP — if you pick the Custom SMTP option, email goes to the SMTP host and port you enter. That's whatever SMTP service or server you choose, so check its own terms and privacy policy.
 
@@ -138,7 +148,7 @@ In your WordPress database, like any SMTP plugin's settings. They're only ever s
 
 = Gmail or Microsoft 365? =
 
-Personal Gmail works through Custom SMTP with an app password. Google Workspace and Microsoft 365 have switched off basic SMTP auth, so use Resend or Postmark for those.
+Both work, with no password stored. Pick Gmail (personal Gmail or Google Workspace) or Microsoft 365 (including Outlook.com), create an OAuth app in Google Cloud or Entra ID, paste its Client ID and Secret, and click Connect account — the in-plugin steps show the redirect URI to allow. Building a site for a client? Microsoft 365 app-only sends from a mailbox through an Entra app registration (certificate or client secret), so nobody has to sign in. Zoho Mail works the same way.
 
 = How long do you keep email logs? =
 
@@ -165,6 +175,7 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 
 = 1.1.0 =
 * Add: Six more providers — Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend and Maileroo.
+* Add: Gmail / Google Workspace, Microsoft 365 / Outlook (including app-only, no sign-in) and Zoho Mail over OAuth 2.0 — no password stored.
 * Add: One-click import from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP — provider, credentials and sender come over, including FluentSMTP's backup and per-sender routing.
 * Add: Failure alerts by email — sent by your server's own mailer, so they arrive even when the provider is what broke. Also when a backup has to take over. At most one per hour.
 * Add: Alerts on Slack, Discord, Microsoft Teams or any JSON webhook, with a test button. Individual emails are never posted.

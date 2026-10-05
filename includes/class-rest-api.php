@@ -35,6 +35,10 @@ class REST_API {
 			'POST' => 'test_connection',
 		) );
 
+		$this->route( $ns, '/connections/(?P<id>[\w-]+)/authorize', array(
+			'POST' => 'authorize_connection',
+		) );
+
 		$this->route( $ns, '/dashboard',           array( 'GET'  => 'get_dashboard' ) );
 		$this->route( $ns, '/test-email',          array( 'POST' => 'send_test' ) );
 		$this->route( $ns, '/logs',                array( 'GET'  => 'get_logs' ) );
@@ -185,14 +189,35 @@ class REST_API {
 		return rest_ensure_response( $settings );
 	}
 
-	// `locked` lists the fields wp-config.php sets for that provider, so the
-	// editor can show them as managed there.
 	public function get_connections() {
-		$manager = Manager::instance();
-		return rest_ensure_response( array_map( static function ( $c ) use ( $manager ) {
-			$c['locked'] = array_keys( $manager->constant_fields( (string) ( $c['provider'] ?? '' ) ) );
-			return $c;
-		}, $this->connections() ) );
+		return rest_ensure_response( array_map( array( $this, 'public_connection' ), $this->connections() ) );
+	}
+
+	// A connection as the browser may see it: OAuth tokens stay on the server,
+	// replaced by a `connected` flag; `locked` lists the fields wp-config.php
+	// sets for that provider, so the editor can show them as managed there.
+	private function public_connection( array $conn ): array {
+		$config            = (array) ( $conn['config'] ?? array() );
+		$conn['connected'] = ! empty( $config['refresh_token'] );
+		$conn['config']    = array_diff_key( $config, array_flip( OAuth::TOKEN_KEYS ) );
+		$conn['locked']    = array_keys( Manager::instance()->constant_fields( (string) ( $conn['provider'] ?? '' ) ) );
+		return $conn;
+	}
+
+	/**
+	 * The sign-in link for an OAuth connection (Gmail, Microsoft 365, Zoho).
+	 * The browser opens it; the provider sends the admin back to OAuth's
+	 * admin-post callback.
+	 */
+	public function authorize_connection( $request ) {
+		$id = sanitize_text_field( $request->get_param( 'id' ) );
+		foreach ( $this->connections() as $c ) {
+			if ( $c['id'] === $id ) {
+				$url = OAuth::authorize_url( $c );
+				return is_wp_error( $url ) ? $url : rest_ensure_response( array( 'url' => $url ) );
+			}
+		}
+		return new \WP_Error( 'not_found', __( 'Connection not found.', 'mailyard' ), array( 'status' => 404 ) );
 	}
 
 	public function create_connection( $request ) {
@@ -214,7 +239,7 @@ class REST_API {
 			'name'             => sanitize_text_field( $input['name'] ?? '' ),
 			'from_email'       => sanitize_email( $input['from_email'] ?? '' ),
 			'from_name'        => sanitize_text_field( $input['from_name'] ?? '' ),
-			'config'           => $this->sanitize_config( $input['config'] ?? array() ),
+			'config'           => array_diff_key( $this->sanitize_config( $input['config'] ?? array() ), array_flip( OAuth::TOKEN_KEYS ) ),
 			'from_match'       => $this->sanitize_from_match( $input['from_match'] ?? array() ),
 			'enabled'          => (bool) ( $input['enabled'] ?? false ),
 			'priority'         => count( $conns ),
@@ -229,7 +254,7 @@ class REST_API {
 			$this->sync_active( $conns );
 		}
 
-		return rest_ensure_response( $new );
+		return rest_ensure_response( $this->public_connection( $new ) );
 	}
 
 	public function update_connection( $request ) {
@@ -259,7 +284,14 @@ class REST_API {
 				$c['from_name'] = sanitize_text_field( $input['from_name'] );
 			}
 			if ( isset( $input['config'] ) ) {
-				$c['config'] = $this->sanitize_config( $input['config'] );
+				$old    = (array) ( $c['config'] ?? array() );
+				$config = array_diff_key( $this->sanitize_config( $input['config'] ), array_flip( OAuth::TOKEN_KEYS ) );
+				// The browser never holds the OAuth tokens, so a save keeps the
+				// stored ones — unless the app identity changed, which voids them.
+				$same_app = ( $old['client_id'] ?? '' ) === ( $config['client_id'] ?? '' )
+					&& ( $old['tenant'] ?? '' ) === ( $config['tenant'] ?? '' )
+					&& ( $old['dc'] ?? '' ) === ( $config['dc'] ?? '' );
+				$c['config'] = $same_app ? $config + array_intersect_key( $old, array_flip( OAuth::TOKEN_KEYS ) ) : $config;
 			}
 			if ( isset( $input['from_match'] ) ) {
 				$c['from_match'] = $this->sanitize_from_match( $input['from_match'] );
@@ -275,7 +307,7 @@ class REST_API {
 
 		$this->save_connections( $conns );
 		$this->sync_active( $conns );
-		return rest_ensure_response( $found );
+		return rest_ensure_response( $this->public_connection( $found ) );
 	}
 
 	public function delete_connection( $request ) {
@@ -314,7 +346,7 @@ class REST_API {
 
 		$this->save_connections( $reordered );
 		$this->sync_active( $reordered );
-		return rest_ensure_response( $reordered );
+		return rest_ensure_response( array_map( array( $this, 'public_connection' ), $reordered ) );
 	}
 
 	// Send a test through ONE specific connection, bypassing the failover chain.
@@ -343,8 +375,12 @@ class REST_API {
 		$esp = Manager::instance()->get( $conn['provider'] );
 		// Connect exactly the way real mail does (Manager::connection_config()).
 		if ( ! $esp || ! $esp->connect( Manager::instance()->connection_config( $conn ) ) ) {
-			$this->record_test_result( $id, 'failed', __( 'Connection could not be initialized — check credentials.', 'mailyard' ) );
-			return rest_ensure_response( array( 'success' => false, 'message' => __( 'Connection could not be initialized.', 'mailyard' ) ) );
+			$signin  = OAuth::endpoints( (string) $conn['provider'], (array) ( $conn['config'] ?? array() ) ) && empty( $conn['config']['refresh_token'] );
+			$message = $signin
+				? __( 'Connect the account first — open this connection and click Connect account.', 'mailyard' )
+				: __( 'Connection could not be initialized — check credentials.', 'mailyard' );
+			$this->record_test_result( $id, 'failed', $message );
+			return rest_ensure_response( array( 'success' => false, 'message' => $message ) );
 		}
 
 		$body   = $this->default_test_body( $to );
@@ -826,8 +862,15 @@ class REST_API {
 		}
 		$clean = array();
 		foreach ( $config as $k => $v ) {
-			$k           = sanitize_key( $k );
-			$clean[ $k ] = is_array( $v ) ? $this->sanitize_config( $v ) : sanitize_text_field( (string) $v );
+			$k = sanitize_key( $k );
+			if ( is_array( $v ) ) {
+				$clean[ $k ] = $this->sanitize_config( $v );
+			} elseif ( 'certificate' === $k ) {
+				// A PEM block is multi-line; sanitize_text_field() would flatten it.
+				$clean[ $k ] = sanitize_textarea_field( (string) $v );
+			} else {
+				$clean[ $k ] = sanitize_text_field( (string) $v );
+			}
 		}
 		return $clean;
 	}

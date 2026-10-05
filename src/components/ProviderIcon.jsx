@@ -79,6 +79,30 @@ const icons = {
 			<path d="M10.5 14.5L20 21l9.5-6.5" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
 		</svg>
 	),
+	gmail: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#fff" stroke="#E5E7EB" />
+			<path d="M9 14.5L20 22.5l11-8" stroke="#EA4335" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+			<path d="M9 14.5V28a1 1 0 0 0 1 1h4V18.5" stroke="#4285F4" strokeWidth="2.6" fill="none" strokeLinejoin="round" />
+			<path d="M31 14.5V28a1 1 0 0 1-1 1h-4V18.5" stroke="#34A853" strokeWidth="2.6" fill="none" strokeLinejoin="round" />
+		</svg>
+	),
+	microsoft: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#fff" stroke="#E5E7EB" />
+			<rect x="10" y="10" width="9.2" height="9.2" fill="#F25022" />
+			<rect x="20.8" y="10" width="9.2" height="9.2" fill="#7FBA00" />
+			<rect x="10" y="20.8" width="9.2" height="9.2" fill="#00A4EF" />
+			<rect x="20.8" y="20.8" width="9.2" height="9.2" fill="#FFB900" />
+		</svg>
+	),
+	zoho: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#E42527" />
+			<rect x="10" y="13" width="20" height="14" rx="2.5" stroke="#fff" strokeWidth="2" fill="none" />
+			<path d="M15 17.5h10l-10 5h10" stroke="#FFD500" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+		</svg>
+	),
 	smtp: ( s ) => (
 		<svg width={ s } height={ s } viewBox="0 0 40 40">
 			<rect width="40" height="40" rx="8" fill="#F3F0EA" />
@@ -100,6 +124,7 @@ const icons = {
 
 // The PHP Mail connection is stored under WordPress's own mailer slug.
 icons.phpmailer = icons.php;
+icons.microsoft_app = icons.microsoft;
 
 export default function ProviderIcon( { id, size = 26 } ) {
 	const render = icons[ id ];

@@ -24,6 +24,9 @@ class Importer {
 		'ses'       => array( 'access_key', 'secret_key' ),
 		'mailgun'   => array( 'api_key', 'domain' ),
 		'mailjet'   => array( 'api_key', 'secret_key' ),
+		'gmail'     => array( 'client_id', 'client_secret' ),
+		'microsoft' => array( 'client_id', 'client_secret' ),
+		'zoho'      => array( 'client_id', 'client_secret' ),
 		'phpmailer' => array(),
 	);
 
@@ -54,8 +57,12 @@ class Importer {
 	 * Append a source's connections. They go live only when Mailyard has no
 	 * enabled connection yet; otherwise they arrive switched off for review.
 	 *
+	 * Sign-in connections (Gmail, Microsoft 365, Zoho) bring only their app
+	 * credentials: the other plugin's tokens are bound to its own redirect URI,
+	 * so they always arrive switched off, waiting for Connect account.
+	 *
 	 * @param string $source One of self::SOURCES.
-	 * @return array|\WP_Error { imported: int, enabled: bool }
+	 * @return array|\WP_Error { imported: int, enabled: bool, connect: int }
 	 */
 	public function import( string $source ) {
 		$drafts = $this->drafts( $source );
@@ -66,8 +73,11 @@ class Importer {
 		$conns   = Options::connections();
 		$enable  = ! array_filter( $conns, static function ( $c ) { return ! empty( $c['enabled'] ); } );
 		$primary = true;
+		$connect = 0;
 		foreach ( $drafts as $d ) {
-			$conns[] = array(
+			$signin   = (bool) OAuth::endpoints( $d['provider'], $d['config'] );
+			$connect += $signin ? 1 : 0;
+			$conns[]  = array(
 				'id'               => wp_generate_uuid4(),
 				'provider'         => $d['provider'],
 				'name'             => $d['name'],
@@ -77,7 +87,7 @@ class Importer {
 				'from_match'       => $d['from_match'],
 				// From a multi-connection source only its primary and backup
 				// were live there, so only they go live here.
-				'enabled'          => $enable && ( $primary || ! empty( $d['backup'] ) ),
+				'enabled'          => $enable && ! $signin && ( $primary || ! empty( $d['backup'] ) ),
 				'priority'         => count( $conns ),
 				'last_test_at'     => 0,
 				'last_test_status' => '',
@@ -95,7 +105,8 @@ class Importer {
 
 		return array(
 			'imported' => count( $drafts ),
-			'enabled'  => $enable,
+			'enabled'  => $enable && $connect < count( $drafts ),
+			'connect'  => $connect,
 		);
 	}
 
@@ -207,6 +218,13 @@ class Importer {
 			$draft += array( 'provider' => 'mailgun', 'config' => array( 'api_key' => $get( 'mailgun', 'api_key' ), 'domain' => $get( 'mailgun', 'domain' ), 'region' => 'eu' === strtolower( $get( 'mailgun', 'region' ) ) ? 'eu' : 'us' ) );
 		} elseif ( 'mailjet' === $mailer ) {
 			$draft += array( 'provider' => 'mailjet', 'config' => array( 'api_key' => $get( 'mailjet', 'api_key' ), 'secret_key' => $get( 'mailjet', 'secret_key' ) ) );
+		} elseif ( in_array( $mailer, array( 'gmail', 'outlook', 'zoho' ), true ) ) {
+			// App credentials only; the account is connected again from Mailyard.
+			$config = array( 'client_id' => $get( $mailer, 'client_id' ), 'client_secret' => $get( $mailer, 'client_secret' ) );
+			if ( 'zoho' === $mailer ) {
+				$config['dc'] = OAuth::zoho_dc( $get( 'zoho', 'domain' ) );
+			}
+			$draft += array( 'provider' => 'outlook' === $mailer ? 'microsoft' : $mailer, 'config' => $config );
 		} else {
 			return array();
 		}
@@ -231,6 +249,8 @@ class Importer {
 			'sendgrid'   => array( 'api_key' => 1 ),
 			'sendinblue' => array( 'api_key' => 1 ),
 			'postmark'   => array( 'api_key' => 1 ),
+			'gmail'      => array( 'client_secret' => 1 ),
+			'outlook'    => array( 'client_secret' => 1 ),
 		);
 		$version = (int) ( $data['encrypt_version'] ?? 1 );
 		$default = (string) ( $data['misc']['default_connection'] ?? '' );
@@ -269,6 +289,8 @@ class Importer {
 				'sendinblue' => array( 'brevo', array( 'api_key' => $c( 'FLUENTMAIL_SENDINBLUE_API_KEY', 'api_key' ) ) ),
 				'postmark'   => array( 'postmark', array_filter( array( 'api_key' => $c( 'FLUENTMAIL_POSTMARK_API_KEY', 'api_key' ), 'stream' => (string) ( $s['message_stream'] ?? '' ) ) ) ),
 				'smtp2go'    => array( 'smtp2go', array( 'api_key' => $c( 'FLUENTMAIL_SMTP2GO_API_KEY', 'api_key' ) ) ),
+				'gmail'      => array( 'gmail', array( 'client_id' => $c( 'FLUENTMAIL_GMAIL_CLIENT_ID', 'client_id' ), 'client_secret' => $c( 'FLUENTMAIL_GMAIL_CLIENT_SECRET', 'client_secret' ) ) ),
+				'outlook'    => array( 'microsoft', array( 'client_id' => $c( 'FLUENTMAIL_OUTLOOK_CLIENT_ID', 'client_id' ), 'client_secret' => $c( 'FLUENTMAIL_OUTLOOK_CLIENT_SECRET', 'client_secret' ) ) ),
 				'default'    => array( 'phpmailer', array() ),
 			);
 			if ( ! isset( $map[ $p ] ) ) {
@@ -325,6 +347,10 @@ class Importer {
 		} elseif ( 'mailjet_api' === $t ) {
 			$provider = 'mailjet';
 			$config   = array( 'api_key' => $secret( 'mailjet_api_key', 'POST_SMTP_API_KEY' ), 'secret_key' => $secret( 'mailjet_secret_key', 'POST_SMTP_API_KEY' ) );
+		} elseif ( 'gmail_api' === $t ) {
+			// Stored as typed (not base64), app credentials only.
+			$provider = 'gmail';
+			$config   = array( 'client_id' => (string) ( $o['oauth_client_id'] ?? '' ), 'client_secret' => (string) ( $o['oauth_client_secret'] ?? '' ) );
 		} else {
 			return array();
 		}
