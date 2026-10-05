@@ -27,7 +27,7 @@ class Brevo implements Provider {
 
 		$body = array(
 			'sender'  => $sender,
-			'to'      => array( array( 'email' => sanitize_email( $params['to'] ) ) ),
+			'to'      => array_map( function ( $e ) { return array( 'email' => $e ); }, Recipients::split( $params['to'] ) ),
 			'subject' => sanitize_text_field( $params['subject'] ),
 		);
 
@@ -48,6 +48,9 @@ class Brevo implements Provider {
 		}
 		if ( ! empty( $params['bcc'] ) ) {
 			$body['bcc'] = array_map( function ( $e ) { return array( 'email' => $e ); }, $params['bcc'] );
+		}
+		if ( ! empty( $params['headers'] ) ) {
+			$body['headers'] = (object) $params['headers'];
 		}
 		if ( ! empty( $params['attachments'] ) ) {
 			$body['attachment'] = array_map( function ( $a ) {

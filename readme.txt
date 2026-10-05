@@ -145,8 +145,19 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 == Changelog ==
 
 = 1.1.0 =
+* Add: Background sending — the page answers first and the email goes out right after, shown as Pending in the log until then.
+* Add: Offline mode — every email is logged, none are sent. For staging and development sites.
+* Add: PHP Mail as a connection — your server's own mail, no setup, handy as the last backup in the chain.
+* Add: The email log shows each message's Cc, Bcc and Reply-To.
+* Add: Send test names the provider that delivered it, and says so when a backup had to take over.
 * Update: Simpler admin — one sidebar (Dashboard, Connections, Email log, Deliverability, Settings), mirrored in the WordPress menu.
 * Update: Connections no longer have a Marketing/Transactional purpose; every enabled connection carries all mail. A connection that was set to Marketing only is switched off on update (its settings are kept).
+* Update: An email to several recipients goes out as one message, as WordPress sends it, instead of one copy per address.
+* Fix: Cc and Bcc addresses set in email headers were dropped by every provider.
+* Fix: Custom headers (List-Unsubscribe, X-…) and attachment filenames set by the sending plugin now reach the provider.
+* Fix: Two connections on the same provider (two Postmark servers, say) no longer share one set of credentials during failover.
+* Fix: Amazon SES no longer garbles non-English text or rejects long HTML lines.
+* Fix: Custom SMTP with Encryption set to None no longer switches to TLS on its own.
 
 = 1.0.2 (2026/07/30) =
 * Fix: The connection Test now sends through the same provider settings as real mail — a Marketing-purpose Postmark connection tests on the broadcast stream, not the transactional one.

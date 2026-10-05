@@ -11,6 +11,13 @@ const HEALTH = {
 	healthy: { label: 'Healthy',     cls: 'bg-success/10 text-success', dot: 'bg-success' },
 	warning: { label: 'Warning',     cls: 'bg-warning/10 text-warning', dot: 'bg-warning' },
 	down:    { label: 'No delivery', cls: 'bg-danger/10 text-danger',   dot: 'bg-danger' },
+	offline: { label: 'Offline',     cls: 'bg-ink-100 text-ink-700',    dot: 'bg-ink-400' },
+};
+
+const BANNER = {
+	down: { text: 'No delivery — there is no enabled connection, so email is not being sent.', action: 'Add a connection', route: 'connections' },
+	warning: { text: 'Some recent emails failed to send.', action: 'View the log', route: 'logs' },
+	offline: { text: 'Offline mode is on — every email is logged, none are sent.', action: 'Turn it off', route: 'settings' },
 };
 
 const GRADE_TONE = { A: 'text-success', B: 'text-success', C: 'text-warning', D: 'text-danger', F: 'text-danger' };
@@ -115,7 +122,7 @@ function SendTestPanel( { onClose, onSent } ) {
 		setMsg( '' );
 		post( 'test-email', { to: to.trim() } )
 			.then( ( data ) => {
-				setState( data.success ? 'success' : 'error' );
+				setState( data.success ? ( data.warning ? 'warning' : 'success' ) : 'error' );
 				setMsg( data.message || ( data.success ? 'Sent.' : 'Failed.' ) );
 				if ( data.success ) onSent?.();
 			} )
@@ -141,6 +148,7 @@ function SendTestPanel( { onClose, onSent } ) {
 				</Button>
 			</div>
 			{ state === 'success' && <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-success/10 px-3 py-2 text-[12px] font-medium text-success"><CheckIcon className="h-3.5 w-3.5" /> { msg }</div> }
+			{ state === 'warning' && <div className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-[12px] font-medium text-warning">{ msg }</div> }
 			{ state === 'error' && <div className="mt-3 rounded-lg bg-danger-light px-3 py-2 text-[12px] text-danger">{ msg }</div> }
 		</Card>
 	);
@@ -188,19 +196,15 @@ export default function Dashboard( { onNavigate } ) {
 
 			{ /* Degraded health earns a full-width banner, not a tiny pill —
 			     it's the single most important thing on this screen. */ }
-			{ ! loading && health !== 'healthy' && (
+			{ ! loading && BANNER[ health ] && (
 				<div className={ `mb-5 flex items-center gap-2.5 rounded-xl px-4 py-3 text-[12.5px] font-medium ${ meta.cls }` }>
 					<span className={ `h-2 w-2 shrink-0 rounded-full ${ meta.dot }` } />
-					<span className="min-w-0 flex-1">
-						{ health === 'down'
-							? 'No delivery — there is no enabled connection, so email is not being sent.'
-							: 'Some recent emails failed to send.' }
-					</span>
+					<span className="min-w-0 flex-1">{ BANNER[ health ].text }</span>
 					<button
-						onClick={ () => onNavigate( health === 'down' ? 'connections' : 'logs' ) }
+						onClick={ () => onNavigate( BANNER[ health ].route ) }
 						className="shrink-0 cursor-pointer border-none bg-transparent font-semibold underline underline-offset-2 hover:opacity-80"
 					>
-						{ health === 'down' ? 'Add a connection' : 'View logs' }
+						{ BANNER[ health ].action }
 					</button>
 				</div>
 			) }

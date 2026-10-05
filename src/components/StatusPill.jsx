@@ -20,6 +20,8 @@ const statusMap = {
 	failed: 'bad',
 	blocked: 'bad',
 	sending: 'accent',
+	pending: 'accent',
+	offline: 'default',
 };
 
 export default function StatusPill( { children, variant, status } ) {

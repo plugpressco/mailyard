@@ -108,7 +108,9 @@ class Manager {
 	}
 
 	// Pair each raw connection with its connected ESP, dropping unknown providers
-	// and ones whose credentials fail to connect.
+	// and ones whose credentials fail to connect. Each entry gets its own copy
+	// of the driver: two connections on one provider (e.g. two Postmark
+	// servers) must not share — and overwrite — each other's credentials.
 	private function build_entries( array $conns ): array {
 		$out = array();
 		foreach ( $conns as $conn ) {
@@ -117,7 +119,7 @@ class Manager {
 				continue;
 			}
 
-			$esp = $this->providers[ $slug ];
+			$esp = clone $this->providers[ $slug ];
 			if ( ! $esp->connect( $this->connection_config( $conn ) ) ) {
 				continue;
 			}

@@ -19,7 +19,7 @@ class Resend implements Provider {
 
 		$body = array(
 			'from'    => $from,
-			'to'      => array( sanitize_email( $params['to'] ) ),
+			'to'      => Recipients::split( $params['to'] ),
 			'subject' => sanitize_text_field( $params['subject'] ),
 			'tags'    => array( array( 'name' => 'category', 'value' => 'transactional' ) ),
 		);
@@ -42,6 +42,9 @@ class Resend implements Provider {
 		}
 		if ( ! empty( $params['bcc'] ) ) {
 			$body['bcc'] = $params['bcc'];
+		}
+		if ( ! empty( $params['headers'] ) ) {
+			$body['headers'] = (object) $params['headers'];
 		}
 		if ( ! empty( $params['attachments'] ) ) {
 			$body['attachments'] = array_map( function ( $a ) {

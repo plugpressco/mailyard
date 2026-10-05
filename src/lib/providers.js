@@ -133,9 +133,9 @@ export const LIVE_PROVIDERS = [
 		],
 	},
 	{
-		id: 'php',
+		id: 'phpmailer',
 		name: 'PHP Mail',
-		desc: 'Server default — no config needed',
+		desc: 'Your server — a no-setup backup',
 		dashboard: null,
 		fields: [],
 	},

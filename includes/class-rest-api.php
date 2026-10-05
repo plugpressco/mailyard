@@ -147,7 +147,7 @@ class REST_API {
 
 		// Credentials are NOT stored here — they live on each connection's
 		// 'config' field under mailyard_connections (non-autoloaded).
-		$keys = array( 'active', 'from_name', 'from_email', 'logging' );
+		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $input[ $key ] ) ) {
@@ -352,11 +352,13 @@ class REST_API {
 		// Recent activity — last 7 logged emails.
 		$recent = $logger->query( array( 'page' => 1, 'per_page' => 7 ) );
 
+		$offline = ! empty( Options::settings()['offline'] );
+
 		return rest_ensure_response( array(
 			'sent_7d'      => $stats['sent_7d'] ?? 0,
 			'failed_7d'    => $stats['failed_7d'] ?? 0,
 			'chain'        => $chain_view,
-			'health'       => $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ),
+			'health'       => $offline ? 'offline' : $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ),
 			'series'       => $logger->daily_stats( 14 ),
 			'recent'       => $recent['items'] ?? array(),
 		) );
@@ -400,22 +402,55 @@ class REST_API {
 			: $this->default_test_body( $to );
 
 		$content_type = 'plain' === $format ? 'text/plain' : 'text/html';
-		$result       = wp_mail( $to, $subject, $body, array( "Content-Type: $content_type; charset=UTF-8" ) );
+		$result       = Override::sync( function () use ( $to, $subject, $body, $content_type ) {
+			return wp_mail( $to, $subject, $body, array( "Content-Type: $content_type; charset=UTF-8" ) );
+		} );
+		$outcome      = Override::last_outcome();
 
-		if ( $result ) {
+		if ( 'offline' === ( $outcome['status'] ?? '' ) ) {
 			return rest_ensure_response( array(
 				'success' => true,
-				/* translators: %s: recipient email address. */
-				'message' => sprintf( __( 'Test email sent to %s', 'mailyard' ), $to ),
+				'message' => __( 'Offline mode is on — the test was logged, not sent.', 'mailyard' ),
 			) );
 		}
 
-		global $phpmailer;
-		$error = isset( $phpmailer->ErrorInfo ) ? sanitize_text_field( $phpmailer->ErrorInfo ) : '';
+		if ( $result ) {
+			$via     = $this->provider_label( (string) ( $outcome['provider'] ?? '' ) );
+			$message = $via
+				/* translators: 1: recipient email address, 2: provider name. */
+				? sprintf( __( 'Test email sent to %1$s via %2$s.', 'mailyard' ), $to, $via )
+				/* translators: %s: recipient email address. */
+				: sprintf( __( 'Test email sent to %s.', 'mailyard' ), $to );
+
+			// Delivered by a backup: say so, and why the primary didn't.
+			$first = $outcome['failed'][0] ?? null;
+			if ( $first ) {
+				/* translators: 1: provider name, 2: error message. */
+				$message .= ' ' . sprintf( __( '%1$s failed first: %2$s', 'mailyard' ), $this->provider_label( $first['provider'] ), $first['error'] );
+			}
+
+			return rest_ensure_response( array(
+				'success'  => true,
+				'warning'  => (bool) $first,
+				'message'  => $message,
+				'provider' => (string) ( $outcome['provider'] ?? '' ),
+			) );
+		}
+
+		$error = (string) ( $outcome['error'] ?? '' );
+		if ( '' === $error ) {
+			global $phpmailer;
+			$error = isset( $phpmailer->ErrorInfo ) ? sanitize_text_field( $phpmailer->ErrorInfo ) : '';
+		}
 		return rest_ensure_response( array(
 			'success' => false,
 			'message' => $error ?: __( 'Failed to send.', 'mailyard' ),
 		) );
+	}
+
+	private function provider_label( string $slug ): string {
+		$esp = '' !== $slug ? Manager::instance()->get( $slug ) : null;
+		return $esp ? $esp->get_label() : '';
 	}
 
 	private function default_test_body( string $to ): string {
@@ -521,7 +556,9 @@ class REST_API {
 			? array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) $row['headers'] ) ) )
 			: array();
 
-		$ok = wp_mail( $to, (string) $row['subject'], (string) $row['body'], $headers );
+		$ok = Override::sync( function () use ( $to, $row, $headers ) {
+			return wp_mail( $to, (string) $row['subject'], (string) $row['body'], $headers );
+		} );
 
 		return rest_ensure_response( array(
 			'ok'     => (bool) $ok,
@@ -626,6 +663,8 @@ class REST_API {
 			case 'from_name':
 				return sanitize_text_field( $value );
 			case 'logging':
+			case 'offline':
+			case 'background':
 				return (bool) $value;
 			default:
 				return sanitize_text_field( (string) $value );

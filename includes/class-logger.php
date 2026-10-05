@@ -56,12 +56,13 @@ class Logger {
 		add_action( 'wp_mail_failed', array( $this, 'on_failure' ) );
 	}
 
-	// Called by Override for API providers that bypass wp_mail().
-	public function log( array $args ) {
+	// Called by Override for every send attempt. Returns the new row id (0 when
+	// logging is off).
+	public function log( array $args ): int {
 		if ( ! $this->is_enabled() ) {
-			return;
+			return 0;
 		}
-		$this->insert( $this->build_row(
+		return $this->insert( $this->build_row(
 			$args['to'] ?? '',
 			$args['subject'] ?? '',
 			$args['body'] ?? '',
@@ -70,6 +71,24 @@ class Logger {
 			sanitize_key( $args['status'] ?? 'sent' ),
 			$args['error'] ?? ''
 		) );
+	}
+
+	// Settle a row written earlier (a Background "pending" entry) with the
+	// send's outcome.
+	public function update( int $id, array $args ): void {
+		if ( ! $id ) {
+			return;
+		}
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			self::table(),
+			array(
+				'status'        => sanitize_key( $args['status'] ?? 'sent' ),
+				'provider'      => sanitize_key( $args['provider'] ?? '' ),
+				'error_message' => sanitize_text_field( (string) ( $args['error'] ?? '' ) ),
+			),
+			array( 'id' => $id )
+		);
 	}
 
 	public function on_success( $data ) {
@@ -244,6 +263,12 @@ class Logger {
 			'created_at' => $row['created_at'],
 		);
 
+		// Cc / Bcc / Reply-To as the message carried them.
+		$parsed             = Message::parse_headers( (string) $row['headers'] );
+		$shaped['cc']       = Message::addresses( $parsed['cc'] );
+		$shaped['bcc']      = Message::addresses( $parsed['bcc'] );
+		$shaped['reply_to'] = Message::addresses( $parsed['reply-to'] )[0] ?? '';
+
 		// Human-readable guidance for failures (single source: Errors::humanize).
 		if ( 'failed' === $row['status'] && '' !== (string) $row['error_message'] ) {
 			$shaped['error_human'] = Errors::humanize( (string) $row['error_message'], (string) $row['provider'] );
@@ -268,8 +293,9 @@ class Logger {
 		return $row ? $this->shape_row( $row ) : null;
 	}
 
-	private function insert( array $data ) {
+	private function insert( array $data ): int {
 		global $wpdb;
 		$wpdb->insert( self::table(), $data ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->insert_id;
 	}
 }

@@ -268,6 +268,14 @@ function LogDrawer( { row: r, onClose, onResent } ) {
 				</div>
 			) }
 
+			{ ( r.cc?.length > 0 || r.bcc?.length > 0 || r.reply_to ) && (
+				<dl className="mb-4 grid grid-cols-[72px_1fr] gap-x-3 gap-y-1 text-[12px]">
+					{ r.cc?.length > 0 && <><dt className="text-ink-400">Cc</dt><dd className="m-0 break-all font-mono text-ink-700">{ r.cc.join( ', ' ) }</dd></> }
+					{ r.bcc?.length > 0 && <><dt className="text-ink-400">Bcc</dt><dd className="m-0 break-all font-mono text-ink-700">{ r.bcc.join( ', ' ) }</dd></> }
+					{ r.reply_to && <><dt className="text-ink-400">Reply-To</dt><dd className="m-0 break-all font-mono text-ink-700">{ r.reply_to }</dd></> }
+				</dl>
+			) }
+
 			<SectionTitle className="mb-1">Body</SectionTitle>
 			<div className="mb-4 whitespace-pre-wrap rounded-lg border border-ink-200/70 bg-white p-3 text-[12px] leading-relaxed text-ink-700">
 				{ r.body || '(no body)' }

@@ -22,11 +22,11 @@ class Options {
 	// Default provider when none configured — passes through to wp_mail().
 	const DEFAULT_PROVIDER = 'phpmailer';
 
-	// Providers that can be selected as the active connection. Must stay in sync
-	// with the providers registered in Manager::__construct(); excludes 'phpmailer'
-	// which is the fall-through default.
+	// Providers a connection can use. Must stay in sync with the providers
+	// registered in Manager::__construct(). 'phpmailer' (PHP Mail) needs no
+	// setup — it's the zero-config backup at the end of a chain.
 	public static function providers(): array {
-		return array( 'ses', 'postmark', 'resend', 'brevo', 'smtp' );
+		return array( 'ses', 'postmark', 'resend', 'brevo', 'smtp', self::DEFAULT_PROVIDER );
 	}
 
 	// Providers whose API performs its own recipient validation —

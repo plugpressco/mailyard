@@ -71,6 +71,9 @@ const icons = {
 	),
 };
 
+// The PHP Mail connection is stored under WordPress's own mailer slug.
+icons.phpmailer = icons.php;
+
 export default function ProviderIcon( { id, size = 26 } ) {
 	const render = icons[ id ];
 	if ( ! render ) {

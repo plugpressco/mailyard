@@ -97,8 +97,20 @@ function DataDanger() {
 	);
 }
 
+function ToggleRow( { title, description, on, onChange } ) {
+	return (
+		<div className="flex items-center justify-between gap-6 px-5 py-4">
+			<div>
+				<div className="text-[13px] font-semibold text-ink-900">{ title }</div>
+				<div className="mt-[1px] text-[12px] text-ink-400">{ description }</div>
+			</div>
+			<Toggle label={ title } on={ on } onChange={ onChange } />
+		</div>
+	);
+}
+
 /**
- * The free plugin's own delivery settings — the default Settings section.
+ * Delivery settings — the default Settings section.
  */
 function DeliverySettings() {
 	const { settings, loading, save } = useSettings();
@@ -106,6 +118,8 @@ function DeliverySettings() {
 	const [ fromEmail, setFromEmail ] = useState( '' );
 	const [ fromName, setFromName ] = useState( '' );
 	const [ logging, setLogging ] = useState( true );
+	const [ background, setBackground ] = useState( false );
+	const [ offline, setOffline ] = useState( false );
 
 	const timer = useRef( null );
 	const lastMsg = useRef( '' );
@@ -117,6 +131,8 @@ function DeliverySettings() {
 		setFromEmail( settings.from_email ?? '' );
 		setFromName( settings.from_name ?? '' );
 		setLogging( settings.logging ?? true );
+		setBackground( !! settings.background );
+		setOffline( !! settings.offline );
 	}, [ settings ] );
 
 	const trigger = ( msg ) => {
@@ -134,6 +150,8 @@ function DeliverySettings() {
 				from_email: fromEmail.trim(),
 				from_name:  fromName.trim(),
 				logging,
+				background,
+				offline,
 			} )
 				.then( () => toast.success( msg ) )
 				.catch( () => toast.error( 'Failed to save' ) );
@@ -172,20 +190,25 @@ function DeliverySettings() {
 				</div>
 			</Card>
 
-			<Card className="overflow-hidden">
-				<div className="flex items-center justify-between px-5 py-4">
-					<div>
-						<div className="text-[13px] font-semibold text-ink-900">Email logging</div>
-						<div className="mt-[1px] text-[12px] text-ink-400">
-							Store every outgoing email in the Logs tab for debugging and review.
-						</div>
-					</div>
-					<Toggle
-						label="Email logging"
-						on={ logging }
-						onChange={ ( v ) => { setLogging( v ); trigger( v ? 'Logging enabled' : 'Logging disabled' ); } }
-					/>
-				</div>
+			<Card className="overflow-hidden divide-y divide-ink-200">
+				<ToggleRow
+					title="Background sending"
+					description="Answer the page first, send the email a moment later — a slow provider never slows your site. The log shows it as Pending until it goes out."
+					on={ background }
+					onChange={ ( v ) => { setBackground( v ); trigger( v ? 'Background sending on' : 'Background sending off' ); } }
+				/>
+				<ToggleRow
+					title="Email logging"
+					description="Store every outgoing email in the Email log for debugging and review."
+					on={ logging }
+					onChange={ ( v ) => { setLogging( v ); trigger( v ? 'Logging enabled' : 'Logging disabled' ); } }
+				/>
+				<ToggleRow
+					title="Offline mode"
+					description="Log every email without sending any. For staging and development sites."
+					on={ offline }
+					onChange={ ( v ) => { setOffline( v ); trigger( v ? 'Offline mode on — nothing will be sent' : 'Offline mode off' ); } }
+				/>
 			</Card>
 
 			<div className="mt-8 text-center">

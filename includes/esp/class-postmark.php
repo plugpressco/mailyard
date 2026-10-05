@@ -21,7 +21,7 @@ class Postmark implements Provider {
 
 		$payload = array(
 			'From'          => $from,
-			'To'            => sanitize_email( $params['to'] ),
+			'To'            => implode( ', ', Recipients::split( $params['to'] ) ),
 			'Subject'       => sanitize_text_field( $params['subject'] ),
 			'MessageStream' => $this->stream,
 		);
@@ -45,6 +45,12 @@ class Postmark implements Provider {
 		}
 		if ( ! empty( $params['bcc'] ) ) {
 			$payload['Bcc'] = implode( ', ', $params['bcc'] );
+		}
+		if ( ! empty( $params['headers'] ) ) {
+			$payload['Headers'] = array();
+			foreach ( $params['headers'] as $name => $value ) {
+				$payload['Headers'][] = array( 'Name' => $name, 'Value' => $value );
+			}
 		}
 		if ( ! empty( $params['attachments'] ) ) {
 			$payload['Attachments'] = array_map( function ( $a ) {

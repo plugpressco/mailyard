@@ -45,18 +45,26 @@ class Attachment {
 	}
 
 	// Normalize $atts['attachments'] (string path | array of paths) into an
-	// array of from_path() results, dropping unreadable entries.
+	// array of from_path() results, dropping unreadable entries. A string key
+	// is the filename the caller wants shown (wp_mail() supports
+	// array( 'invoice.pdf' => '/tmp/abc123' )).
 	public static function normalize( $attachments ): array {
 		if ( empty( $attachments ) ) {
 			return array();
 		}
-		$paths = is_array( $attachments ) ? $attachments : array( $attachments );
-		$out   = array();
-		foreach ( $paths as $path ) {
-			$entry = self::from_path( (string) $path );
-			if ( $entry ) {
-				$out[] = $entry;
+		if ( is_string( $attachments ) ) {
+			$attachments = explode( "\n", str_replace( "\r\n", "\n", $attachments ) );
+		}
+		$out = array();
+		foreach ( (array) $attachments as $name => $path ) {
+			$entry = self::from_path( trim( (string) $path ) );
+			if ( ! $entry ) {
+				continue;
 			}
+			if ( is_string( $name ) && '' !== trim( $name ) ) {
+				$entry['filename'] = basename( $name );
+			}
+			$out[] = $entry;
 		}
 		return $out;
 	}

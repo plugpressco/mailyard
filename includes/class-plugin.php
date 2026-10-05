@@ -144,6 +144,7 @@ class Plugin {
 		require_once $includes . 'class-manager.php';
 		require_once $includes . 'class-deliverability.php';
 		require_once $includes . 'class-errors.php';
+		require_once $includes . 'class-message.php';
 		require_once $includes . 'class-logger.php';
 		require_once $includes . 'class-override.php';
 		require_once $includes . 'class-failure-notice.php';
