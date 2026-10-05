@@ -1,11 +1,3 @@
-// Routing purpose options for the connection editor. Mirrors the values the REST
-// API whitelists in sanitize_purpose().
-export const PURPOSES = [
-	{ value: 'any', label: 'Any' },
-	{ value: 'transactional', label: 'Transactional' },
-	{ value: 'marketing', label: 'Marketing' },
-];
-
 // One-click SMTP presets — prefill host/port/encryption for common providers so
 // the user only needs to add credentials. They all resolve to the generic `smtp`
 // provider; "Custom" clears the prefill for anything else.

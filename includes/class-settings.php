@@ -48,58 +48,22 @@ class Settings {
 			'58.14'
 		);
 
-		// One native submenu entry per SECTION, not per SPA page — the WP menu
-		// stays a clean top-level map (Dashboard, Delivery, Marketing via Pro,
-		// Settings); fine-grained navigation lives in the app's own sidebar.
-		// Keys are the SPA hash route each entry lands on.
+		// One native submenu entry per page, mirroring the app's sidebar (NAV in
+		// src/App.jsx). Keys are the SPA hash route each entry lands on.
 		$submenus = array(
-			'dashboard'   => array(
-				'label' => __( 'Dashboard', 'mailyard' ),
-				'order' => 10,
-			),
-			'connections' => array(
-				'label' => __( 'Delivery', 'mailyard' ),
-				'order' => 15,
-			),
-			'settings'    => array(
-				'label' => __( 'Settings', 'mailyard' ),
-				'order' => 90,
-			),
-		);
-
-		/**
-		 * Extend the Mailyard admin submenu.
-		 *
-		 * Mailyard Pro adds its sections (Campaigns, Contacts, Automations)
-		 * here so both products live under one menu.
-		 *
-		 * @param array $submenus Map of SPA hash route => array( 'label', 'order' ).
-		 *                        Plain-string values are accepted (order 50).
-		 */
-		$submenus = apply_filters( 'mailyard_admin_submenus', $submenus );
-
-		// Normalize legacy string entries, then sort by weight.
-		foreach ( $submenus as $key => $entry ) {
-			if ( ! is_array( $entry ) ) {
-				$submenus[ $key ] = array(
-					'label' => (string) $entry,
-					'order' => 50,
-				);
-			}
-		}
-		uasort(
-			$submenus,
-			static function ( $a, $b ) {
-				return ( $a['order'] ?? 50 ) <=> ( $b['order'] ?? 50 );
-			}
+			'dashboard'      => __( 'Dashboard', 'mailyard' ),
+			'connections'    => __( 'Connections', 'mailyard' ),
+			'logs'           => __( 'Email log', 'mailyard' ),
+			'deliverability' => __( 'Deliverability', 'mailyard' ),
+			'settings'       => __( 'Settings', 'mailyard' ),
 		);
 
 		$first = true;
-		foreach ( $submenus as $key => $entry ) {
+		foreach ( $submenus as $key => $label ) {
 			add_submenu_page(
 				'mailyard',
-				$entry['label'],
-				$entry['label'],
+				$label,
+				$label,
 				'manage_options',
 				$first ? 'mailyard' : 'mailyard#/' . $key,
 				array( $this, 'render' )
@@ -141,22 +105,10 @@ class Settings {
 		// which supplies its own X-WP-Nonce (wp_rest) middleware. We expose the REST
 		// root + nonce so the client can authenticate.
 		wp_localize_script( 'mailyard-admin', 'mailyard', array(
-			'restUrl'      => esc_url_raw( rest_url( Options::REST_NS ) ),
-			'nonce'        => wp_create_nonce( 'wp_rest' ),
-			'version'      => MAILYARD_VERSION,
-			'shellVersion' => MAILYARD_SHELL_VERSION,
+			'restUrl' => esc_url_raw( rest_url( Options::REST_NS ) ),
+			'nonce'   => wp_create_nonce( 'wp_rest' ),
+			'version' => MAILYARD_VERSION,
 		) );
-
-		/**
-		 * Fires after Mailyard's admin bundle is enqueued on its page.
-		 *
-		 * Extenders (Mailyard Pro) hook this to enqueue their own bundle with
-		 * a dependency on the passed handle — that ordering guarantees their
-		 * `mailyard.shell.modules` filter registers before the shell mounts.
-		 *
-		 * @param string $handle Mailyard's admin script handle.
-		 */
-		do_action( 'mailyard_admin_enqueue', 'mailyard-admin' );
 	}
 
 	public function render() {

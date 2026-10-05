@@ -88,8 +88,7 @@ class Postmark implements Provider {
 	public function get_label(): string { return __( 'Postmark', 'mailyard' ); }
 
 	public function get_fields(): array {
-		// Message Stream is derived from the connection's purpose (marketing →
-		// broadcast, otherwise transactional) — see Manager::build_entries().
+		// Message Stream defaults to the server's transactional stream ('outbound').
 		return array(
 			array( 'key' => 'api_key', 'label' => __( 'Server Token', 'mailyard' ), 'type' => 'password', 'required' => true ),
 		);

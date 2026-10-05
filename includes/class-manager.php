@@ -47,22 +47,18 @@ class Manager {
 		return $this->build_entries( $this->enabled_sorted() );
 	}
 
-	// Resolve the failover chain for a given sender and purpose. Connections opt in
-	// to senders via their `from_match` list (exact address, bare domain, or '*');
-	// the most specific matching tier wins (exact > domain > catch-all) and is then
-	// ordered by priority for failover. Falls back to the full chain when nothing
-	// matches so mail is never silently dropped.
-	public function chain_for( string $from_email, string $purpose = 'transactional' ): array {
+	// Resolve the failover chain for a given sender. Connections opt in to senders
+	// via their `from_match` list (exact address, bare domain, or '*'); the most
+	// specific matching tier wins (exact > domain > catch-all) and is then ordered
+	// by priority for failover. Falls back to the full chain when nothing matches
+	// so mail is never silently dropped.
+	public function chain_for( string $from_email ): array {
 		$from_email = strtolower( trim( $from_email ) );
-		$candidates = array_filter( $this->enabled_sorted(), function ( $c ) use ( $purpose ) {
-			$p = $c['purpose'] ?? 'any';
-			return 'any' === $p || $p === $purpose;
-		} );
 
 		// Score each candidate, keeping only the highest specificity tier.
 		$best  = 0;
 		$tier  = array();
-		foreach ( $candidates as $conn ) {
+		foreach ( $this->enabled_sorted() as $conn ) {
 			$score = $this->from_match_score( $conn['from_match'] ?? array(), $from_email );
 			if ( 0 === $score ) {
 				continue;
@@ -104,20 +100,11 @@ class Manager {
 		return $enabled;
 	}
 
-	// Resolve a connection's ESP config with provider specifics derived in one
-	// place — Postmark's message stream follows the connection's purpose
-	// (marketing → broadcast, otherwise transactional) unless explicitly set.
-	// Both the failover chain and the connection test MUST connect through
-	// this, so a test can never send on a different stream than real mail.
+	// Resolve a connection's ESP config. Both the failover chain and the
+	// connection test MUST connect through this, so a test can never send with
+	// different settings than real mail.
 	public function connection_config( array $conn ): array {
-		$config = $conn['config'] ?? array();
-		$slug   = sanitize_key( $conn['provider'] ?? '' );
-
-		if ( 'postmark' === $slug && empty( $config['stream'] ) ) {
-			$config['stream'] = ( 'marketing' === ( $conn['purpose'] ?? 'any' ) ) ? 'broadcast' : 'outbound';
-		}
-
-		return $config;
+		return is_array( $conn['config'] ?? null ) ? $conn['config'] : array();
 	}
 
 	// Pair each raw connection with its connected ESP, dropping unknown providers

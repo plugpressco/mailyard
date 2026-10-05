@@ -4,7 +4,7 @@ import MailyardMark from './Logo';
 
 /**
  * Which item owns the current route: exact match, prefix match (nested routes
- * like `settings/marketing` belong to `settings`), or the dashboard default at
+ * like `settings/connect-ai` belong to `settings`), or the dashboard default at
  * the empty hash. AppNav's own active test is an exact `value` match, so the
  * winner is resolved here and handed over as `value` (longest prefix wins).
  */
@@ -23,12 +23,9 @@ function activeRoute( groups, route ) {
 }
 
 /**
- * The shell sidebar — a thin mapping of the merged shell model onto the design
+ * The app sidebar — a thin mapping of the NAV model (App.jsx) onto the design
  * system's AppNav (groups, footer groups, meta line all come from the library;
  * see @plugpress/ui docs/consumer-agent-guide.md §5).
- *
- * Renders ONLY registered groups — when Mailyard Pro isn't active its groups
- * simply don't exist; there are no locked or placeholder entries.
  */
 export default function Sidebar( { groups, route, onNavigate } ) {
 	const items = groups.map( ( group ) => ( {

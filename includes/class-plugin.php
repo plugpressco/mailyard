@@ -89,9 +89,31 @@ class Plugin {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_CLEANUP );
 		}
 
+		$this->retire_marketing_purpose();
+
 		Logger::instance()->init();
 		( new Override() )->init();
 		( new Failure_Notice() )->init();
+	}
+
+	// One-time: connection purposes are gone (every enabled connection now
+	// carries all mail). A connection that was Marketing-only never handled
+	// transactional mail, so it's switched off rather than silently joining
+	// the chain; its credentials stay so it can be re-enabled. Idempotent: a
+	// no-op once no connection carries a `purpose` key.
+	private function retire_marketing_purpose(): void {
+		$conns = get_option( Options::CONNECTIONS, array() );
+		if ( ! is_array( $conns ) || ! array_filter( $conns, static function ( $c ) { return isset( $c['purpose'] ); } ) ) {
+			return;
+		}
+		foreach ( $conns as &$c ) {
+			if ( 'marketing' === ( $c['purpose'] ?? '' ) ) {
+				$c['enabled'] = false;
+			}
+			unset( $c['purpose'] );
+		}
+		unset( $c );
+		update_option( Options::CONNECTIONS, $conns, false );
 	}
 
 	public function run_cleanup(): void {

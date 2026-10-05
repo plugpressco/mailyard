@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Suspense, lazy } from 'react';
-import { applyFilters } from '@wordpress/hooks';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Dialog, DangerZone as PPDangerZone, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
@@ -52,8 +51,8 @@ function EraseDialog( { onConfirm, onCancel, erasing } ) {
 	);
 }
 
-/** Free Mailyard's erase-all card — one panel of the Data & danger page. */
-function FreeDangerPanel() {
+/** Data & danger — the irreversible erase-all action. */
+function DataDanger() {
 	const [ open, setOpen ] = useState( false );
 	const [ erasing, setErasing ] = useState( false );
 
@@ -62,8 +61,6 @@ function FreeDangerPanel() {
 		post( 'data/erase-all', { confirm: 'DELETE' } )
 			.then( () => {
 				toast.success( 'All data deleted' );
-				// Reset to the onboarding flow so the clean state is reflected.
-				if ( window.mailyard ) window.mailyard.onboarded = false;
 				window.location.hash = '';
 				setTimeout( () => window.location.reload(), 600 );
 			} )
@@ -75,11 +72,12 @@ function FreeDangerPanel() {
 	};
 
 	return (
-		<>
+		<div className="max-w-[840px]">
+			<PageHeader title="Data & danger" subtitle="Irreversible actions." />
 			<PPDangerZone
-				eyebrow="Danger zone · Mailyard"
+				eyebrow="Danger zone"
 				title="Delete all delivery data"
-				description="Permanently erases all delivery logs, connections, and settings. Campaign data (Mailyard Pro) is not touched. This cannot be undone."
+				description="Permanently erases all delivery logs, connections, and settings. This cannot be undone."
 				action={
 					<Button variant="danger" onClick={ () => setOpen( true ) }>
 						Delete all data
@@ -95,42 +93,6 @@ function FreeDangerPanel() {
 					onCancel={ () => ! erasing && setOpen( false ) }
 				/>
 			) }
-		</>
-	);
-}
-
-/**
- * Data & danger — the family's data-management page: backup/restore and the
- * irreversible actions, one panel per concern. Family plugins contribute
- * panels via the `mailyard.shell.dataPanels` filter ({ id, order, Component });
- * panels with order < 50 render above the free erase card (e.g. Pro's
- * backup/restore), >= 50 below (e.g. Pro's own danger zone).
- */
-function DataDanger() {
-	const panels = useMemo( () => {
-		const list = applyFilters( 'mailyard.shell.dataPanels', [] );
-		return ( Array.isArray( list ) ? list : [] )
-			.filter( ( p ) => p && p.id && p.Component )
-			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
-	}, [] );
-
-	const above = panels.filter( ( p ) => ( p.order ?? 50 ) < 50 );
-	const below = panels.filter( ( p ) => ( p.order ?? 50 ) >= 50 );
-
-	const render = ( { id, Component } ) => (
-		<Suspense key={ id } fallback={ null }>
-			<div className="mb-4">
-				<Component />
-			</div>
-		</Suspense>
-	);
-
-	return (
-		<div className="max-w-[840px]">
-			<PageHeader title="Data & danger" subtitle="Backups, restores, and irreversible actions." />
-			{ above.map( render ) }
-			<FreeDangerPanel />
-			{ below.map( render ) }
 		</div>
 	);
 }
@@ -242,41 +204,26 @@ const SECTION_GROUPS = [
 	{ id: 'data', label: 'Data' },
 ];
 
-/** Free Mailyard's own sections — same contract family plugins use. */
-const CORE_SECTIONS = [
-	{ id: 'delivery', label: 'Delivery', group: 'configure', order: 10, Component: DeliverySettings },
-	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', order: 10, Component: ConnectAI },
-	{ id: 'data', label: 'Data & danger', group: 'data', order: 10, Component: DataDanger },
+/** Every settings section, in rail order. */
+const SECTIONS = [
+	{ id: 'delivery', label: 'Delivery', group: 'configure', Component: DeliverySettings },
+	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', Component: ConnectAI },
+	{ id: 'data', label: 'Data & danger', group: 'data', Component: DataDanger },
 ];
 
 /**
- * Settings — ONE page, ONE left nav. Both plugins contribute flat sections
- * through the `mailyard.shell.settingsSections` filter
- * ({ id, label, order, group: 'configure'|'connect'|'data', Component });
- * Mailyard Pro adds Brand, Campaigns, Compliance, and API access. There is
- * deliberately no per-product wrapper: config is organized by WHAT it
- * configures, not by which plugin ships it.
+ * Settings — ONE page, ONE left nav, grouped sections.
  *
  * Route space: `#/settings` = Delivery, `#/settings/<id>` = that section
- * (deeper segments belong to the section). Unknown ids — including the
- * retired `marketing/*` tab paths — redirect to Delivery.
+ * (deeper segments belong to the section). Unknown ids redirect to Delivery.
  */
 export default function Settings( { route = 'settings', navigate } ) {
-	const sections = useMemo( () => {
-		const contributed = applyFilters( 'mailyard.shell.settingsSections', [] );
-		return [
-			...CORE_SECTIONS,
-			...( Array.isArray( contributed ) ? contributed : [] ).filter(
-				( s ) => s && s.id && s.label && s.Component && SECTION_GROUPS.some( ( g ) => g.id === s.group )
-			),
-		].sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
-	}, [] );
-
+	const sections = SECTIONS;
 	const activeId = route.split( '/' )[ 1 ] || 'delivery';
 	const active = sections.find( ( s ) => s.id === activeId );
 
-	// Retired/unknown section ids (old #/settings/marketing/* deep links, a
-	// deactivated plugin's section) land on Delivery instead of a blank pane.
+	// Retired/unknown section ids (old #/settings/marketing/* deep links)
+	// land on Delivery instead of a blank pane.
 	useEffect( () => {
 		if ( ! active && 'delivery' !== activeId ) {
 			window.location.hash = '#/settings';
@@ -292,7 +239,7 @@ export default function Settings( { route = 'settings', navigate } ) {
 		}
 	};
 
-	const Section = ( active || CORE_SECTIONS[ 0 ] ).Component;
+	const Section = ( active || SECTIONS[ 0 ] ).Component;
 
 	return (
 		<div className="flex gap-8">

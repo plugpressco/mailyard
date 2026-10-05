@@ -184,7 +184,6 @@ class REST_API {
 			'from_name'        => sanitize_text_field( $input['from_name'] ?? '' ),
 			'config'           => $this->sanitize_config( $input['config'] ?? array() ),
 			'from_match'       => $this->sanitize_from_match( $input['from_match'] ?? array() ),
-			'purpose'          => $this->sanitize_purpose( $input['purpose'] ?? 'any' ),
 			'enabled'          => (bool) ( $input['enabled'] ?? false ),
 			'priority'         => count( $conns ),
 			'last_test_at'     => 0,
@@ -228,9 +227,6 @@ class REST_API {
 			}
 			if ( isset( $input['from_match'] ) ) {
 				$c['from_match'] = $this->sanitize_from_match( $input['from_match'] );
-			}
-			if ( isset( $input['purpose'] ) ) {
-				$c['purpose'] = $this->sanitize_purpose( $input['purpose'] );
 			}
 			$found = $c;
 			break;
@@ -301,9 +297,7 @@ class REST_API {
 		}
 
 		$esp = Manager::instance()->get( $conn['provider'] );
-		// connection_config() derives provider specifics (Postmark stream from
-		// purpose) — raw config here made Marketing connections test on the
-		// transactional stream, hiding routing mistakes until a real campaign.
+		// Connect exactly the way real mail does (Manager::connection_config()).
 		if ( ! $esp || ! $esp->connect( Manager::instance()->connection_config( $conn ) ) ) {
 			$this->record_test_result( $id, 'failed', __( 'Connection could not be initialized — check credentials.', 'mailyard' ) );
 			return rest_ensure_response( array( 'success' => false, 'message' => __( 'Connection could not be initialized.', 'mailyard' ) ) );
@@ -621,12 +615,6 @@ class REST_API {
 			}
 		}
 		return array_values( array_unique( $clean ) );
-	}
-
-	// Routing purpose — whitelist with a safe default.
-	private function sanitize_purpose( $value ): string {
-		$value = sanitize_key( (string) $value );
-		return in_array( $value, array( 'any', 'transactional', 'marketing' ), true ) ? $value : 'any';
 	}
 
 	private function sanitize_setting( string $key, $value ) {

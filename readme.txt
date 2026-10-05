@@ -41,12 +41,6 @@ Setup takes a minute: pick a provider, paste a key, send a test. If another SMTP
 * **Custom SMTP** — any SMTP server, Gmail app passwords included
 * **PHP mail** — your host's server; no setup, but don't count on it
 
-= Mailyard Pro =
-
-Mailyard delivers the email your site already sends. [Mailyard Pro](https://plugpress.co/mailyard) adds the email you write: broadcast campaigns, a clean email editor, contacts and segments, open tracking, and one-click unsubscribe built in.
-
-Nothing in free Mailyard is held back for it, and Mailyard never nags you about it.
-
 = Source code =
 
 The admin screens are React, built with `@wordpress/scripts`. The unminified source lives at https://github.com/plugpressco/mailyard under `src/` — `npm install`, then `npm run build`.
@@ -137,7 +131,7 @@ No. Uninstalling leaves your logs and settings alone, so you can reinstall witho
 
 = Is it really free? =
 
-Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the email log. Nothing is locked or metered. The only thing we sell is [Mailyard Pro](https://plugpress.co/mailyard), a separate broadcast-campaigns plugin that builds on top of Mailyard — this plugin is complete without it.
+Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the email log. Nothing is locked, metered, or held back for an upgrade.
 
 == Screenshots ==
 
@@ -149,6 +143,10 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 6. Settings → Connect AI — the master switch and per-tool permissions for AI agents.
 
 == Changelog ==
+
+= 1.1.0 =
+* Update: Simpler admin — one sidebar (Dashboard, Connections, Email log, Deliverability, Settings), mirrored in the WordPress menu.
+* Update: Connections no longer have a Marketing/Transactional purpose; every enabled connection carries all mail. A connection that was set to Marketing only is switched off on update (its settings are kept).
 
 = 1.0.2 (2026/07/30) =
 * Fix: The connection Test now sends through the same provider settings as real mail — a Marketing-purpose Postmark connection tests on the broadcast stream, not the transactional one.

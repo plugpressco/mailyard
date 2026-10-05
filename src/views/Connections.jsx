@@ -12,9 +12,9 @@ import useConnections from '@/hooks/useConnections';
 import { post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
-import { Card, Button, Toggle, Input, Select, SegmentedControl, TagInput, SectionTitle, PageHeader, ConnectionsSkeleton } from '@/components/ui';
-import { PlusIcon, GearIcon, XIcon, GripIcon, LinkIcon, ChevronRightIcon, SpinnerIcon } from '@/components/Icons';
-import { LIVE_PROVIDERS, PURPOSES, SMTP_PRESETS } from '@/lib/providers';
+import { Card, Button, Toggle, Input, Select, TagInput, SectionTitle, PageHeader, ConnectionsSkeleton } from '@/components/ui';
+import { PlusIcon, GearIcon, XIcon, GripIcon, LinkIcon, ChevronRightIcon } from '@/components/Icons';
+import { LIVE_PROVIDERS, SMTP_PRESETS } from '@/lib/providers';
 
 function relative( unixSec ) {
 	if ( ! unixSec ) return null;
@@ -40,7 +40,6 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 	const [ fromEmail, setFromEmail ] = useState( '' );
 	const [ fromName, setFromName ] = useState( '' );
 	const [ fromMatch, setFromMatch ] = useState( [] );
-	const [ purpose, setPurpose ] = useState( 'any' );
 	const [ showRouting, setShowRouting ] = useState( false );
 	const [ smtpPreset, setSmtpPreset ] = useState( null );
 
@@ -52,16 +51,14 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 			setFromEmail( conn.from_email || '' );
 			setFromName( conn.from_name || '' );
 			setFromMatch( Array.isArray( conn.from_match ) ? conn.from_match : [] );
-			setPurpose( conn.purpose || 'any' );
 			// Reveal routing only when it's been customised away from the default.
-			setShowRouting( ( Array.isArray( conn.from_match ) && conn.from_match.length > 0 ) || ( conn.purpose && conn.purpose !== 'any' ) );
+			setShowRouting( Array.isArray( conn.from_match ) && conn.from_match.length > 0 );
 		} else {
 			setName( provider.name );
 			setConfig( {} );
 			setFromEmail( '' );
 			setFromName( '' );
 			setFromMatch( [] );
-			setPurpose( 'any' );
 			setShowRouting( false );
 		}
 	}, [ conn, provider ] );
@@ -185,10 +182,10 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 					className="flex w-full cursor-pointer items-center justify-between border-none bg-transparent px-5 py-3.5 text-left"
 				>
 					<span className="flex items-center gap-2">
-						<SectionTitle>Advanced routing</SectionTitle>
+						<SectionTitle>Sender routing</SectionTitle>
 						{ ! showRouting && (
 							<span className="text-[11.5px] text-ink-400">
-								{ fromMatch.length ? fromMatch.join( ', ' ) : 'All senders' }{ purpose !== 'any' ? ` · ${ purpose }` : '' }
+								{ fromMatch.length ? fromMatch.join( ', ' ) : 'All senders' }
 							</span>
 						) }
 					</span>
@@ -203,13 +200,6 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 						placeholder="All senders (catch-all)"
 						hint="Add an email (support@you.com) or a domain (you.com), then press Enter. Leave empty to handle every sender. The most specific match wins."
 					/>
-					<SegmentedControl
-						label="Purpose"
-						options={ PURPOSES }
-						value={ purpose }
-						onChange={ setPurpose }
-						hint="How this connection is used for routing. “Any” handles everything — keep it unless you want a dedicated connection per stream (e.g. a separate Postmark Broadcast connection just for campaigns). Postmark’s message stream is set automatically: Marketing → Broadcast, otherwise Transactional."
-					/>
 				</div>
 				) }
 			</Card>
@@ -219,7 +209,7 @@ function ConfigPage( { provider, conn, onSave, onBack, saving } ) {
 				<Button
 					className="flex-1 justify-center"
 					disabled={ ! canSave || saving }
-					onClick={ () => canSave && onSave( { name, config, from_email: fromEmail, from_name: fromName, from_match: fromMatch, purpose } ) }
+					onClick={ () => canSave && onSave( { name, config, from_email: fromEmail, from_name: fromName, from_match: fromMatch } ) }
 				>
 					{ saving ? 'Saving…' : conn ? 'Save changes' : 'Save & enable connection' }
 				</Button>
@@ -317,9 +307,6 @@ function SortableCard( { conn, index, testing, onToggle, onRemove, onEdit, onTes
 					<span>{ conn.from_email || 'Not configured' }</span>
 					{ Array.isArray( conn.from_match ) && conn.from_match.length > 0 && (
 						<span className="truncate text-ink-500">· { conn.from_match.join( ', ' ) }</span>
-					) }
-					{ conn.purpose && conn.purpose !== 'any' && (
-						<span className="rounded bg-ink-100 px-1.5 py-[1px] text-[10px] font-medium uppercase tracking-wide text-ink-500">{ conn.purpose === 'marketing' ? 'mkt' : 'txn' }</span>
 					) }
 					{ badge && (
 						<span className={ `inline-flex items-center gap-1 ${ badgeCls }` }>
@@ -450,14 +437,14 @@ export default function Connections() {
 		setConfigSaving( false );
 	};
 
-	const handleConfigSave = useCallback( ( { name, config, from_email, from_name, from_match, purpose } ) => {
+	const handleConfigSave = useCallback( ( { name, config, from_email, from_name, from_match } ) => {
 		setConfigSaving( true );
 		if ( editingConn ) {
-			update( editingConn.id, { name, config, from_email, from_name, from_match, purpose } )
+			update( editingConn.id, { name, config, from_email, from_name, from_match } )
 				.then( () => { toast.success( `${ name } updated` ); closeConfig(); } )
 				.catch( () => { toast.error( 'Failed to update' ); setConfigSaving( false ); } );
 		} else if ( configProvider ) {
-			create( { provider: configProvider.id, name, config, from_email, from_name, from_match, purpose, enabled: true } )
+			create( { provider: configProvider.id, name, config, from_email, from_name, from_match, enabled: true } )
 				.then( () => { toast.success( `${ name } connected` ); closeConfig(); } )
 				.catch( () => { toast.error( 'Failed to save' ); setConfigSaving( false ); } );
 		}
@@ -479,7 +466,7 @@ export default function Connections() {
 		return <ConnectionsSkeleton />;
 	}
 
-	// Any provider can be added more than once (e.g. Postmark transactional + Postmark broadcast).
+	// Any provider can be added more than once (e.g. two Postmark servers).
 	const availableProviders = LIVE_PROVIDERS;
 
 	return (
