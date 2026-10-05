@@ -1,5 +1,5 @@
 /**
- * SVG brand icons for all 6 live providers.
+ * SVG icons for every provider in LIVE_PROVIDERS (src/lib/providers.js).
  * Each icon renders at the given `size` (px) with proper aspect ratio.
  */
 
@@ -50,6 +50,33 @@ const icons = {
 		<svg width={ s } height={ s } viewBox="0 0 1800 1800" fill="none">
 			<rect width="1800" height="1800" rx="360" fill="#000" />
 			<path d="M1000.46 450C1174.77 450 1278.43 553.669 1278.43 691.282C1278.43 828.896 1174.77 932.563 1000.46 932.563H912.382L1350 1350H1040.82L707.794 1033.48C683.944 1011.47 672.936 985.781 672.935 963.765C672.935 932.572 694.959 905.049 737.161 893.122L908.712 847.244C973.85 829.812 1018.81 779.353 1018.81 713.298C1018.8 632.567 952.745 585.78 871.095 585.78H450V450H1000.46Z" fill="#FDFDFD" />
+		</svg>
+	),
+	smtp2go: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#0F7DC2" />
+			<path d="M11 21.5l18-8-6 15-3.5-5.5L11 21.5z" fill="#fff" />
+			<path d="M19.5 23L29 13.5" stroke="#0F7DC2" strokeWidth="1.4" strokeLinecap="round" />
+		</svg>
+	),
+	mailjet: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#FEC740" />
+			<path d="M10 20.5L30 11l-6.5 19-4.5-7.5L10 20.5z" fill="#1A1A1A" />
+			<path d="M19 22.5L30 11" stroke="#FEC740" strokeWidth="1.4" strokeLinecap="round" />
+		</svg>
+	),
+	mailersend: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#4F46E5" />
+			<path d="M11 27V14l9 7 9-7v13" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+		</svg>
+	),
+	maileroo: ( s ) => (
+		<svg width={ s } height={ s } viewBox="0 0 40 40">
+			<rect width="40" height="40" rx="8" fill="#16A34A" />
+			<rect x="10" y="13" width="20" height="14" rx="2.5" stroke="#fff" strokeWidth="2" fill="none" />
+			<path d="M10.5 14.5L20 21l9.5-6.5" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
 		</svg>
 	),
 	smtp: ( s ) => (

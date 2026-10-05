@@ -26,13 +26,13 @@ class Options {
 	// registered in Manager::__construct(). 'phpmailer' (PHP Mail) needs no
 	// setup — it's the zero-config backup at the end of a chain.
 	public static function providers(): array {
-		return array( 'ses', 'postmark', 'resend', 'brevo', 'smtp', self::DEFAULT_PROVIDER );
+		return array( 'ses', 'postmark', 'resend', 'brevo', 'mailgun', 'sendgrid', 'smtp2go', 'mailjet', 'mailersend', 'maileroo', 'smtp', self::DEFAULT_PROVIDER );
 	}
 
 	// Providers whose API performs its own recipient validation —
 	// skip our DNS lookup which is unreliable on dev/VPN/firewalled machines.
 	public static function api_providers(): array {
-		return array( 'postmark', 'ses', 'resend', 'brevo' );
+		return array( 'ses', 'postmark', 'resend', 'brevo', 'mailgun', 'sendgrid', 'smtp2go', 'mailjet', 'mailersend', 'maileroo' );
 	}
 
 	public static function providers_with_default(): array {

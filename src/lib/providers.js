@@ -104,6 +104,70 @@ export const LIVE_PROVIDERS = [
 		],
 	},
 	{
+		id: 'mailgun',
+		name: 'Mailgun',
+		desc: 'Developer email API',
+		dashboard: 'https://app.mailgun.com/settings/api_security',
+		fields: [
+			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 'key-xxxxxxxxxxxxxxxxxxxxxxxx', hint: 'Found in Mailgun → Settings → API Security. A domain Sending Key also works.' },
+			{ key: 'domain', label: 'Sending Domain', type: 'text', required: true, placeholder: 'mg.yourdomain.com', hint: 'The domain you verified in Mailgun → Sending → Domains.' },
+			{
+				key: 'region', label: 'Region', type: 'select', required: true,
+				hint: 'Must match where your Mailgun domain was created.',
+				options: [
+					{ value: 'us', label: 'US' },
+					{ value: 'eu', label: 'EU' },
+				],
+			},
+		],
+	},
+	{
+		id: 'sendgrid',
+		name: 'SendGrid',
+		desc: 'Twilio email API',
+		dashboard: 'https://app.sendgrid.com/settings/api_keys',
+		fields: [
+			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 'SG.xxxxxxxxxxxxxxxxxxxx', hint: 'Found in SendGrid → Settings → API Keys. Needs the Mail Send permission.' },
+		],
+	},
+	{
+		id: 'smtp2go',
+		name: 'SMTP2GO',
+		desc: 'Reliable global delivery',
+		dashboard: 'https://app.smtp2go.com/sending/apikeys/',
+		fields: [
+			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 'api-xxxxxxxxxxxxxxxxxxxxxxxx', hint: 'Found in SMTP2GO → Sending → API Keys. Allow the /email/send endpoint.' },
+		],
+	},
+	{
+		id: 'mailjet',
+		name: 'Mailjet',
+		desc: 'European email platform',
+		dashboard: 'https://app.mailjet.com/account/apikeys',
+		fields: [
+			{ key: 'api_key', label: 'API Key', type: 'password', required: true, placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', hint: 'Found in Mailjet → Account settings → API Key Management.' },
+			{ key: 'secret_key', label: 'Secret Key', type: 'password', required: true, placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', hint: 'Shown next to the API key. Regenerate it there if you lost it.' },
+		],
+	},
+	{
+		id: 'mailersend',
+		name: 'MailerSend',
+		desc: 'Simple transactional API',
+		dashboard: 'https://app.mailersend.com/api-tokens',
+		fields: [
+			{ key: 'api_key', label: 'API Token', type: 'password', required: true, placeholder: 'mlsn.xxxxxxxxxxxxxxxxxxxx', hint: 'Found in MailerSend → Integrations → API tokens. Needs Email full access.' },
+		],
+	},
+	{
+		id: 'maileroo',
+		name: 'Maileroo',
+		desc: 'Affordable email API',
+		dashboard: 'https://app.maileroo.com/domains',
+		fields: [
+			{ key: 'api_key', label: 'Sending Key', type: 'password', required: true, placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxx', hint: 'Found in Maileroo → Domains → your domain → Sending Keys.' },
+		],
+	},
+	{
 		id: 'smtp',
 		name: 'Custom SMTP',
 		desc: 'Any SMTP server',

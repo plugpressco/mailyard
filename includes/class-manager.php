@@ -20,12 +20,18 @@ class Manager {
 
 	private function __construct() {
 		$this->providers = array(
-			Options::DEFAULT_PROVIDER => new ESP\Default_Mail(),
 			'ses'                     => new ESP\SES(),
 			'postmark'                => new ESP\Postmark(),
 			'resend'                  => new ESP\Resend(),
 			'brevo'                   => new ESP\Brevo(),
+			'mailgun'                 => new ESP\Mailgun(),
+			'sendgrid'                => new ESP\SendGrid(),
+			'smtp2go'                 => new ESP\SMTP2GO(),
+			'mailjet'                 => new ESP\Mailjet(),
+			'mailersend'              => new ESP\MailerSend(),
+			'maileroo'                => new ESP\Maileroo(),
 			'smtp'                    => new ESP\SMTP(),
+			Options::DEFAULT_PROVIDER => new ESP\Default_Mail(),
 		);
 
 		// Allow third-party providers.

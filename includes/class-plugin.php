@@ -138,6 +138,12 @@ class Plugin {
 		require_once $includes . 'esp/class-postmark.php';
 		require_once $includes . 'esp/class-resend.php';
 		require_once $includes . 'esp/class-brevo.php';
+		require_once $includes . 'esp/class-mailgun.php';
+		require_once $includes . 'esp/class-sendgrid.php';
+		require_once $includes . 'esp/class-smtp2go.php';
+		require_once $includes . 'esp/class-mailjet.php';
+		require_once $includes . 'esp/class-mailersend.php';
+		require_once $includes . 'esp/class-maileroo.php';
 		require_once $includes . 'esp/class-smtp.php';
 
 		require_once $includes . 'class-options.php';

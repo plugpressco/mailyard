@@ -8,7 +8,7 @@ Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Sends your WordPress email through Amazon SES, Postmark, Resend, Brevo, or any SMTP — and switches to a backup when a send fails.
+Sends your WordPress email through Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, or any SMTP — and switches to a backup when a send fails.
 
 == Description ==
 
@@ -16,18 +16,18 @@ WordPress hands your email to your web host, and most hosts are bad at email. Me
 
 That felt wrong.
 
-So I built Mailyard. It sends your email through a real service — Amazon SES, Postmark, Resend, Brevo, or any SMTP server — and if that service fails, it retries the same email through your backup, on the same send. Not in a retry queue. Not tomorrow. The email still goes out.
+So I built Mailyard. It sends your email through a real service — Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, or any SMTP server — and if that service fails, it retries the same email through your backup, on the same send. Not in a retry queue. Not tomorrow. The email still goes out.
 
 That is Mailyard, and all of it is free. No locked buttons, no upgrade nags. Plugin site: [plugpress.co/mailyard](https://plugpress.co/mailyard).
 
 = What it does =
 
 * **A backup that takes over.** The moment a send fails, your backup provider tries the same email.
-* **Six ways to send.** Amazon SES, Postmark, Resend, Brevo, custom SMTP, or plain PHP mail.
+* **Twelve ways to send.** Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, custom SMTP, or plain PHP mail.
 * **A log of every email.** Every send and every failure, with the provider's exact error. Logs delete themselves after 30 days.
 * **A deliverability checker.** Your SPF, DKIM, DMARC, and MX records, graded A–F, with the exact DNS record to add.
 * **Sender routing.** Receipts through Postmark, newsletters through Brevo — the right provider per sender, automatically.
-* **Bounce tracking.** All four provider webhooks, normalized into one `mailyard_bounce` hook.
+* **Bounce tracking.** Amazon SES, Postmark, Resend, and Brevo webhooks, normalized into one `mailyard_bounce` hook.
 * **AI tools.** Claude, Cursor, or Codex can check your setup and read the log — every tool has its own off switch, and nothing is exposed until you set it up.
 
 Setup takes a minute: pick a provider, paste a key, send a test. If another SMTP plugin is fighting you, Mailyard says so.
@@ -38,6 +38,7 @@ Setup takes a minute: pick a provider, paste a key, send a test. If another SMTP
 * **Brevo** — has a free tier, 300 emails a day
 * **Postmark** — best inbox placement, made for stores
 * **Amazon SES** — cheapest at high volume
+* **Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo** — already have an account with one? Use it
 * **Custom SMTP** — any SMTP server, Gmail app passwords included
 * **PHP mail** — your host's server; no setup, but don't count on it
 
@@ -66,6 +67,24 @@ Terms: https://postmarkapp.com/terms-of-service — Privacy: https://postmarkapp
 
 Amazon SES (Simple Email Service) — Amazon's email delivery API, used if you pick Amazon SES. Each email goes to `https://email.{your-region}.amazonaws.com/v2/email/outbound-emails`. If you turn on bounce/complaint webhooks for SES, Mailyard also confirms the Amazon SNS subscription with a one-time request to the AWS-hosted `SubscribeURL` (it checks the host is on `amazonaws.com` first).
 Terms: https://aws.amazon.com/service-terms/ — Privacy: https://aws.amazon.com/privacy/
+
+Mailgun — email delivery API, used if you pick Mailgun. Each email goes to `https://api.mailgun.net/v3/{your-domain}/messages` (or `api.eu.mailgun.net` for the EU region).
+Terms: https://www.mailgun.com/legal/terms/ — Privacy: https://www.mailgun.com/legal/privacy-policy/
+
+SendGrid (Twilio) — email delivery API, used if you pick SendGrid. Each email goes to `https://api.sendgrid.com/v3/mail/send`.
+Terms: https://www.twilio.com/en-us/legal/tos — Privacy: https://www.twilio.com/en-us/legal/privacy
+
+SMTP2GO — email delivery API, used if you pick SMTP2GO. Each email goes to `https://api.smtp2go.com/v3/email/send`.
+Terms: https://www.smtp2go.com/terms/ — Privacy: https://www.smtp2go.com/privacy/
+
+Mailjet — email delivery API, used if you pick Mailjet. Each email goes to `https://api.mailjet.com/v3.1/send`.
+Terms: https://www.mailjet.com/legal/terms/ — Privacy: https://www.mailjet.com/legal/privacy-policy/
+
+MailerSend — email delivery API, used if you pick MailerSend. Each email goes to `https://api.mailersend.com/v1/email`.
+Terms and Privacy: https://www.mailersend.com/legal
+
+Maileroo — email delivery API, used if you pick Maileroo. Each email goes to `https://smtp.maileroo.com/api/v2/emails`.
+Terms: https://maileroo.com/terms-conditions — Privacy: https://maileroo.com/privacy-policy
 
 Custom SMTP — if you pick the Custom SMTP option, email goes to the SMTP host and port you enter. That's whatever SMTP service or server you choose, so check its own terms and privacy policy.
 
@@ -145,6 +164,7 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 == Changelog ==
 
 = 1.1.0 =
+* Add: Six more providers — Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend and Maileroo.
 * Add: One-click import from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP — provider, credentials and sender come over, including FluentSMTP's backup and per-sender routing.
 * Add: Background sending — the page answers first and the email goes out right after, shown as Pending in the log until then.
 * Add: Offline mode — every email is logged, none are sent. For staging and development sites.

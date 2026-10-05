@@ -26,12 +26,25 @@ class Errors {
 				'guidance' => __( 'Your email provider hasn\'t verified this From address or its domain. Verify the sender identity (and its DNS records) in your provider\'s dashboard, then try again.', 'mailyard' ),
 			),
 			array(
+				// SendGrid "does not match a verified Sender Identity", MailerSend
+				// "domain must be verified", Mailgun "Domain not found".
+				'match'    => '/verified sender identity|must be verified|unverified|domain not found/i',
+				'title'    => __( 'Sender address or domain not verified', 'mailyard' ),
+				'guidance' => __( 'Your email provider hasn\'t verified this From address or its domain. Verify the sender identity (and its DNS records) in your provider\'s dashboard, then try again.', 'mailyard' ),
+			),
+			array(
+				// Mailgun sandbox domains, trial accounts limited to approved addresses.
+				'match'    => '/sandbox|authorized recipients/i',
+				'title'    => __( 'Your provider account is in test mode', 'mailyard' ),
+				'guidance' => __( 'Test (sandbox) accounts only deliver to pre-approved addresses. Add your own sending domain or upgrade the account in your provider\'s dashboard.', 'mailyard' ),
+			),
+			array(
 				'match'    => 'messagerejected',
 				'title'    => __( 'The provider rejected the message', 'mailyard' ),
 				'guidance' => __( 'Usually the From address or domain isn\'t verified yet, or your account is still in sandbox mode. Verify your sender and request production access in the provider dashboard.', 'mailyard' ),
 			),
 			array(
-				'match'    => '/authenticat|could not authenticate|535|auth failed|invalid credentials|signature/i',
+				'match'    => '/authenticat|could not authenticate|535|auth failed|invalid credentials|signature|unauthori[sz]ed|forbidden|authorization grant|api.?key|HTTP 40[13]\b/i',
 				'title'    => __( 'Authentication failed', 'mailyard' ),
 				'guidance' => __( 'The username, password, or API key was rejected. Double-check the credentials — for Gmail/Microsoft use an app-specific password (with 2-factor enabled), not your normal login.', 'mailyard' ),
 			),
