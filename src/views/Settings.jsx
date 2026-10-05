@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { Dialog, DangerZone as PPDangerZone, toast } from '@plugpress/ui';
+import { Dialog, DangerZone as PPDangerZone, Notice, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
 import { get, post } from '@/lib/api';
@@ -9,6 +9,17 @@ import ToggleRow from '@/components/ToggleRow';
 const ConnectAI = lazy( () => import( './ConnectAI' ) );
 const AlertsSettings = lazy( () => import( './AlertsSettings' ) );
 const SecuritySettings = lazy( () => import( './SecuritySettings' ) );
+const NetworkSettings = lazy( () => import( './NetworkSettings' ) );
+
+// Multisite sharing state for this site; null until loaded (and on single sites
+// the endpoint reports multisite: false).
+function useNetwork() {
+	const [ network, setNetwork ] = useState( null );
+	useEffect( () => {
+		get( 'network' ).then( setNetwork ).catch( () => setNetwork( {} ) );
+	}, [] );
+	return network;
+}
 
 // Confirm modal for the irreversible "Delete all data" action. Uses the
 // design system's Dialog (focus trap, esc, aria). The destructive button
@@ -216,7 +227,11 @@ function DataDanger() {
 /**
  * Delivery settings — the default Settings section.
  */
-function DeliverySettings() {
+function DeliverySettings( { network } ) {
+	// On a subsite under shared settings, the network's groups are read-only here.
+	const managed = !! network?.shared && ! network?.isMain;
+	const senderLocked = managed && !! network?.share_sender;
+	const deliveryLocked = managed && !! network?.share_delivery;
 	const { settings, loading, save } = useSettings();
 
 	const [ fromEmail, setFromEmail ] = useState( '' );
@@ -277,11 +292,17 @@ function DeliverySettings() {
 		<div className="max-w-[840px]">
 			<PageHeader title="Delivery" subtitle="How WordPress email goes out. Changes save automatically." />
 
+			{ managed && (
+				<Notice tone="info" className="mb-3">
+					Email for this site goes through the connections set up on the network’s main site{ senderLocked || deliveryLocked ? ', and the greyed-out settings below are managed there too' : '' }. The log stays this site’s own.
+				</Notice>
+			) }
+
 			<Card className="mb-3 overflow-hidden">
 				<div className="px-5 pt-4 pb-1">
 					<SectionTitle>Default sender</SectionTitle>
 				</div>
-				<div className="flex max-w-[520px] flex-col gap-3 px-5 pb-5 pt-3">
+				<fieldset disabled={ senderLocked } className={ cn( 'm-0 flex max-w-[520px] flex-col gap-3 border-0 px-5 pb-5 pt-3', senderLocked && 'opacity-60' ) }>
 					<Input
 						label="From Email"
 						type="email"
@@ -305,35 +326,37 @@ function DeliverySettings() {
 						value={ returnPath }
 						onChange={ ( e ) => { setReturnPath( e.target.value ); trigger( 'Return path updated' ); } }
 					/>
-				</div>
+				</fieldset>
 			</Card>
 
 			<Card className="overflow-hidden divide-y divide-ink-200">
-				<ToggleRow
-					title="Background sending"
-					description="Answer the page first, send the email a moment later — a slow provider never slows your site. The log shows it as Pending until it goes out."
-					on={ background }
-					onChange={ ( v ) => { setBackground( v ); trigger( v ? 'Background sending on' : 'Background sending off' ); } }
-				/>
-				<ToggleRow
-					title="Email logging"
-					description="Store every outgoing email in the Email log for debugging and review."
-					on={ logging }
-					onChange={ ( v ) => { setLogging( v ); trigger( v ? 'Logging enabled' : 'Logging disabled' ); } }
-				>
-					<Select
-						label="Keep logs for"
-						options={ [
-							{ value: '7', label: '7 days' },
-							{ value: '30', label: '30 days' },
-							{ value: '90', label: '90 days' },
-							{ value: '0', label: 'Forever' },
-						] }
-						value={ retention }
-						onChange={ ( e ) => { setRetention( e.target.value ); trigger( 'Log retention updated' ); } }
-						className="max-w-[200px]"
+				<div className={ cn( 'divide-y divide-ink-200', deliveryLocked && 'pointer-events-none opacity-60' ) }>
+					<ToggleRow
+						title="Background sending"
+						description="Answer the page first, send the email a moment later — a slow provider never slows your site. The log shows it as Pending until it goes out."
+						on={ background }
+						onChange={ ( v ) => { setBackground( v ); trigger( v ? 'Background sending on' : 'Background sending off' ); } }
 					/>
-				</ToggleRow>
+					<ToggleRow
+						title="Email logging"
+						description="Store every outgoing email in the Email log for debugging and review."
+						on={ logging }
+						onChange={ ( v ) => { setLogging( v ); trigger( v ? 'Logging enabled' : 'Logging disabled' ); } }
+					>
+						<Select
+							label="Keep logs for"
+							options={ [
+								{ value: '7', label: '7 days' },
+								{ value: '30', label: '30 days' },
+								{ value: '90', label: '90 days' },
+								{ value: '0', label: 'Forever' },
+							] }
+							value={ retention }
+							onChange={ ( e ) => { setRetention( e.target.value ); trigger( 'Log retention updated' ); } }
+							className="max-w-[200px]"
+						/>
+					</ToggleRow>
+				</div>
 				<ToggleRow
 					title="Offline mode"
 					description="Log every email without sending any. For staging and development sites."
@@ -440,6 +463,7 @@ const SECTIONS = [
 	{ id: 'alerts', label: 'Alerts', group: 'configure', Component: AlertsSettings },
 	{ id: 'wordpress-emails', label: 'WordPress emails', group: 'configure', Component: WordPressEmails },
 	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', Component: ConnectAI },
+	{ id: 'network', label: 'Network', group: 'connect', Component: NetworkSettings, when: ( n ) => !! n?.canManage },
 	{ id: 'security', label: 'Security', group: 'data', Component: SecuritySettings },
 	{ id: 'data', label: 'Data & danger', group: 'data', Component: DataDanger },
 ];
@@ -451,17 +475,19 @@ const SECTIONS = [
  * (deeper segments belong to the section). Unknown ids redirect to Delivery.
  */
 export default function Settings( { route = 'settings', navigate } ) {
-	const sections = SECTIONS;
+	const network = useNetwork();
+	const sections = SECTIONS.filter( ( s ) => ! s.when || s.when( network ) );
 	const activeId = route.split( '/' )[ 1 ] || 'delivery';
 	const active = sections.find( ( s ) => s.id === activeId );
 
 	// Retired/unknown section ids (old #/settings/marketing/* deep links)
-	// land on Delivery instead of a blank pane.
+	// land on Delivery instead of a blank pane — once we know which
+	// conditional sections exist.
 	useEffect( () => {
-		if ( ! active && 'delivery' !== activeId ) {
+		if ( network && ! active && 'delivery' !== activeId ) {
 			window.location.hash = '#/settings';
 		}
-	}, [ active, activeId ] );
+	}, [ network, active, activeId ] );
 
 	const go = ( id ) => {
 		const target = 'delivery' === id ? 'settings' : 'settings/' + id;
@@ -515,7 +541,7 @@ export default function Settings( { route = 'settings', navigate } ) {
 
 			<div className="min-w-0 flex-1">
 				<Suspense fallback={ <SettingsSkeleton /> }>
-					<Section route={ route } navigate={ navigate } />
+					<Section route={ route } navigate={ navigate } network={ network } />
 				</Suspense>
 			</div>
 		</div>

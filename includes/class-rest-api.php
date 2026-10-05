@@ -54,6 +54,10 @@ class REST_API {
 		$this->route( $ns, '/settings/export', array( 'GET' => 'export_settings' ) );
 		$this->route( $ns, '/settings/import', array( 'POST' => 'import_settings' ) );
 		$this->route( $ns, '/logs/empty', array( 'POST' => 'empty_logs' ) );
+		$this->route( $ns, '/network', array(
+			'GET'  => 'get_network',
+			'POST' => 'save_network',
+		) );
 
 		// Importer: other SMTP plugins' saved setups.
 		$this->route( $ns, '/import', array(
@@ -168,7 +172,7 @@ class REST_API {
 		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails', 'alert_email', 'alert_to', 'alert_webhook', 'weekly_summary', 'log_retention' );
 
 		foreach ( $keys as $key ) {
-			if ( isset( $input[ $key ] ) ) {
+			if ( isset( $input[ $key ] ) && ! Options::is_shared_key( $key ) ) {
 				$settings[ $key ] = $this->sanitize_setting( $key, $input[ $key ] );
 			}
 		}
@@ -192,6 +196,10 @@ class REST_API {
 	}
 
 	public function create_connection( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$input    = $request->get_json_params();
 		$provider = sanitize_key( $input['provider'] ?? '' );
 
@@ -225,6 +233,10 @@ class REST_API {
 	}
 
 	public function update_connection( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$id    = sanitize_text_field( $request->get_param( 'id' ) );
 		$input = $request->get_json_params();
 		$conns = $this->connections();
@@ -267,6 +279,10 @@ class REST_API {
 	}
 
 	public function delete_connection( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$id    = sanitize_text_field( $request->get_param( 'id' ) );
 		$conns = array_values( array_filter(
 			$this->connections(),
@@ -278,6 +294,10 @@ class REST_API {
 	}
 
 	public function reorder_connections( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$ids = array_map( 'sanitize_text_field', $request->get_json_params()['ids'] ?? array() );
 		$map = array();
 		foreach ( $this->connections() as $c ) {
@@ -625,6 +645,10 @@ class REST_API {
 	// Restore a backup from export_settings(): settings go through the same
 	// whitelist as a save; connections are rebuilt field by field.
 	public function import_settings( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$data = $request->get_json_params()['data'] ?? null;
 		if ( ! is_array( $data ) || 'mailyard' !== ( $data['plugin'] ?? '' ) || ! is_array( $data['settings'] ?? null ) ) {
 			return new \WP_Error( 'bad_backup', __( 'That file isn’t a Mailyard settings backup.', 'mailyard' ), array( 'status' => 400 ) );
@@ -667,11 +691,48 @@ class REST_API {
 		return rest_ensure_response( array( 'deleted' => Logger::instance()->truncate() ) );
 	}
 
+	// On a subsite under shared settings the connections belong to the main
+	// site: refuse edits here instead of forking a silent local copy.
+	private function managed_by_network() {
+		return Options::shared_source()
+			? new \WP_Error( 'managed_by_network', __( 'Email delivery for this site is managed by the network’s main site.', 'mailyard' ), array( 'status' => 403 ) )
+			: null;
+	}
+
+	// Network sharing state, plus what this site may do about it.
+	public function get_network() {
+		return rest_ensure_response( Options::network() + array(
+			'multisite' => is_multisite(),
+			'isMain'    => is_main_site(),
+			'canManage' => is_multisite() && is_main_site() && current_user_can( 'manage_network_options' ),
+		) );
+	}
+
+	// Main site only, network admins only.
+	public function save_network( $request ) {
+		if ( ! is_multisite() || ! is_main_site() || ! current_user_can( 'manage_network_options' ) ) {
+			return new \WP_Error( 'forbidden', __( 'Only a network admin can change this, from the main site.', 'mailyard' ), array( 'status' => 403 ) );
+		}
+		$input   = (array) $request->get_json_params();
+		$current = Options::network();
+		foreach ( array_keys( $current ) as $key ) {
+			if ( array_key_exists( $key, $input ) ) {
+				$current[ $key ] = (bool) $input[ $key ];
+			}
+		}
+		update_site_option( Options::NETWORK, $current );
+		return $this->get_network();
+	}
+
 	public function get_imports() {
 		return rest_ensure_response( ( new Importer() )->detect() );
 	}
 
 	public function run_import( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$source = sanitize_key( $request->get_json_params()['source'] ?? '' );
 		if ( ! isset( Importer::SOURCES[ $source ] ) ) {
 			return new \WP_Error( 'invalid_source', __( 'Unknown plugin.', 'mailyard' ), array( 'status' => 400 ) );
@@ -739,6 +800,9 @@ class REST_API {
 	}
 
 	private function record_test_result( string $id, string $status, string $error ): void {
+		if ( Options::shared_source() ) {
+			return;
+		}
 		$conns = $this->connections();
 		foreach ( $conns as &$c ) {
 			if ( $c['id'] === $id ) {

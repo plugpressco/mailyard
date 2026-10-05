@@ -65,10 +65,31 @@ class Options {
 	// avoids re-hydrating the option array each time.
 	private static $settings_cache = null;
 
+	// Effective settings for this site: its own, with the network's shared
+	// groups laid over them on a subsite (see network()).
 	public static function settings(): array {
 		if ( null === self::$settings_cache ) {
-			$value = get_option( self::SETTINGS, array() );
-			self::$settings_cache = is_array( $value ) ? $value : array();
+			$value    = get_option( self::SETTINGS, array() );
+			$settings = is_array( $value ) ? $value : array();
+			$source   = self::shared_source();
+			if ( $source ) {
+				$main    = get_blog_option( $source, self::SETTINGS, array() );
+				$main    = is_array( $main ) ? $main : array();
+				$network = self::network();
+				$keys    = array_merge(
+					array( 'active' ),
+					$network['share_sender'] ? self::SHARED_SENDER : array(),
+					$network['share_delivery'] ? self::SHARED_DELIVERY : array()
+				);
+				foreach ( $keys as $key ) {
+					if ( array_key_exists( $key, $main ) ) {
+						$settings[ $key ] = $main[ $key ];
+					} else {
+						unset( $settings[ $key ] );
+					}
+				}
+			}
+			self::$settings_cache = $settings;
 		}
 		return self::$settings_cache;
 	}
@@ -78,10 +99,54 @@ class Options {
 	}
 
 	// Connections with their secrets readable — the one way code reads them, so
-	// optional at-rest encryption (Crypto) stays invisible to every caller.
+	// optional at-rest encryption (Crypto) stays invisible to every caller. On a
+	// subsite under shared settings they're the main site's.
 	public static function connections(): array {
-		$conns = get_option( self::CONNECTIONS, array() );
+		$source = self::shared_source();
+		$conns  = $source ? get_blog_option( $source, self::CONNECTIONS, array() ) : get_option( self::CONNECTIONS, array() );
 		return is_array( $conns ) ? Crypto::map_secrets( $conns, false ) : array();
+	}
+
+	// Multisite: the main site can share its setup with every site of the
+	// network. The provider (connections) is always shared once on; the sender
+	// and the delivery options are each optional. Logs are never shared.
+	const NETWORK         = 'mailyard_network';
+	const SHARED_SENDER   = array( 'from_email', 'from_name', 'return_path' );
+	const SHARED_DELIVERY = array( 'background', 'logging', 'log_retention' );
+
+	/**
+	 * Network sharing switches (all false outside multisite).
+	 *
+	 * @return array{ shared: bool, share_sender: bool, share_delivery: bool }
+	 */
+	public static function network(): array {
+		$value = is_multisite() ? get_site_option( self::NETWORK, array() ) : array();
+		$value = is_array( $value ) ? $value : array();
+		return array(
+			'shared'         => ! empty( $value['shared'] ),
+			'share_sender'   => ! empty( $value['share_sender'] ),
+			'share_delivery' => ! empty( $value['share_delivery'] ),
+		);
+	}
+
+	// The site whose setup this one uses: the main site's id on a subsite under
+	// shared settings, otherwise 0 (this site manages itself).
+	public static function shared_source(): int {
+		if ( ! is_multisite() || is_main_site() || ! self::network()['shared'] ) {
+			return 0;
+		}
+		return (int) get_main_site_id();
+	}
+
+	// Whether this site's copy of a setting is overridden by the network.
+	public static function is_shared_key( string $key ): bool {
+		if ( ! self::shared_source() ) {
+			return false;
+		}
+		$network = self::network();
+		return 'active' === $key
+			|| ( $network['share_sender'] && in_array( $key, self::SHARED_SENDER, true ) )
+			|| ( $network['share_delivery'] && in_array( $key, self::SHARED_DELIVERY, true ) );
 	}
 
 	// Mirror the primary (first enabled) connection into settings: the active

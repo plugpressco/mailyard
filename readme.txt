@@ -179,6 +179,7 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Add: Keep logs for 7, 30 or 90 days, or forever.
 * Add: Credentials can live in wp-config.php (`MAILYARD_{PROVIDER}_{FIELD}`, e.g. `MAILYARD_SMTP_PASSWORD`) instead of the database.
 * Add: Optional encryption of stored credentials, with a clear warning if the site's security keys change.
+* Add: Multisite shared settings — set email up once on the main site and let every site use it; the sender and delivery options are each optional to share. Logs always stay per site.
 * Add: Settings backup — export and import settings and connections as one file; empty the log on its own.
 * Add: Dashboard panel with the week's most common failure reasons, in plain words.
 * Add: Setup checks on the Dashboard — another plugin replacing wp_mail(), a From address on another domain, and Contact Form 7 / WPForms / Gravity Forms set to send "from" the visitor.
