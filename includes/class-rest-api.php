@@ -43,6 +43,12 @@ class REST_API {
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
 		$this->route( $ns, '/data/erase-all',      array( 'POST' => 'erase_all_data' ) );
 
+		// Importer: other SMTP plugins' saved setups.
+		$this->route( $ns, '/import', array(
+			'GET'  => 'get_imports',
+			'POST' => 'run_import',
+		) );
+
 		// Connect AI: the ability catalog + per-tool permissions.
 		$this->route( $ns, '/ai', array(
 			'GET'  => 'get_ai',
@@ -529,6 +535,18 @@ class REST_API {
 		return rest_ensure_response( array( 'success' => true ) );
 	}
 
+	public function get_imports() {
+		return rest_ensure_response( ( new Importer() )->detect() );
+	}
+
+	public function run_import( $request ) {
+		$source = sanitize_key( $request->get_json_params()['source'] ?? '' );
+		if ( ! isset( Importer::SOURCES[ $source ] ) ) {
+			return new \WP_Error( 'invalid_source', __( 'Unknown plugin.', 'mailyard' ), array( 'status' => 400 ) );
+		}
+		return rest_ensure_response( ( new Importer() )->import( $source ) );
+	}
+
 	public function get_logs( $request ) {
 		return rest_ensure_response( Logger::instance()->query( array(
 			'status'   => sanitize_key( $request->get_param( 'status' ) ?? 'all' ),
@@ -567,18 +585,11 @@ class REST_API {
 	}
 
 	private function connections(): array {
-		return get_option( Options::CONNECTIONS, array() );
+		return Options::connections();
 	}
 
-	// Connections hold provider credentials in each conn['config'] — keep this
-	// option out of the autoload set so credentials aren't loaded on every page.
 	private function save_connections( array $conns ) {
-		$existing = get_option( Options::CONNECTIONS, null );
-		if ( null === $existing ) {
-			add_option( Options::CONNECTIONS, $conns, '', false );
-		} else {
-			update_option( Options::CONNECTIONS, $conns );
-		}
+		Options::save_connections( $conns );
 	}
 
 	private function record_test_result( string $id, string $status, string $error ): void {
@@ -596,31 +607,7 @@ class REST_API {
 	}
 
 	private function sync_active( array $conns ) {
-		$settings = get_option( Options::SETTINGS, array() );
-
-		$primary = null;
-		foreach ( $conns as $c ) {
-			if ( ! empty( $c['enabled'] ) ) {
-				$primary = $c;
-				break;
-			}
-		}
-
-		if ( ! $primary ) {
-			$settings['active'] = Options::DEFAULT_PROVIDER;
-			update_option( Options::SETTINGS, $settings );
-			return;
-		}
-
-		$settings['active'] = sanitize_key( $primary['provider'] );
-		if ( ! empty( $primary['from_email'] ) ) {
-			$settings['from_email'] = sanitize_email( $primary['from_email'] );
-		}
-		if ( ! empty( $primary['from_name'] ) ) {
-			$settings['from_name'] = sanitize_text_field( $primary['from_name'] );
-		}
-
-		update_option( Options::SETTINGS, $settings );
+		Options::sync_active( $conns );
 	}
 
 	private function sanitize_config( $config ): array {

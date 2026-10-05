@@ -149,6 +149,7 @@ class Plugin {
 		require_once $includes . 'class-override.php';
 		require_once $includes . 'class-failure-notice.php';
 		require_once $includes . 'class-data-deleter.php';
+		require_once $includes . 'class-importer.php';
 		require_once $includes . 'class-rest-api.php';
 		require_once $includes . 'class-abilities.php';
 		require_once $includes . 'class-webhooks.php';

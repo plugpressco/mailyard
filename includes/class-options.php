@@ -76,4 +76,48 @@ class Options {
 	public static function flush_settings_cache(): void {
 		self::$settings_cache = null;
 	}
+
+	public static function connections(): array {
+		$conns = get_option( self::CONNECTIONS, array() );
+		return is_array( $conns ) ? $conns : array();
+	}
+
+	// Mirror the primary (first enabled) connection into settings: the active
+	// provider slug and, when it has them, its sender as the default sender.
+	public static function sync_active( array $conns ): void {
+		$settings = get_option( self::SETTINGS, array() );
+		$settings = is_array( $settings ) ? $settings : array();
+
+		$primary = null;
+		foreach ( $conns as $c ) {
+			if ( ! empty( $c['enabled'] ) ) {
+				$primary = $c;
+				break;
+			}
+		}
+
+		if ( ! $primary ) {
+			$settings['active'] = self::DEFAULT_PROVIDER;
+		} else {
+			$settings['active'] = sanitize_key( $primary['provider'] );
+			if ( ! empty( $primary['from_email'] ) ) {
+				$settings['from_email'] = sanitize_email( $primary['from_email'] );
+			}
+			if ( ! empty( $primary['from_name'] ) ) {
+				$settings['from_name'] = sanitize_text_field( $primary['from_name'] );
+			}
+		}
+
+		update_option( self::SETTINGS, $settings );
+	}
+
+	// Connections hold provider credentials in each conn['config'] — keep this
+	// option out of the autoload set so credentials aren't loaded on every page.
+	public static function save_connections( array $conns ): void {
+		if ( null === get_option( self::CONNECTIONS, null ) ) {
+			add_option( self::CONNECTIONS, $conns, '', false );
+		} else {
+			update_option( self::CONNECTIONS, $conns, false );
+		}
+	}
 }

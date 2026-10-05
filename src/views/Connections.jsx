@@ -9,7 +9,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Dialog, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useConnections from '@/hooks/useConnections';
-import { post } from '@/lib/api';
+import { get, post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
 import { Card, Button, Toggle, Input, Select, TagInput, SectionTitle, PageHeader, ConnectionsSkeleton } from '@/components/ui';
@@ -266,6 +266,61 @@ function TestDialog( { conn, onSend, onCancel, sending } ) {
 	);
 }
 
+/**
+ * Another SMTP plugin's saved setup, offered for a one-click import. The
+ * credentials are copied server-side; nothing secret passes through here.
+ */
+function ImportOffers( { onImported } ) {
+	const [ offers, setOffers ] = useState( [] );
+	const [ busy, setBusy ] = useState( null );
+
+	useEffect( () => {
+		get( 'import' ).then( ( list ) => setOffers( Array.isArray( list ) ? list : [] ) ).catch( () => {} );
+	}, [] );
+
+	const run = ( offer ) => {
+		setBusy( offer.source );
+		post( 'import', { source: offer.source } )
+			.then( ( res ) => {
+				toast.success(
+					res.enabled
+						? `Imported from ${ offer.name } — send a test to confirm it works.`
+						: `Imported from ${ offer.name }, switched off — enable it when you're ready.`
+				);
+				setOffers( ( list ) => list.filter( ( o ) => o.source !== offer.source ) );
+				onImported?.();
+			} )
+			.catch( ( err ) => toast.error( err?.message || 'Import failed' ) )
+			.finally( () => setBusy( null ) );
+	};
+
+	if ( ! offers.length ) {
+		return null;
+	}
+
+	return (
+		<div className="mb-4 flex flex-col gap-2">
+			{ offers.map( ( o ) => (
+				<Card key={ o.source } className="flex items-center gap-3 border-brand/30 bg-brand-light px-4 py-3">
+					<div className="flex shrink-0 -space-x-1.5">
+						{ o.connections.map( ( c, i ) => <ProviderIcon key={ i } id={ c.provider } size={ 26 } /> ) }
+					</div>
+					<div className="min-w-0 flex-1">
+						<div className="text-[13px] font-semibold text-ink-900">Found your { o.name } setup</div>
+						<div className="text-[12px] text-ink-500">
+							{ o.connections.length === 1 ? 'One connection' : `${ o.connections.length } connections` } — copy { o.connections.length === 1 ? 'it' : 'them' } over with { o.connections.length === 1 ? 'its' : 'their' } credentials.
+							{ o.active && ` Then deactivate ${ o.name }: two mailers conflict.` }
+						</div>
+					</div>
+					<Button size="sm" disabled={ busy === o.source } onClick={ () => run( o ) }>
+						{ busy === o.source ? 'Importing…' : 'Import' }
+					</Button>
+				</Card>
+			) ) }
+		</div>
+	);
+}
+
 function SortableCard( { conn, index, testing, onToggle, onRemove, onEdit, onTest } ) {
 	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable( { id: conn.id } );
 	const isPrimary = index === 0 && conn.enabled;
@@ -480,6 +535,8 @@ export default function Connections() {
 					</Button>
 				}
 			/>
+
+			<ImportOffers onImported={ () => refetch?.() } />
 
 			{ adding && (
 				<div className="mb-4">
