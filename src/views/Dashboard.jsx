@@ -229,6 +229,17 @@ export default function Dashboard( { onNavigate } ) {
 				</div>
 			) }
 
+			{ data?.checks?.length > 0 && (
+				<div className="mb-5 flex flex-col gap-2">
+					{ data.checks.map( ( c ) => (
+						<div key={ c.id } className={ cn( 'rounded-xl px-4 py-3 text-[12.5px]', c.tone === 'warning' ? 'bg-warning/10' : 'bg-ink-100' ) }>
+							<div className={ cn( 'font-semibold', c.tone === 'warning' ? 'text-warning' : 'text-ink-800' ) }>{ c.title }</div>
+							<div className="mt-0.5 leading-relaxed text-ink-600">{ c.detail }</div>
+						</div>
+					) ) }
+				</div>
+			) }
+
 			{ testOpen && <SendTestPanel onClose={ () => setTestOpen( false ) } onSent={ refresh } /> }
 
 			<div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">

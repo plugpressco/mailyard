@@ -385,6 +385,7 @@ class REST_API {
 			'chain'        => $chain_view,
 			'health'       => $unreadable ? 'locked' : ( $offline ? 'offline' : $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ) ),
 			'series'       => $logger->daily_stats( 14 ),
+			'checks'       => ( new Checks() )->run(),
 			'top_errors'   => array_map( function ( $row ) {
 				return $row + array( 'human' => Errors::humanize( $row['error'], '' ) );
 			}, $logger->top_errors( 7, 3 ) ),

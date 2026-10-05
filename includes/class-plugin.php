@@ -164,6 +164,7 @@ class Plugin {
 		require_once $includes . 'class-override.php';
 		require_once $includes . 'class-wp-emails.php';
 		require_once $includes . 'class-alerts.php';
+		require_once $includes . 'class-checks.php';
 		require_once $includes . 'class-failure-notice.php';
 		require_once $includes . 'class-data-deleter.php';
 		require_once $includes . 'class-importer.php';

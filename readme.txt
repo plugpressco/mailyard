@@ -181,6 +181,7 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Add: Optional encryption of stored credentials, with a clear warning if the site's security keys change.
 * Add: Settings backup — export and import settings and connections as one file; empty the log on its own.
 * Add: Dashboard panel with the week's most common failure reasons, in plain words.
+* Add: Setup checks on the Dashboard — another plugin replacing wp_mail(), a From address on another domain, and Contact Form 7 / WPForms / Gravity Forms set to send "from" the visitor.
 * Update: Any logged email can be resent, not only failed ones.
 * Add: Send test names the provider that delivered it, and says so when a backup had to take over.
 * Update: Simpler admin — one sidebar (Dashboard, Connections, Email log, Deliverability, Settings), mirrored in the WordPress menu.
