@@ -24,13 +24,18 @@ That is Mailyard, and all of it is free. No locked buttons, no upgrade nags. Plu
 
 * **A backup that takes over.** The moment a send fails, your backup provider tries the same email.
 * **Sixteen ways to send.** Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, Gmail, Microsoft 365 (signed in or app-only), Zoho Mail, custom SMTP, or plain PHP mail.
-* **A log of every email.** Every send and every failure, with the provider's exact error. Logs delete themselves after 30 days.
+* **A log of every email.** Every send and every failure, with the provider's exact error in plain words. Search, filter, resend, export to CSV. Kept 30 days by default — or 7, 90, or forever.
+* **Alerts before a customer tells you.** An email when sending fails or a backup had to take over (sent by your server, so it arrives even when the provider is what broke), on Slack, Discord or Teams too, plus an optional weekly summary.
 * **A deliverability checker.** Your SPF, DKIM, DMARC, and MX records, graded A–F, with the exact DNS record to add.
 * **Sender routing.** Receipts through Postmark, newsletters through Brevo — the right provider per sender, automatically.
 * **Bounce tracking.** Amazon SES, Postmark, Resend, and Brevo webhooks, normalized into one `mailyard_bounce` hook.
+* **Control WordPress's own emails.** Switch off new-user, password-change, comment and auto-update notifications. Password resets always go out.
+* **Background sending and Offline mode.** Pages don't wait on the mail server; staging sites log everything and send nothing.
+* **Multisite.** Set email up once on the main site for the whole network, or let each site do its own.
+* **Credentials kept your way.** In wp-config.php, encrypted in the database, or plain — and a one-file settings backup.
 * **AI tools.** Claude, Cursor, or Codex can check your setup and read the log — every tool has its own off switch, and nothing is exposed until you set it up.
 
-Setup takes a minute: pick a provider, paste a key, send a test. If another SMTP plugin is fighting you, Mailyard says so.
+Setup takes a minute: pick a provider, paste a key, send a test. Coming from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP? Mailyard finds your setup and imports it in one click. If another plugin is fighting you, Mailyard says so.
 
 = Which provider? =
 
@@ -98,6 +103,8 @@ Terms: https://www.zoho.com/terms.html — Privacy: https://www.zoho.com/privacy
 
 Custom SMTP — if you pick the Custom SMTP option, email goes to the SMTP host and port you enter. That's whatever SMTP service or server you choose, so check its own terms and privacy policy.
 
+Chat webhook — only if you add a webhook URL in Settings → Alerts (Slack, Discord, Microsoft Teams, or any address you choose). Mailyard posts the alert to that URL: your site name and address, how many emails failed, and the provider's error message. Email contents and recipients are never posted. The service behind the URL is one you picked, so its own terms and privacy policy apply.
+
 Cloudflare DNS over HTTPS — only used by the deliverability checker, and only as a fallback when your server's own DNS lookup fails. It sends just your domain name (to read SPF/DKIM/DMARC/MX records) to `https://cloudflare-dns.com/dns-query`. No email content is involved.
 Terms: https://www.cloudflare.com/website-terms/ — Privacy: https://developers.cloudflare.com/1.1.1.1/privacy/public-dns-resolver/
 
@@ -114,7 +121,7 @@ In the Connections tab, click Add, set up a second provider, enable it, and drag
 
 = Coming from another SMTP plugin =
 
-Deactivate your current mail plugin (WP Mail SMTP, FluentSMTP, Post SMTP, whichever) before activating Mailyard. Two of them running at once causes conflicts — Mailyard will warn you if it spots one.
+Open Connections: if WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP is set up on the site, Mailyard offers to import it — provider, credentials and sender, without retyping a key. Then deactivate the old plugin; two mailers at once conflict, and Mailyard will warn you if it spots one.
 
 == Frequently Asked Questions ==
 
@@ -152,7 +159,7 @@ Both work, with no password stored. Pick Gmail (personal Gmail or Google Workspa
 
 = How long do you keep email logs? =
 
-30 days, then they're deleted automatically. You can also turn logging off entirely in Settings.
+30 days by default, then they're deleted automatically. Pick 7, 30 or 90 days, or forever, in Settings → Delivery — or turn logging off entirely.
 
 = Does uninstalling delete my data? =
 
