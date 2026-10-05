@@ -93,9 +93,9 @@ class Manager {
 	public function get( string $slug ): ?Provider { return $this->providers[ $slug ] ?? null; }
 
 	private function enabled_sorted(): array {
-		$conns = get_option( Options::CONNECTIONS, array() );
+		$conns = Options::connections();
 
-		$enabled = array_filter( (array) $conns, function ( $c ) {
+		$enabled = array_filter( $conns, function ( $c ) {
 			return ! empty( $c['enabled'] );
 		} );
 
@@ -108,9 +108,35 @@ class Manager {
 
 	// Resolve a connection's ESP config. Both the failover chain and the
 	// connection test MUST connect through this, so a test can never send with
-	// different settings than real mail.
+	// different settings than real mail. wp-config constants win over stored
+	// values (see constant_fields()).
 	public function connection_config( array $conn ): array {
-		return is_array( $conn['config'] ?? null ) ? $conn['config'] : array();
+		$config = is_array( $conn['config'] ?? null ) ? $conn['config'] : array();
+		foreach ( $this->constant_fields( (string) ( $conn['provider'] ?? '' ) ) as $key => $value ) {
+			$config[ $key ] = $value;
+		}
+		return $config;
+	}
+
+	/**
+	 * Provider fields set in wp-config.php, as MAILYARD_{PROVIDER}_{FIELD}
+	 * (e.g. MAILYARD_SMTP_PASSWORD, MAILYARD_POSTMARK_API_KEY), so credentials
+	 * can stay out of the database. They apply to every connection of that
+	 * provider.
+	 *
+	 * @param string $slug Provider slug.
+	 * @return array field key => value
+	 */
+	public function constant_fields( string $slug ): array {
+		$esp = $this->get( sanitize_key( $slug ) );
+		$out = array();
+		foreach ( $esp ? $esp->get_fields() : array() as $field ) {
+			$const = 'MAILYARD_' . strtoupper( $slug . '_' . $field['key'] );
+			if ( defined( $const ) ) {
+				$out[ $field['key'] ] = (string) constant( $const );
+			}
+		}
+		return $out;
 	}
 
 	// Pair each raw connection with its connected ESP, dropping unknown providers

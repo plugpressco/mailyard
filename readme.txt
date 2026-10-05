@@ -177,6 +177,9 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Add: The email log shows each message's Cc, Bcc and Reply-To.
 * Add: Email log filters by provider, paging, and CSV export.
 * Add: Keep logs for 7, 30 or 90 days, or forever.
+* Add: Credentials can live in wp-config.php (`MAILYARD_{PROVIDER}_{FIELD}`, e.g. `MAILYARD_SMTP_PASSWORD`) instead of the database.
+* Add: Optional encryption of stored credentials, with a clear warning if the site's security keys change.
+* Add: Settings backup — export and import settings and connections as one file; empty the log on its own.
 * Add: Dashboard panel with the week's most common failure reasons, in plain words.
 * Update: Any logged email can be resent, not only failed ones.
 * Add: Send test names the provider that delivered it, and says so when a backup had to take over.

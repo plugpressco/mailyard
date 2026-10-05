@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Dialog, DangerZone as PPDangerZone, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
-import { post } from '@/lib/api';
+import { get, post } from '@/lib/api';
 import { Card, Input, Select, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
 import ToggleRow from '@/components/ToggleRow';
 
 const ConnectAI = lazy( () => import( './ConnectAI' ) );
 const AlertsSettings = lazy( () => import( './AlertsSettings' ) );
+const SecuritySettings = lazy( () => import( './SecuritySettings' ) );
 
 // Confirm modal for the irreversible "Delete all data" action. Uses the
 // design system's Dialog (focus trap, esc, aria). The destructive button
@@ -53,7 +54,119 @@ function EraseDialog( { onConfirm, onCancel, erasing } ) {
 	);
 }
 
-/** Data & danger — the irreversible erase-all action. */
+/**
+ * Settings backup: export everything (settings + connections, credentials
+ * included) as JSON, import it on another site, and empty the log.
+ */
+function BackupCard() {
+	const [ busy, setBusy ] = useState( null );
+	const [ pending, setPending ] = useState( null );
+	const [ confirmEmpty, setConfirmEmpty ] = useState( false );
+	const fileRef = useRef( null );
+
+	const exportFile = () => {
+		setBusy( 'export' );
+		get( 'settings/export' )
+			.then( ( data ) => {
+				const url = URL.createObjectURL( new Blob( [ JSON.stringify( data, null, 2 ) ], { type: 'application/json' } ) );
+				const a = document.createElement( 'a' );
+				a.href = url;
+				a.download = `mailyard-settings-${ new Date().toISOString().slice( 0, 10 ) }.json`;
+				a.click();
+				URL.revokeObjectURL( url );
+			} )
+			.catch( ( err ) => toast.error( err?.message || 'Export failed' ) )
+			.finally( () => setBusy( null ) );
+	};
+
+	const pickFile = ( e ) => {
+		const file = e.target.files?.[ 0 ];
+		e.target.value = '';
+		if ( ! file ) return;
+		file.text()
+			.then( ( text ) => setPending( JSON.parse( text ) ) )
+			.catch( () => toast.error( 'That file isn’t valid JSON.' ) );
+	};
+
+	const runImport = () => {
+		setBusy( 'import' );
+		post( 'settings/import', { data: pending } )
+			.then( ( res ) => {
+				toast.success( `Settings restored — ${ res.connections } connection${ res.connections === 1 ? '' : 's' }.` );
+				setPending( null );
+				setTimeout( () => window.location.reload(), 800 );
+			} )
+			.catch( ( err ) => toast.error( err?.message || 'Import failed' ) )
+			.finally( () => setBusy( null ) );
+	};
+
+	const emptyLog = () => {
+		setBusy( 'empty' );
+		post( 'logs/empty' )
+			.then( ( res ) => toast.success( `Log emptied — ${ res.deleted } entr${ res.deleted === 1 ? 'y' : 'ies' } removed.` ) )
+			.catch( ( err ) => toast.error( err?.message || 'Could not empty the log' ) )
+			.finally( () => { setBusy( null ); setConfirmEmpty( false ); } );
+	};
+
+	return (
+		<Card className="mb-4 divide-y divide-ink-200 overflow-hidden">
+			<div className="flex items-center justify-between gap-6 px-5 py-4">
+				<div>
+					<div className="text-[13px] font-semibold text-ink-900">Settings backup</div>
+					<div className="mt-[1px] text-[12px] text-ink-400">
+						Settings and connections in one file, to restore here or move to another site. It contains your credentials — keep it somewhere safe. The log isn’t included.
+					</div>
+				</div>
+				<div className="flex shrink-0 gap-1.5">
+					<Button size="sm" variant="secondary" disabled={ !! busy } onClick={ exportFile }>{ busy === 'export' ? 'Exporting…' : 'Export' }</Button>
+					<Button size="sm" variant="secondary" disabled={ !! busy } onClick={ () => fileRef.current?.click() }>Import…</Button>
+					<input ref={ fileRef } type="file" accept="application/json,.json" className="hidden" onChange={ pickFile } />
+				</div>
+			</div>
+			<div className="flex items-center justify-between gap-6 px-5 py-4">
+				<div>
+					<div className="text-[13px] font-semibold text-ink-900">Empty the email log</div>
+					<div className="mt-[1px] text-[12px] text-ink-400">Removes every logged email. Settings and connections stay.</div>
+				</div>
+				<Button size="sm" variant="secondary" disabled={ !! busy } onClick={ () => setConfirmEmpty( true ) }>Empty log</Button>
+			</div>
+
+			{ confirmEmpty && (
+				<Dialog
+					open
+					onOpenChange={ ( open ) => ! open && busy !== 'empty' && setConfirmEmpty( false ) }
+					size="sm"
+					title="Empty the email log?"
+					description="Every logged email is deleted. This can’t be undone."
+					footer={
+						<>
+							<Button variant="secondary" disabled={ busy === 'empty' } onClick={ () => setConfirmEmpty( false ) }>Cancel</Button>
+							<Button variant="danger" disabled={ busy === 'empty' } onClick={ emptyLog }>{ busy === 'empty' ? 'Emptying…' : 'Empty log' }</Button>
+						</>
+					}
+				/>
+			) }
+
+			{ pending && (
+				<Dialog
+					open
+					onOpenChange={ ( open ) => ! open && busy !== 'import' && setPending( null ) }
+					size="sm"
+					title="Restore this backup?"
+					description={ `This replaces your current settings and all ${ ( pending.connections || [] ).length } connection(s) with the ones in the file${ pending.exported_at ? ` (exported ${ pending.exported_at.slice( 0, 10 ) })` : '' }. The log is left alone.` }
+					footer={
+						<>
+							<Button variant="secondary" disabled={ busy === 'import' } onClick={ () => setPending( null ) }>Cancel</Button>
+							<Button disabled={ busy === 'import' } onClick={ runImport }>{ busy === 'import' ? 'Restoring…' : 'Restore' }</Button>
+						</>
+					}
+				/>
+			) }
+		</Card>
+	);
+}
+
+/** Data & danger — backup, restore, and the irreversible erase-all action. */
 function DataDanger() {
 	const [ open, setOpen ] = useState( false );
 	const [ erasing, setErasing ] = useState( false );
@@ -75,7 +188,8 @@ function DataDanger() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="Data & danger" subtitle="Irreversible actions." />
+			<PageHeader title="Data & danger" subtitle="Back up and restore your setup, clear the log, or start over." />
+			<BackupCard />
 			<PPDangerZone
 				eyebrow="Danger zone"
 				title="Delete all delivery data"
@@ -326,6 +440,7 @@ const SECTIONS = [
 	{ id: 'alerts', label: 'Alerts', group: 'configure', Component: AlertsSettings },
 	{ id: 'wordpress-emails', label: 'WordPress emails', group: 'configure', Component: WordPressEmails },
 	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', Component: ConnectAI },
+	{ id: 'security', label: 'Security', group: 'data', Component: SecuritySettings },
 	{ id: 'data', label: 'Data & danger', group: 'data', Component: DataDanger },
 ];
 

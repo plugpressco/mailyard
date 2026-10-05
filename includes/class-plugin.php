@@ -155,6 +155,7 @@ class Plugin {
 		require_once $includes . 'esp/class-smtp.php';
 
 		require_once $includes . 'class-options.php';
+		require_once $includes . 'class-crypto.php';
 		require_once $includes . 'class-manager.php';
 		require_once $includes . 'class-deliverability.php';
 		require_once $includes . 'class-errors.php';

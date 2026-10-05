@@ -12,12 +12,14 @@ const HEALTH = {
 	warning: { label: 'Warning',     cls: 'bg-warning/10 text-warning', dot: 'bg-warning' },
 	down:    { label: 'No delivery', cls: 'bg-danger/10 text-danger',   dot: 'bg-danger' },
 	offline: { label: 'Offline',     cls: 'bg-ink-100 text-ink-700',    dot: 'bg-ink-400' },
+	locked:  { label: 'Locked',      cls: 'bg-danger/10 text-danger',   dot: 'bg-danger' },
 };
 
 const BANNER = {
 	down: { text: 'No delivery — there is no enabled connection, so email is not being sent.', action: 'Add a connection', route: 'connections' },
 	warning: { text: 'Some recent emails failed to send.', action: 'View the log', route: 'logs' },
 	offline: { text: 'Offline mode is on — every email is logged, none are sent.', action: 'Turn it off', route: 'settings' },
+	locked: { text: 'Your saved credentials can’t be read — this site’s security keys changed since they were encrypted. Enter them again in Connections.', action: 'Open Connections', route: 'connections' },
 };
 
 const GRADE_TONE = { A: 'text-success', B: 'text-success', C: 'text-warning', D: 'text-danger', F: 'text-danger' };

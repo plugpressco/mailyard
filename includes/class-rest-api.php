@@ -46,6 +46,15 @@ class REST_API {
 
 		$this->route( $ns, '/alerts/test', array( 'POST' => 'test_alert' ) );
 
+		// Security and maintenance.
+		$this->route( $ns, '/security', array(
+			'GET'  => 'get_security',
+			'POST' => 'save_security',
+		) );
+		$this->route( $ns, '/settings/export', array( 'GET' => 'export_settings' ) );
+		$this->route( $ns, '/settings/import', array( 'POST' => 'import_settings' ) );
+		$this->route( $ns, '/logs/empty', array( 'POST' => 'empty_logs' ) );
+
 		// Importer: other SMTP plugins' saved setups.
 		$this->route( $ns, '/import', array(
 			'GET'  => 'get_imports',
@@ -172,8 +181,14 @@ class REST_API {
 		return rest_ensure_response( $settings );
 	}
 
+	// `locked` lists the fields wp-config.php sets for that provider, so the
+	// editor can show them as managed there.
 	public function get_connections() {
-		return rest_ensure_response( $this->connections() );
+		$manager = Manager::instance();
+		return rest_ensure_response( array_map( static function ( $c ) use ( $manager ) {
+			$c['locked'] = array_keys( $manager->constant_fields( (string) ( $c['provider'] ?? '' ) ) );
+			return $c;
+		}, $this->connections() ) );
 	}
 
 	public function create_connection( $request ) {
@@ -361,13 +376,14 @@ class REST_API {
 		// Recent activity — last 7 logged emails.
 		$recent = $logger->query( array( 'page' => 1, 'per_page' => 7 ) );
 
-		$offline = ! empty( Options::settings()['offline'] );
+		$offline    = ! empty( Options::settings()['offline'] );
+		$unreadable = Crypto::unreadable();
 
 		return rest_ensure_response( array(
 			'sent_7d'      => $stats['sent_7d'] ?? 0,
 			'failed_7d'    => $stats['failed_7d'] ?? 0,
 			'chain'        => $chain_view,
-			'health'       => $offline ? 'offline' : $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ),
+			'health'       => $unreadable ? 'locked' : ( $offline ? 'offline' : $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ) ),
 			'series'       => $logger->daily_stats( 14 ),
 			'top_errors'   => array_map( function ( $row ) {
 				return $row + array( 'human' => Errors::humanize( $row['error'], '' ) );
@@ -555,6 +571,99 @@ class REST_API {
 				? $result->get_error_message()
 				: ( 'webhook' === $channel ? __( 'Test alert posted.', 'mailyard' ) : __( 'Test alert sent by your server’s own mailer.', 'mailyard' ) ),
 		) );
+	}
+
+	// Encryption state, plus which credentials come from wp-config.php.
+	public function get_security() {
+		Options::connections(); // Opening them is how an unreadable secret shows up.
+		$constants = array();
+		foreach ( Manager::instance()->all() as $slug => $esp ) {
+			foreach ( array_keys( Manager::instance()->constant_fields( $slug ) ) as $key ) {
+				$constants[] = 'MAILYARD_' . strtoupper( $slug . '_' . $key );
+			}
+		}
+		return rest_ensure_response( array(
+			'available'  => Crypto::available(),
+			'enabled'    => ! empty( Options::settings()['encrypt'] ),
+			'unreadable' => Crypto::unreadable(),
+			'pinnedKey'  => defined( 'MAILYARD_ENCRYPTION_KEY' ),
+			'constants'  => $constants,
+		) );
+	}
+
+	// Turn encryption on or off: re-save every connection so its secrets are
+	// sealed (or opened) right away, not on the next edit.
+	public function save_security( $request ) {
+		$on = ! empty( $request->get_json_params()['encrypt'] );
+		if ( $on && ! Crypto::available() ) {
+			return new \WP_Error( 'no_sodium', __( 'This server’s PHP has no sodium extension, so encryption isn’t available.', 'mailyard' ), array( 'status' => 400 ) );
+		}
+		$conns    = Options::connections();
+		$settings = get_option( Options::SETTINGS, array() );
+		$settings['encrypt'] = $on;
+		update_option( Options::SETTINGS, $settings );
+		Options::flush_settings_cache();
+		Options::save_connections( $conns );
+		return $this->get_security();
+	}
+
+	// Settings and connections as one JSON backup — credentials included, so
+	// the file must be kept safe. Logs are not part of it.
+	public function export_settings() {
+		$settings = get_option( Options::SETTINGS, array() );
+		unset( $settings['imported'] );
+		return rest_ensure_response( array(
+			'plugin'      => 'mailyard',
+			'version'     => MAILYARD_VERSION,
+			'exported_at' => gmdate( 'c' ),
+			'settings'    => $settings,
+			'connections' => Options::connections(),
+		) );
+	}
+
+	// Restore a backup from export_settings(): settings go through the same
+	// whitelist as a save; connections are rebuilt field by field.
+	public function import_settings( $request ) {
+		$data = $request->get_json_params()['data'] ?? null;
+		if ( ! is_array( $data ) || 'mailyard' !== ( $data['plugin'] ?? '' ) || ! is_array( $data['settings'] ?? null ) ) {
+			return new \WP_Error( 'bad_backup', __( 'That file isn’t a Mailyard settings backup.', 'mailyard' ), array( 'status' => 400 ) );
+		}
+
+		$request_settings = new \WP_REST_Request( 'POST' );
+		$request_settings->set_body( wp_json_encode( $data['settings'] ) );
+		$request_settings->set_header( 'Content-Type', 'application/json' );
+		$this->save_settings( $request_settings );
+		Options::flush_settings_cache();
+
+		$conns = array();
+		foreach ( (array) ( $data['connections'] ?? array() ) as $i => $c ) {
+			$provider = sanitize_key( $c['provider'] ?? '' );
+			if ( ! is_array( $c ) || ! in_array( $provider, Options::providers(), true ) ) {
+				continue;
+			}
+			$conns[] = array(
+				'id'               => sanitize_text_field( $c['id'] ?? '' ) ?: wp_generate_uuid4(),
+				'provider'         => $provider,
+				'name'             => sanitize_text_field( $c['name'] ?? '' ),
+				'from_email'       => sanitize_email( $c['from_email'] ?? '' ),
+				'from_name'        => sanitize_text_field( $c['from_name'] ?? '' ),
+				'config'           => $this->sanitize_config( $c['config'] ?? array() ),
+				'from_match'       => $this->sanitize_from_match( $c['from_match'] ?? array() ),
+				'enabled'          => ! empty( $c['enabled'] ),
+				'priority'         => count( $conns ),
+				'last_test_at'     => 0,
+				'last_test_status' => '',
+				'last_test_error'  => '',
+			);
+		}
+		$this->save_connections( $conns );
+		$this->sync_active( $conns );
+
+		return rest_ensure_response( array( 'connections' => count( $conns ) ) );
+	}
+
+	public function empty_logs() {
+		return rest_ensure_response( array( 'deleted' => Logger::instance()->truncate() ) );
 	}
 
 	public function get_imports() {

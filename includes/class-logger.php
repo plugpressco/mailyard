@@ -276,6 +276,15 @@ class Logger {
 		return $csv;
 	}
 
+	// Delete every log row. Returns how many there were.
+	public function truncate(): int {
+		global $wpdb;
+		$table = esc_sql( self::table() );
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( "DELETE FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return $count;
+	}
+
 	// Delete logs older than N days.
 	public function cleanup( int $days = 30 ): int {
 		global $wpdb;

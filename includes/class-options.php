@@ -77,9 +77,11 @@ class Options {
 		self::$settings_cache = null;
 	}
 
+	// Connections with their secrets readable — the one way code reads them, so
+	// optional at-rest encryption (Crypto) stays invisible to every caller.
 	public static function connections(): array {
 		$conns = get_option( self::CONNECTIONS, array() );
-		return is_array( $conns ) ? $conns : array();
+		return is_array( $conns ) ? Crypto::map_secrets( $conns, false ) : array();
 	}
 
 	// Mirror the primary (first enabled) connection into settings: the active
@@ -113,7 +115,11 @@ class Options {
 
 	// Connections hold provider credentials in each conn['config'] — keep this
 	// option out of the autoload set so credentials aren't loaded on every page.
+	// With encryption on (Settings → Security), secret fields are sealed here.
 	public static function save_connections( array $conns ): void {
+		if ( ! empty( self::settings()['encrypt'] ) ) {
+			$conns = Crypto::map_secrets( $conns, true );
+		}
 		if ( null === get_option( self::CONNECTIONS, null ) ) {
 			add_option( self::CONNECTIONS, $conns, '', false );
 		} else {
