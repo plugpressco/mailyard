@@ -136,7 +136,7 @@ class Message {
 	// (defaulting to HTML collapses \n-formatted plain bodies into one line).
 	private static function is_html( string $content_type ): bool {
 		if ( '' === $content_type ) {
-			$content_type = (string) apply_filters( 'wp_mail_content_type', 'text/plain' );
+			$content_type = (string) apply_filters( 'wp_mail_content_type', 'text/plain' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core's filter, applied as wp_mail() does.
 		}
 		return 'text/plain' !== strtolower( trim( explode( ';', $content_type )[0] ) );
 	}

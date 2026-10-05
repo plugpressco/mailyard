@@ -33,7 +33,7 @@ class SES implements Provider {
 		$raw = $this->build_mime( $from, $to, $subject, $html, $text, $params );
 
 		$payload  = wp_json_encode( array( 'Content' => array( 'Raw' => array( 'Data' => base64_encode( $raw ) ) ) ) );
-		$host     = "email.{$this->region}.amazonaws.com";
+		$host     = "email.{$this->region}.amazonaws.com"; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- the SES API endpoint, not offloaded assets.
 		$endpoint = "https://{$host}/v2/email/outbound-emails";
 
 		$response = wp_remote_post( $endpoint, array(

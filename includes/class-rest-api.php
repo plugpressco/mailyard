@@ -153,7 +153,7 @@ class REST_API {
 
 		// Credentials are NOT stored here — they live on each connection's
 		// 'config' field under mailyard_connections (non-autoloaded).
-		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background' );
+		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails' );
 
 		foreach ( $keys as $key ) {
 			if ( isset( $input[ $key ] ) ) {
@@ -646,7 +646,10 @@ class REST_API {
 			case 'active':
 				return sanitize_key( $value );
 			case 'from_email':
+			case 'return_path':
 				return sanitize_email( $value );
+			case 'disabled_emails':
+				return WP_Emails::sanitize( $value );
 			case 'from_name':
 				return sanitize_text_field( $value );
 			case 'logging':

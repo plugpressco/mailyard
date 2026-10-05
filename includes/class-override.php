@@ -55,6 +55,10 @@ class Override {
 	}
 
 	public function init() {
+		if ( '' !== (string) ( Options::settings()['return_path'] ?? '' ) ) {
+			add_action( 'phpmailer_init', array( $this, 'apply_return_path' ) );
+		}
+
 		// Route everything through the interceptor when at least one usable
 		// connection exists (it picks a sender-matched failover chain and honors
 		// the message's own From header), and always in Offline mode.
@@ -224,6 +228,27 @@ class Override {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Point bounces at the Return Path address (the SMTP envelope sender), so
+	 * non-delivery reports skip the From mailbox. Only PHPMailer sends — SMTP,
+	 * PHP Mail, and WordPress itself — have an envelope to set; API providers
+	 * wrap their own and handle bounces on their side.
+	 *
+	 * @param \PHPMailer\PHPMailer\PHPMailer $phpmailer The mailer about to send.
+	 */
+	public function apply_return_path( $phpmailer ) {
+		/**
+		 * Filters the bounce address for one message.
+		 *
+		 * @param string $address   The configured Return Path.
+		 * @param object $phpmailer The message being sent.
+		 */
+		$address = (string) apply_filters( 'mailyard_return_path', (string) ( Options::settings()['return_path'] ?? '' ), $phpmailer );
+		if ( is_email( $address ) ) {
+			$phpmailer->Sender = $address;
+		}
 	}
 
 	// Detect WP's synthetic default From (wordpress@<sitename>) so the passthrough

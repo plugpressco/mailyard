@@ -117,6 +117,7 @@ function DeliverySettings() {
 
 	const [ fromEmail, setFromEmail ] = useState( '' );
 	const [ fromName, setFromName ] = useState( '' );
+	const [ returnPath, setReturnPath ] = useState( '' );
 	const [ logging, setLogging ] = useState( true );
 	const [ background, setBackground ] = useState( false );
 	const [ offline, setOffline ] = useState( false );
@@ -130,6 +131,7 @@ function DeliverySettings() {
 		if ( ! settings ) return;
 		setFromEmail( settings.from_email ?? '' );
 		setFromName( settings.from_name ?? '' );
+		setReturnPath( settings.return_path ?? '' );
 		setLogging( settings.logging ?? true );
 		setBackground( !! settings.background );
 		setOffline( !! settings.offline );
@@ -149,6 +151,7 @@ function DeliverySettings() {
 			save( {
 				from_email: fromEmail.trim(),
 				from_name:  fromName.trim(),
+				return_path: returnPath.trim(),
 				logging,
 				background,
 				offline,
@@ -187,6 +190,14 @@ function DeliverySettings() {
 						value={ fromName }
 						onChange={ ( e ) => { setFromName( e.target.value ); trigger( 'Default sender updated' ); } }
 					/>
+					<Input
+						label="Return path"
+						type="email"
+						placeholder="bounces@yourdomain.com"
+						hint="Optional. Bounces go here instead of the From address. Applies to SMTP and PHP Mail — API providers handle bounces on their side."
+						value={ returnPath }
+						onChange={ ( e ) => { setReturnPath( e.target.value ); trigger( 'Return path updated' ); } }
+					/>
 				</div>
 			</Card>
 
@@ -220,6 +231,82 @@ function DeliverySettings() {
 	);
 }
 
+// The notification emails WordPress sends by itself, grouped as the admin
+// thinks of them. Keys mirror WP_Emails::SWITCHES.
+const WP_EMAIL_GROUPS = [
+	{
+		label: 'Users',
+		items: [
+			{ key: 'new_user_admin', title: 'New user — tell the admin', description: 'The “New user registration” email to the site admin.' },
+			{ key: 'new_user_user', title: 'New user — welcome email', description: 'Includes the link to set a password. New users can still use “Lost your password?”.' },
+			{ key: 'password_change_admin', title: 'Password reset — tell the admin', description: 'Sent to the admin after someone resets their password.' },
+			{ key: 'password_change_user', title: 'Password changed — tell the user', description: 'Sent to a user after their password is changed.' },
+			{ key: 'email_change_user', title: 'Email changed — tell the user', description: 'Sent to the old address after a user’s email is changed.' },
+		],
+	},
+	{
+		label: 'Comments',
+		items: [
+			{ key: 'comment_author', title: 'New comment', description: 'Tells a post’s author about each new comment.' },
+			{ key: 'comment_moderation', title: 'Comment awaiting moderation', description: 'Tells moderators a comment needs approval.' },
+		],
+	},
+	{
+		label: 'Updates',
+		items: [
+			{ key: 'update_core', title: 'WordPress auto-updates', description: 'The report after WordPress updates itself.' },
+			{ key: 'update_plugins', title: 'Plugin auto-updates', description: 'The report after plugins update themselves.' },
+			{ key: 'update_themes', title: 'Theme auto-updates', description: 'The report after themes update themselves.' },
+		],
+	},
+];
+
+/** WordPress emails — switch off the notifications WordPress sends by itself. */
+function WordPressEmails() {
+	const { settings, loading, save } = useSettings();
+	const [ disabled, setDisabled ] = useState( [] );
+
+	useEffect( () => {
+		if ( settings ) setDisabled( Array.isArray( settings.disabled_emails ) ? settings.disabled_emails : [] );
+	}, [ settings ] );
+
+	const toggle = ( key, on ) => {
+		const next = on ? disabled.filter( ( k ) => k !== key ) : [ ...disabled, key ];
+		setDisabled( next );
+		save( { disabled_emails: next } )
+			.then( () => toast.success( on ? 'Email switched on' : 'Email switched off' ) )
+			.catch( () => toast.error( 'Failed to save' ) );
+	};
+
+	if ( loading ) {
+		return <SettingsSkeleton />;
+	}
+
+	return (
+		<div className="max-w-[840px]">
+			<PageHeader title="WordPress emails" subtitle="Switch off the notifications WordPress sends by itself. Password reset emails always go out, so nobody gets locked out." />
+			{ WP_EMAIL_GROUPS.map( ( group ) => (
+				<Card key={ group.label } className="mb-3 overflow-hidden">
+					<div className="px-5 pt-4 pb-1">
+						<SectionTitle>{ group.label }</SectionTitle>
+					</div>
+					<div className="divide-y divide-ink-200">
+						{ group.items.map( ( item ) => (
+							<ToggleRow
+								key={ item.key }
+								title={ item.title }
+								description={ item.description }
+								on={ ! disabled.includes( item.key ) }
+								onChange={ ( v ) => toggle( item.key, v ) }
+							/>
+						) ) }
+					</div>
+				</Card>
+			) ) }
+		</div>
+	);
+}
+
 /** Left-nav group order + labels. */
 const SECTION_GROUPS = [
 	{ id: 'configure', label: 'Configure' },
@@ -230,6 +317,7 @@ const SECTION_GROUPS = [
 /** Every settings section, in rail order. */
 const SECTIONS = [
 	{ id: 'delivery', label: 'Delivery', group: 'configure', Component: DeliverySettings },
+	{ id: 'wordpress-emails', label: 'WordPress emails', group: 'configure', Component: WordPressEmails },
 	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', Component: ConnectAI },
 	{ id: 'data', label: 'Data & danger', group: 'data', Component: DataDanger },
 ];

@@ -166,6 +166,8 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 = 1.1.0 =
 * Add: Six more providers — Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend and Maileroo.
 * Add: One-click import from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP — provider, credentials and sender come over, including FluentSMTP's backup and per-sender routing.
+* Add: WordPress emails — switch off the notifications WordPress sends by itself (new users, password and email changes, comments, auto-update reports). Password resets always go out.
+* Add: Return path — send bounces to their own mailbox (SMTP and PHP Mail), per message via the `mailyard_return_path` filter.
 * Add: Background sending — the page answers first and the email goes out right after, shown as Pending in the log until then.
 * Add: Offline mode — every email is logged, none are sent. For staging and development sites.
 * Add: PHP Mail as a connection — your server's own mail, no setup, handy as the last backup in the chain.
