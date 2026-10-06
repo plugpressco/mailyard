@@ -2,19 +2,16 @@
 /**
  * Mailyard tools for the WordPress Abilities API (WP 6.9+ / 7.0).
  *
- * The delivery half of the family's AI surface: an agent can see the provider
- * chain, diagnose SPF/DKIM/DMARC, read the failure log, and send a test — the
- * "why aren't my emails arriving?" workflow, end to end. Mailyard Pro adds the
- * campaign tools under the SAME `mailyard/*` namespace and `mailyard` category,
- * so both plugins read as one product to an agent.
+ * An agent can see the provider chain, diagnose SPF/DKIM/DMARC, read the
+ * failure log, and send a test — the "why aren't my emails arriving?"
+ * workflow, end to end.
  *
  * Every ability is opted into MCP (`meta.mcp.public => true`), so once an MCP
  * bridge is active (the WordPress MCP Adapter plugin, or Saddle) an MCP client
  * — Claude Code, Codex, Cursor, … — can discover and call them. Mailyard ships
  * no MCP transport of its own.
  *
- * The whole layer is a silent no-op on WordPress older than 6.9 (the API's
- * functions simply don't exist), which is why the plugin still supports 5.8.
+ * The whole layer is a silent no-op when the API's functions don't exist.
  *
  * @package Mailyard
  */
@@ -25,11 +22,7 @@ defined( 'ABSPATH' ) || exit;
 
 class Abilities {
 
-	/**
-	 * Shared FAMILY category — Mailyard Pro registers its campaign tools into
-	 * this same category (at priority 20, behind an is_registered guard) so the
-	 * free plugin, loading first at priority 10, is the one that defines it.
-	 */
+	/** Ability category every Mailyard tool registers into. */
 	const CATEGORY = 'mailyard';
 
 	/** Master switch — every Mailyard tool at once. */
@@ -59,8 +52,7 @@ class Abilities {
 	/**
 	 * Risk-aware default before the user has chosen. The read-only tools are on
 	 * so the diagnosis workflow works out of the box; send-test delivers a REAL
-	 * email to an address the assistant names, so it is opt-in — the same stance
-	 * Pro takes on its whole-audience send.
+	 * email to an address the assistant names, so it is opt-in.
 	 *
 	 * @param string $name Ability name.
 	 */
@@ -132,9 +124,6 @@ class Abilities {
 	 * Hook ability + category registration. No-ops when the Abilities API isn't
 	 * present (WP < 6.9) or the master switch is off. Individual tools are gated
 	 * per-permission in maybe_register().
-	 *
-	 * Default priority 10 on both hooks: Mailyard Pro hooks the same actions at
-	 * 20 and skips the category when it already exists, so free owns it.
 	 */
 	public function register(): void {
 		if ( ! self::is_enabled() ) {
@@ -191,7 +180,7 @@ class Abilities {
 			self::CATEGORY,
 			array(
 				'label'       => __( 'Mailyard', 'mailyard' ),
-				'description' => __( 'Email delivery, broadcast campaigns, and contacts.', 'mailyard' ),
+				'description' => __( 'Email delivery: providers, the email log, and deliverability.', 'mailyard' ),
 			)
 		);
 	}
@@ -281,7 +270,7 @@ class Abilities {
 					'properties' => array(
 						'status' => array(
 							'type'        => 'string',
-							'enum'        => array( 'all', 'sent', 'failed' ),
+							'enum'        => array( 'all', 'sent', 'failed', 'pending', 'offline' ),
 							'description' => __( 'Filter by status. Default: all.', 'mailyard' ),
 						),
 						'search' => array(
@@ -401,7 +390,6 @@ class Abilities {
 				'name'             => (string) ( $conn['name'] ?? '' ),
 				'provider'         => (string) ( $conn['provider'] ?? '' ),
 				'from_email'       => (string) ( $conn['from_email'] ?? '' ),
-				'purpose'          => (string) ( $conn['purpose'] ?? 'any' ),
 				'last_test_status' => (string) ( $conn['last_test_status'] ?? '' ),
 				'last_test_error'  => (string) ( $conn['last_test_error'] ?? '' ),
 				'last_test_at'     => (string) ( $conn['last_test_at'] ?? '' ),

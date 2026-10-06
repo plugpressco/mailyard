@@ -20,12 +20,22 @@ class Manager {
 
 	private function __construct() {
 		$this->providers = array(
-			Options::DEFAULT_PROVIDER => new ESP\Default_Mail(),
 			'ses'                     => new ESP\SES(),
 			'postmark'                => new ESP\Postmark(),
 			'resend'                  => new ESP\Resend(),
 			'brevo'                   => new ESP\Brevo(),
+			'mailgun'                 => new ESP\Mailgun(),
+			'sendgrid'                => new ESP\SendGrid(),
+			'smtp2go'                 => new ESP\SMTP2GO(),
+			'mailjet'                 => new ESP\Mailjet(),
+			'mailersend'              => new ESP\MailerSend(),
+			'maileroo'                => new ESP\Maileroo(),
+			'gmail'                   => new ESP\Gmail(),
+			'microsoft'               => new ESP\Microsoft(),
+			'microsoft_app'           => new ESP\Microsoft_App(),
+			'zoho'                    => new ESP\Zoho(),
 			'smtp'                    => new ESP\SMTP(),
+			Options::DEFAULT_PROVIDER => new ESP\Default_Mail(),
 		);
 
 		// Allow third-party providers.
@@ -47,22 +57,18 @@ class Manager {
 		return $this->build_entries( $this->enabled_sorted() );
 	}
 
-	// Resolve the failover chain for a given sender and purpose. Connections opt in
-	// to senders via their `from_match` list (exact address, bare domain, or '*');
-	// the most specific matching tier wins (exact > domain > catch-all) and is then
-	// ordered by priority for failover. Falls back to the full chain when nothing
-	// matches so mail is never silently dropped.
-	public function chain_for( string $from_email, string $purpose = 'transactional' ): array {
+	// Resolve the failover chain for a given sender. Connections opt in to senders
+	// via their `from_match` list (exact address, bare domain, or '*'); the most
+	// specific matching tier wins (exact > domain > catch-all) and is then ordered
+	// by priority for failover. Falls back to the full chain when nothing matches
+	// so mail is never silently dropped.
+	public function chain_for( string $from_email ): array {
 		$from_email = strtolower( trim( $from_email ) );
-		$candidates = array_filter( $this->enabled_sorted(), function ( $c ) use ( $purpose ) {
-			$p = $c['purpose'] ?? 'any';
-			return 'any' === $p || $p === $purpose;
-		} );
 
 		// Score each candidate, keeping only the highest specificity tier.
 		$best  = 0;
 		$tier  = array();
-		foreach ( $candidates as $conn ) {
+		foreach ( $this->enabled_sorted() as $conn ) {
 			$score = $this->from_match_score( $conn['from_match'] ?? array(), $from_email );
 			if ( 0 === $score ) {
 				continue;
@@ -91,9 +97,9 @@ class Manager {
 	public function get( string $slug ): ?Provider { return $this->providers[ $slug ] ?? null; }
 
 	private function enabled_sorted(): array {
-		$conns = get_option( Options::CONNECTIONS, array() );
+		$conns = Options::connections();
 
-		$enabled = array_filter( (array) $conns, function ( $c ) {
+		$enabled = array_filter( $conns, function ( $c ) {
 			return ! empty( $c['enabled'] );
 		} );
 
@@ -104,8 +110,45 @@ class Manager {
 		return $enabled;
 	}
 
+	// Resolve a connection's ESP config. Both the failover chain and the
+	// connection test MUST connect through this, so a test can never send with
+	// different settings than real mail. wp-config constants win over stored
+	// values (see constant_fields()); `_connection_id` lets OAuth drivers save
+	// refreshed tokens back to the connection they came from.
+	public function connection_config( array $conn ): array {
+		$config = is_array( $conn['config'] ?? null ) ? $conn['config'] : array();
+		foreach ( $this->constant_fields( (string) ( $conn['provider'] ?? '' ) ) as $key => $value ) {
+			$config[ $key ] = $value;
+		}
+		$config['_connection_id'] = (string) ( $conn['id'] ?? '' );
+		return $config;
+	}
+
+	/**
+	 * Provider fields set in wp-config.php, as MAILYARD_{PROVIDER}_{FIELD}
+	 * (e.g. MAILYARD_SMTP_PASSWORD, MAILYARD_POSTMARK_API_KEY), so credentials
+	 * can stay out of the database. They apply to every connection of that
+	 * provider.
+	 *
+	 * @param string $slug Provider slug.
+	 * @return array field key => value
+	 */
+	public function constant_fields( string $slug ): array {
+		$esp = $this->get( sanitize_key( $slug ) );
+		$out = array();
+		foreach ( $esp ? $esp->get_fields() : array() as $field ) {
+			$const = 'MAILYARD_' . strtoupper( $slug . '_' . $field['key'] );
+			if ( defined( $const ) ) {
+				$out[ $field['key'] ] = (string) constant( $const );
+			}
+		}
+		return $out;
+	}
+
 	// Pair each raw connection with its connected ESP, dropping unknown providers
-	// and ones whose credentials fail to connect.
+	// and ones whose credentials fail to connect. Each entry gets its own copy
+	// of the driver: two connections on one provider (e.g. two Postmark
+	// servers) must not share — and overwrite — each other's credentials.
 	private function build_entries( array $conns ): array {
 		$out = array();
 		foreach ( $conns as $conn ) {
@@ -113,16 +156,9 @@ class Manager {
 			if ( ! isset( $this->providers[ $slug ] ) ) {
 				continue;
 			}
-			$config = $conn['config'] ?? array();
 
-			// Postmark's message stream is derived from the connection's purpose
-			// (marketing → broadcast, otherwise transactional) unless explicitly set.
-			if ( 'postmark' === $slug && empty( $config['stream'] ) ) {
-				$config['stream'] = ( 'marketing' === ( $conn['purpose'] ?? 'any' ) ) ? 'broadcast' : 'outbound';
-			}
-
-			$esp = $this->providers[ $slug ];
-			if ( ! $esp->connect( $config ) ) {
+			$esp = clone $this->providers[ $slug ];
+			if ( ! $esp->connect( $this->connection_config( $conn ) ) ) {
 				continue;
 			}
 			$out[] = array( 'slug' => $slug, 'esp' => $esp, 'conn' => $conn );

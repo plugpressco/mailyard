@@ -13,12 +13,12 @@ class SES implements Provider {
 	public function connect( array $config ): bool {
 		$this->access_key = $config['access_key'] ?? '';
 		$this->secret_key = $config['secret_key'] ?? '';
-		$this->region     = $config['region'] ?: 'us-east-1';
+		$this->region     = ( $config['region'] ?? '' ) ?: 'us-east-1';
 		return ! empty( $this->access_key ) && ! empty( $this->secret_key );
 	}
 
 	public function send( array $params ): Result {
-		$to         = sanitize_email( $params['to'] );
+		$to         = implode( ', ', Recipients::split( $params['to'] ) );
 		$subject    = sanitize_text_field( $params['subject'] );
 		$html       = (string) ( $params['html'] ?? '' );
 		$text       = (string) ( $params['text'] ?? '' );
@@ -33,7 +33,7 @@ class SES implements Provider {
 		$raw = $this->build_mime( $from, $to, $subject, $html, $text, $params );
 
 		$payload  = wp_json_encode( array( 'Content' => array( 'Raw' => array( 'Data' => base64_encode( $raw ) ) ) ) );
-		$host     = "email.{$this->region}.amazonaws.com";
+		$host     = "email.{$this->region}.amazonaws.com"; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- the SES API endpoint, not offloaded assets.
 		$endpoint = "https://{$host}/v2/email/outbound-emails";
 
 		$response = wp_remote_post( $endpoint, array(
@@ -84,27 +84,33 @@ class SES implements Provider {
 		if ( $reply_to ) {
 			$headers .= 'Reply-To: ' . sanitize_email( $reply_to ) . "\r\n";
 		}
+		foreach ( (array) ( $params['headers'] ?? array() ) as $name => $value ) {
+			$headers .= $name . ': ' . str_replace( array( "\r", "\n" ), ' ', (string) $value ) . "\r\n";
+		}
 		$headers .= 'Subject: =?UTF-8?B?' . base64_encode( $subject ) . "?=\r\nMIME-Version: 1.0\r\n";
 
-		// Body (no attachments yet — that wrapping happens below).
+		// Body parts are base64: 7bit can't carry UTF-8 or lines over 998
+		// characters (minified HTML), which SES would reject or mangle.
 		if ( '' !== $html ) {
 			$body_type    = "multipart/alternative; boundary=\"$alt_boundary\"";
-			$body_content = "--$alt_boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n"
-				. wp_strip_all_tags( $html ) . "\r\n\r\n"
-				. "--$alt_boundary\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n"
-				. $html . "\r\n\r\n"
+			$body_content = "--$alt_boundary\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+				. chunk_split( base64_encode( wp_strip_all_tags( $html ) ) ) . "\r\n"
+				. "--$alt_boundary\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+				. chunk_split( base64_encode( $html ) ) . "\r\n"
 				. "--$alt_boundary--";
+			$body_head    = "Content-Type: $body_type\r\n";
 		} else {
 			$body_type    = 'text/plain; charset=UTF-8';
-			$body_content = $text;
+			$body_content = chunk_split( base64_encode( $text ) );
+			$body_head    = "Content-Type: $body_type\r\nContent-Transfer-Encoding: base64\r\n";
 		}
 
 		if ( empty( $attachments ) ) {
-			return $headers . "Content-Type: $body_type\r\n\r\n" . $body_content;
+			return $headers . $body_head . "\r\n" . $body_content;
 		}
 
 		// Wrap whatever body we built in multipart/mixed and append attachments.
-		$wrapped = "--$mix_boundary\r\nContent-Type: $body_type\r\n\r\n"
+		$wrapped = "--$mix_boundary\r\n" . $body_head . "\r\n"
 			. $body_content . "\r\n\r\n";
 
 		foreach ( $attachments as $a ) {

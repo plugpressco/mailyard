@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { applyFilters } from '@wordpress/hooks';
-import { toast } from '@plugpress/ui';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { get, post } from '@/lib/api';
 import useDeliverability from '@/hooks/useDeliverability';
@@ -13,6 +11,15 @@ const HEALTH = {
 	healthy: { label: 'Healthy',     cls: 'bg-success/10 text-success', dot: 'bg-success' },
 	warning: { label: 'Warning',     cls: 'bg-warning/10 text-warning', dot: 'bg-warning' },
 	down:    { label: 'No delivery', cls: 'bg-danger/10 text-danger',   dot: 'bg-danger' },
+	offline: { label: 'Offline',     cls: 'bg-ink-100 text-ink-700',    dot: 'bg-ink-400' },
+	locked:  { label: 'Locked',      cls: 'bg-danger/10 text-danger',   dot: 'bg-danger' },
+};
+
+const BANNER = {
+	down: { text: 'No delivery — there is no enabled connection, so email is not being sent.', action: 'Add a connection', route: 'connections' },
+	warning: { text: 'Some recent emails failed to send.', action: 'View the log', route: 'logs' },
+	offline: { text: 'Offline mode is on — every email is logged, none are sent.', action: 'Turn it off', route: 'settings' },
+	locked: { text: 'Your saved credentials can’t be read — this site’s security keys changed since they were encrypted. Enter them again in Connections.', action: 'Open Connections', route: 'connections' },
 };
 
 const GRADE_TONE = { A: 'text-success', B: 'text-success', C: 'text-warning', D: 'text-danger', F: 'text-danger' };
@@ -107,6 +114,24 @@ function ActivityFeed( { items, onNavigate } ) {
 	);
 }
 
+// The most common reasons sends failed this week, in plain words.
+function TopErrors( { rows, onNavigate } ) {
+	return (
+		<Card className="mb-4 overflow-hidden p-0">
+			<PanelHead title="Why emails failed · 7 days" action="View failures" onAction={ () => onNavigate( 'logs' ) } />
+			{ rows.map( ( r, i ) => (
+				<div key={ i } className="flex items-start gap-3 border-b border-ink-100 px-4 py-2.5 last:border-0">
+					<span className="w-8 shrink-0 font-mono text-[12px] font-semibold text-danger">{ r.count }×</span>
+					<div className="min-w-0 flex-1">
+						<div className="text-[12.5px] font-medium text-ink-900">{ r.human?.title || r.error }</div>
+						{ r.human?.guidance && <div className="mt-0.5 text-[11.5px] leading-relaxed text-ink-500">{ r.human.guidance }</div> }
+					</div>
+				</div>
+			) ) }
+		</Card>
+	);
+}
+
 function SendTestPanel( { onClose, onSent } ) {
 	const [ to, setTo ] = useState( '' );
 	const [ state, setState ] = useState( null );
@@ -117,7 +142,7 @@ function SendTestPanel( { onClose, onSent } ) {
 		setMsg( '' );
 		post( 'test-email', { to: to.trim() } )
 			.then( ( data ) => {
-				setState( data.success ? 'success' : 'error' );
+				setState( data.success ? ( data.warning ? 'warning' : 'success' ) : 'error' );
 				setMsg( data.message || ( data.success ? 'Sent.' : 'Failed.' ) );
 				if ( data.success ) onSent?.();
 			} )
@@ -143,6 +168,7 @@ function SendTestPanel( { onClose, onSent } ) {
 				</Button>
 			</div>
 			{ state === 'success' && <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-success/10 px-3 py-2 text-[12px] font-medium text-success"><CheckIcon className="h-3.5 w-3.5" /> { msg }</div> }
+			{ state === 'warning' && <div className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-[12px] font-medium text-warning">{ msg }</div> }
 			{ state === 'error' && <div className="mt-3 rounded-lg bg-danger-light px-3 py-2 text-[12px] text-danger">{ msg }</div> }
 		</Card>
 	);
@@ -153,16 +179,6 @@ export default function Dashboard( { onNavigate } ) {
 	const [ loading, setLoading ] = useState( true );
 	const [ testOpen, setTestOpen ] = useState( false );
 	const { domains } = useDeliverability();
-
-	// Widgets contributed by family plugins (Mailyard Pro adds its campaign
-	// stats/recent-campaigns card). Collected once — extenders registered
-	// their filters at script eval, before the shell mounted.
-	const widgets = useMemo( () => {
-		const list = applyFilters( 'mailyard.shell.dashboardWidgets', [] );
-		return ( Array.isArray( list ) ? list : [] )
-			.filter( ( w ) => w && w.id && w.Component )
-			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
-	}, [] );
 
 	const refresh = useCallback( () => get( 'dashboard' ).then( setData ).catch( () => setData( null ) ), [] );
 	useEffect( () => { refresh().finally( () => setLoading( false ) ); }, [ refresh ] );
@@ -200,20 +216,27 @@ export default function Dashboard( { onNavigate } ) {
 
 			{ /* Degraded health earns a full-width banner, not a tiny pill —
 			     it's the single most important thing on this screen. */ }
-			{ ! loading && health !== 'healthy' && (
+			{ ! loading && BANNER[ health ] && (
 				<div className={ `mb-5 flex items-center gap-2.5 rounded-xl px-4 py-3 text-[12.5px] font-medium ${ meta.cls }` }>
 					<span className={ `h-2 w-2 shrink-0 rounded-full ${ meta.dot }` } />
-					<span className="min-w-0 flex-1">
-						{ health === 'down'
-							? 'No delivery — there is no enabled connection, so email is not being sent.'
-							: 'Some recent emails failed to send.' }
-					</span>
+					<span className="min-w-0 flex-1">{ BANNER[ health ].text }</span>
 					<button
-						onClick={ () => onNavigate( health === 'down' ? 'connections' : 'logs' ) }
+						onClick={ () => onNavigate( BANNER[ health ].route ) }
 						className="shrink-0 cursor-pointer border-none bg-transparent font-semibold underline underline-offset-2 hover:opacity-80"
 					>
-						{ health === 'down' ? 'Add a connection' : 'View logs' }
+						{ BANNER[ health ].action }
 					</button>
+				</div>
+			) }
+
+			{ data?.checks?.length > 0 && (
+				<div className="mb-5 flex flex-col gap-2">
+					{ data.checks.map( ( c ) => (
+						<div key={ c.id } className={ cn( 'rounded-xl px-4 py-3 text-[12.5px]', c.tone === 'warning' ? 'bg-warning/10' : 'bg-ink-100' ) }>
+							<div className={ cn( 'font-semibold', c.tone === 'warning' ? 'text-warning' : 'text-ink-800' ) }>{ c.title }</div>
+							<div className="mt-0.5 leading-relaxed text-ink-600">{ c.detail }</div>
+						</div>
+					) ) }
 				</div>
 			) }
 
@@ -242,21 +265,9 @@ export default function Dashboard( { onNavigate } ) {
 				<ChainPanel chain={ chain } onNavigate={ onNavigate } />
 			</div>
 
-			<ActivityFeed items={ recent } onNavigate={ onNavigate } />
+			{ data?.top_errors?.length > 0 && <TopErrors rows={ data.top_errors } onNavigate={ onNavigate } /> }
 
-			{ /* Add-on widgets (Mailyard Pro) live in their own zone below a
-			     divider so they read as an extension, not a second dashboard. */ }
-			{ widgets.length > 0 && (
-				<div className="mt-8 border-t border-ink-200 pt-6">
-					{ widgets.map( ( { id, Component } ) => (
-						<div key={ id } className="mt-4 first:mt-0">
-							<Suspense fallback={ null }>
-								<Component />
-							</Suspense>
-						</div>
-					) ) }
-				</div>
-			) }
+			<ActivityFeed items={ recent } onNavigate={ onNavigate } />
 		</div>
 	);
 }

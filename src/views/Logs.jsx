@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Drawer, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
-import { post } from '@/lib/api';
-import useLogs from '@/hooks/useLogs';
+import { get, post } from '@/lib/api';
 import ProviderIcon from '@/components/ProviderIcon';
 import StatusPill from '@/components/StatusPill';
 import {
 	Button,
 	Card,
 	Input,
+	Select,
 	SectionTitle,
 	PageHeader,
 	TableSkeleton,
@@ -17,16 +17,59 @@ import { SearchIcon } from '@/components/Icons';
 import { LIVE_PROVIDERS } from '@/lib/providers';
 
 const FILTERS = [ 'all', 'sent', 'failed' ];
+const PER_PAGE = 25;
+const PROVIDER_OPTIONS = [ { value: 'all', label: 'All providers' }, ...LIVE_PROVIDERS.map( ( p ) => ( { value: p.id, label: p.name } ) ) ];
+
+// The log, filtered and paged server-side. A search waits for typing to pause.
+function useLogPage( filters, page ) {
+	const [ data, setData ] = useState( { items: [], total: 0 } );
+	const [ loading, setLoading ] = useState( true );
+	const [ error, setError ] = useState( null );
+
+	const load = useCallback( () => {
+		get( 'logs', { ...filters, page, per_page: PER_PAGE } )
+			.then( ( res ) => { setData( { items: res.items || [], total: res.total || 0 } ); setError( null ); } )
+			.catch( ( err ) => setError( err?.message || 'Failed to load the log.' ) )
+			.finally( () => setLoading( false ) );
+	}, [ filters.status, filters.provider, filters.search, page ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect( () => {
+		const t = setTimeout( load, filters.search ? 300 : 0 );
+		return () => clearTimeout( t );
+	}, [ load ] ); // eslint-disable-line react-hooks/exhaustive-deps
+
+	return { ...data, loading, error, refetch: load };
+}
 
 export default function Logs() {
 	const [ filter, setFilter ] = useState( 'all' );
+	const [ provider, setProvider ] = useState( 'all' );
 	const [ query, setQuery ] = useState( '' );
+	const [ page, setPage ] = useState( 1 );
 	const [ selected, setSelected ] = useState( null );
+	const [ exporting, setExporting ] = useState( false );
 
-	const { logs, loading, error, refetch } = useLogs( {
-		status: filter,
-		search: query,
-	} );
+	const filters = { status: filter, provider, search: query.trim() };
+	const { items: logs, total, loading, error, refetch } = useLogPage( filters, page );
+	const pages = Math.max( 1, Math.ceil( total / PER_PAGE ) );
+
+	// Any filter change starts over at page 1.
+	useEffect( () => setPage( 1 ), [ filter, provider, query ] );
+
+	const exportCsv = () => {
+		setExporting( true );
+		get( 'logs/export', filters )
+			.then( ( res ) => {
+				const url = URL.createObjectURL( new Blob( [ res.csv ], { type: 'text/csv;charset=utf-8' } ) );
+				const a = document.createElement( 'a' );
+				a.href = url;
+				a.download = res.filename || 'mailyard-log.csv';
+				a.click();
+				URL.revokeObjectURL( url );
+			} )
+			.catch( ( err ) => toast.error( err?.message || 'Export failed' ) )
+			.finally( () => setExporting( false ) );
+	};
 
 	// Close the drawer with Escape.
 	useEffect( () => {
@@ -45,11 +88,16 @@ export default function Logs() {
 	return (
 		<div>
 			<PageHeader
-				title="Logs"
-				subtitle="Every email sent through Mailyard."
+				title="Email log"
+				subtitle="Every email your site sent, or tried to. Click one to read it, see the error, or send it again."
+				action={
+					<Button size="sm" variant="secondary" disabled={ exporting || ! total } onClick={ exportCsv }>
+						{ exporting ? 'Exporting…' : 'Export CSV' }
+					</Button>
+				}
 			/>
 
-			<div className="mb-3 flex items-center justify-between gap-2">
+			<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
 				<div className="inline-flex gap-1 rounded-lg bg-ink-100 p-1">
 					{ FILTERS.map( ( v ) => (
 						<button
@@ -66,15 +114,25 @@ export default function Logs() {
 						</button>
 					) ) }
 				</div>
-				<Input
-					id="my-log-search"
-					size="sm"
-					icon={ <SearchIcon className="h-3.5 w-3.5" /> }
-					placeholder="Search…"
-					value={ query }
-					onChange={ ( e ) => setQuery( e.target.value ) }
-					className="w-[200px]"
-				/>
+				<div className="flex items-center gap-2">
+					<Select
+						size="sm"
+						aria-label="Provider"
+						options={ PROVIDER_OPTIONS }
+						value={ provider }
+						onChange={ ( e ) => setProvider( e.target.value ) }
+						className="w-[160px]"
+					/>
+					<Input
+						id="my-log-search"
+						size="sm"
+						icon={ <SearchIcon className="h-3.5 w-3.5" /> }
+						placeholder="Search recipient or subject"
+						value={ query }
+						onChange={ ( e ) => setQuery( e.target.value ) }
+						className="w-[220px]"
+					/>
+				</div>
 			</div>
 
 			{ error && (
@@ -121,12 +179,24 @@ export default function Logs() {
 					</table>
 					{ logs.length === 0 && (
 						<div className="py-9 text-center text-[12.5px] text-ink-400">
-							{ filter === 'all'
+							{ filter === 'all' && provider === 'all' && ! query
 								? 'No emails logged yet.'
-								: `No ${ filter } emails.` }
+								: 'No emails match these filters.' }
 						</div>
 					) }
 				</Card>
+			) }
+
+			{ total > PER_PAGE && (
+				<div className="mt-3 flex items-center justify-between text-[12px] text-ink-500">
+					<span>
+						{ ( page - 1 ) * PER_PAGE + 1 }–{ Math.min( page * PER_PAGE, total ) } of { total }
+					</span>
+					<div className="flex gap-1.5">
+						<Button size="sm" variant="secondary" disabled={ page <= 1 } onClick={ () => setPage( page - 1 ) }>Previous</Button>
+						<Button size="sm" variant="secondary" disabled={ page >= pages } onClick={ () => setPage( page + 1 ) }>Next</Button>
+					</div>
+				</div>
 			) }
 
 			{ selected && (
@@ -257,15 +327,23 @@ function LogDrawer( { row: r, onClose, onResent } ) {
 				</div>
 			) }
 
-			{ r.status === 'failed' && (
+			{ r.status !== 'pending' && (
 				<div className="mb-4">
-					<Button size="sm" onClick={ resend } disabled={ resending }>
+					<Button size="sm" variant={ r.status === 'failed' ? undefined : 'secondary' } onClick={ resend } disabled={ resending }>
 						{ resending ? 'Resending…' : 'Resend email' }
 					</Button>
 					<p className="mt-1.5 mb-0 text-[11px] text-ink-400">
-						Replays this message through your current connections.
+						Sends this message again through your current connections. Attachments aren’t kept in the log, so they don’t go with it.
 					</p>
 				</div>
+			) }
+
+			{ ( r.cc?.length > 0 || r.bcc?.length > 0 || r.reply_to ) && (
+				<dl className="mb-4 grid grid-cols-[72px_1fr] gap-x-3 gap-y-1 text-[12px]">
+					{ r.cc?.length > 0 && <><dt className="text-ink-400">Cc</dt><dd className="m-0 break-all font-mono text-ink-700">{ r.cc.join( ', ' ) }</dd></> }
+					{ r.bcc?.length > 0 && <><dt className="text-ink-400">Bcc</dt><dd className="m-0 break-all font-mono text-ink-700">{ r.bcc.join( ', ' ) }</dd></> }
+					{ r.reply_to && <><dt className="text-ink-400">Reply-To</dt><dd className="m-0 break-all font-mono text-ink-700">{ r.reply_to }</dd></> }
+				</dl>
 			) }
 
 			<SectionTitle className="mb-1">Body</SectionTitle>

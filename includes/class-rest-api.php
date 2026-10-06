@@ -35,13 +35,39 @@ class REST_API {
 			'POST' => 'test_connection',
 		) );
 
+		$this->route( $ns, '/connections/(?P<id>[\w-]+)/authorize', array(
+			'POST' => 'authorize_connection',
+		) );
+
 		$this->route( $ns, '/dashboard',           array( 'GET'  => 'get_dashboard' ) );
 		$this->route( $ns, '/test-email',          array( 'POST' => 'send_test' ) );
 		$this->route( $ns, '/logs',                array( 'GET'  => 'get_logs' ) );
+		$this->route( $ns, '/logs/export',         array( 'GET'  => 'export_logs' ) );
 		$this->route( $ns, '/logs/(?P<id>\d+)/resend', array( 'POST' => 'resend_log' ) );
 		$this->route( $ns, '/deliverability',      array( 'GET'  => 'get_deliverability' ) );
 		$this->route( $ns, '/diagnostics',         array( 'GET'  => 'get_diagnostics' ) );
 		$this->route( $ns, '/data/erase-all',      array( 'POST' => 'erase_all_data' ) );
+
+		$this->route( $ns, '/alerts/test', array( 'POST' => 'test_alert' ) );
+
+		// Security and maintenance.
+		$this->route( $ns, '/security', array(
+			'GET'  => 'get_security',
+			'POST' => 'save_security',
+		) );
+		$this->route( $ns, '/settings/export', array( 'GET' => 'export_settings' ) );
+		$this->route( $ns, '/settings/import', array( 'POST' => 'import_settings' ) );
+		$this->route( $ns, '/logs/empty', array( 'POST' => 'empty_logs' ) );
+		$this->route( $ns, '/network', array(
+			'GET'  => 'get_network',
+			'POST' => 'save_network',
+		) );
+
+		// Importer: other SMTP plugins' saved setups.
+		$this->route( $ns, '/import', array(
+			'GET'  => 'get_imports',
+			'POST' => 'run_import',
+		) );
 
 		// Connect AI: the ability catalog + per-tool permissions.
 		$this->route( $ns, '/ai', array(
@@ -147,10 +173,10 @@ class REST_API {
 
 		// Credentials are NOT stored here — they live on each connection's
 		// 'config' field under mailyard_connections (non-autoloaded).
-		$keys = array( 'active', 'from_name', 'from_email', 'logging' );
+		$keys = array( 'active', 'from_name', 'from_email', 'logging', 'offline', 'background', 'return_path', 'disabled_emails', 'alert_email', 'alert_to', 'alert_webhook', 'weekly_summary', 'log_retention' );
 
 		foreach ( $keys as $key ) {
-			if ( isset( $input[ $key ] ) ) {
+			if ( isset( $input[ $key ] ) && ! Options::is_shared_key( $key ) ) {
 				$settings[ $key ] = $this->sanitize_setting( $key, $input[ $key ] );
 			}
 		}
@@ -164,10 +190,41 @@ class REST_API {
 	}
 
 	public function get_connections() {
-		return rest_ensure_response( $this->connections() );
+		return rest_ensure_response( array_map( array( $this, 'public_connection' ), $this->connections() ) );
+	}
+
+	// A connection as the browser may see it: OAuth tokens stay on the server,
+	// replaced by a `connected` flag; `locked` lists the fields wp-config.php
+	// sets for that provider, so the editor can show them as managed there.
+	private function public_connection( array $conn ): array {
+		$config            = (array) ( $conn['config'] ?? array() );
+		$conn['connected'] = ! empty( $config['refresh_token'] );
+		$conn['config']    = array_diff_key( $config, array_flip( OAuth::TOKEN_KEYS ) );
+		$conn['locked']    = array_keys( Manager::instance()->constant_fields( (string) ( $conn['provider'] ?? '' ) ) );
+		return $conn;
+	}
+
+	/**
+	 * The sign-in link for an OAuth connection (Gmail, Microsoft 365, Zoho).
+	 * The browser opens it; the provider sends the admin back to OAuth's
+	 * admin-post callback.
+	 */
+	public function authorize_connection( $request ) {
+		$id = sanitize_text_field( $request->get_param( 'id' ) );
+		foreach ( $this->connections() as $c ) {
+			if ( $c['id'] === $id ) {
+				$url = OAuth::authorize_url( $c );
+				return is_wp_error( $url ) ? $url : rest_ensure_response( array( 'url' => $url ) );
+			}
+		}
+		return new \WP_Error( 'not_found', __( 'Connection not found.', 'mailyard' ), array( 'status' => 404 ) );
 	}
 
 	public function create_connection( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$input    = $request->get_json_params();
 		$provider = sanitize_key( $input['provider'] ?? '' );
 
@@ -182,9 +239,8 @@ class REST_API {
 			'name'             => sanitize_text_field( $input['name'] ?? '' ),
 			'from_email'       => sanitize_email( $input['from_email'] ?? '' ),
 			'from_name'        => sanitize_text_field( $input['from_name'] ?? '' ),
-			'config'           => $this->sanitize_config( $input['config'] ?? array() ),
+			'config'           => array_diff_key( $this->sanitize_config( $input['config'] ?? array() ), array_flip( OAuth::TOKEN_KEYS ) ),
 			'from_match'       => $this->sanitize_from_match( $input['from_match'] ?? array() ),
-			'purpose'          => $this->sanitize_purpose( $input['purpose'] ?? 'any' ),
 			'enabled'          => (bool) ( $input['enabled'] ?? false ),
 			'priority'         => count( $conns ),
 			'last_test_at'     => 0,
@@ -198,10 +254,14 @@ class REST_API {
 			$this->sync_active( $conns );
 		}
 
-		return rest_ensure_response( $new );
+		return rest_ensure_response( $this->public_connection( $new ) );
 	}
 
 	public function update_connection( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$id    = sanitize_text_field( $request->get_param( 'id' ) );
 		$input = $request->get_json_params();
 		$conns = $this->connections();
@@ -224,13 +284,17 @@ class REST_API {
 				$c['from_name'] = sanitize_text_field( $input['from_name'] );
 			}
 			if ( isset( $input['config'] ) ) {
-				$c['config'] = $this->sanitize_config( $input['config'] );
+				$old    = (array) ( $c['config'] ?? array() );
+				$config = array_diff_key( $this->sanitize_config( $input['config'] ), array_flip( OAuth::TOKEN_KEYS ) );
+				// The browser never holds the OAuth tokens, so a save keeps the
+				// stored ones — unless the app identity changed, which voids them.
+				$same_app = ( $old['client_id'] ?? '' ) === ( $config['client_id'] ?? '' )
+					&& ( $old['tenant'] ?? '' ) === ( $config['tenant'] ?? '' )
+					&& ( $old['dc'] ?? '' ) === ( $config['dc'] ?? '' );
+				$c['config'] = $same_app ? $config + array_intersect_key( $old, array_flip( OAuth::TOKEN_KEYS ) ) : $config;
 			}
 			if ( isset( $input['from_match'] ) ) {
 				$c['from_match'] = $this->sanitize_from_match( $input['from_match'] );
-			}
-			if ( isset( $input['purpose'] ) ) {
-				$c['purpose'] = $this->sanitize_purpose( $input['purpose'] );
 			}
 			$found = $c;
 			break;
@@ -243,10 +307,14 @@ class REST_API {
 
 		$this->save_connections( $conns );
 		$this->sync_active( $conns );
-		return rest_ensure_response( $found );
+		return rest_ensure_response( $this->public_connection( $found ) );
 	}
 
 	public function delete_connection( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$id    = sanitize_text_field( $request->get_param( 'id' ) );
 		$conns = array_values( array_filter(
 			$this->connections(),
@@ -258,6 +326,10 @@ class REST_API {
 	}
 
 	public function reorder_connections( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
 		$ids = array_map( 'sanitize_text_field', $request->get_json_params()['ids'] ?? array() );
 		$map = array();
 		foreach ( $this->connections() as $c ) {
@@ -274,7 +346,7 @@ class REST_API {
 
 		$this->save_connections( $reordered );
 		$this->sync_active( $reordered );
-		return rest_ensure_response( $reordered );
+		return rest_ensure_response( array_map( array( $this, 'public_connection' ), $reordered ) );
 	}
 
 	// Send a test through ONE specific connection, bypassing the failover chain.
@@ -301,9 +373,14 @@ class REST_API {
 		}
 
 		$esp = Manager::instance()->get( $conn['provider'] );
-		if ( ! $esp || ! $esp->connect( $conn['config'] ?? array() ) ) {
-			$this->record_test_result( $id, 'failed', __( 'Connection could not be initialized — check credentials.', 'mailyard' ) );
-			return rest_ensure_response( array( 'success' => false, 'message' => __( 'Connection could not be initialized.', 'mailyard' ) ) );
+		// Connect exactly the way real mail does (Manager::connection_config()).
+		if ( ! $esp || ! $esp->connect( Manager::instance()->connection_config( $conn ) ) ) {
+			$signin  = OAuth::endpoints( (string) $conn['provider'], (array) ( $conn['config'] ?? array() ) ) && empty( $conn['config']['refresh_token'] );
+			$message = $signin
+				? __( 'Connect the account first — open this connection and click Connect account.', 'mailyard' )
+				: __( 'Connection could not be initialized — check credentials.', 'mailyard' );
+			$this->record_test_result( $id, 'failed', $message );
+			return rest_ensure_response( array( 'success' => false, 'message' => $message ) );
 		}
 
 		$body   = $this->default_test_body( $to );
@@ -355,12 +432,19 @@ class REST_API {
 		// Recent activity — last 7 logged emails.
 		$recent = $logger->query( array( 'page' => 1, 'per_page' => 7 ) );
 
+		$offline    = ! empty( Options::settings()['offline'] );
+		$unreadable = Crypto::unreadable();
+
 		return rest_ensure_response( array(
 			'sent_7d'      => $stats['sent_7d'] ?? 0,
 			'failed_7d'    => $stats['failed_7d'] ?? 0,
 			'chain'        => $chain_view,
-			'health'       => $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ),
+			'health'       => $unreadable ? 'locked' : ( $offline ? 'offline' : $this->compute_health( $chain_view, $stats['failed_7d'] ?? 0 ) ),
 			'series'       => $logger->daily_stats( 14 ),
+			'checks'       => ( new Checks() )->run(),
+			'top_errors'   => array_map( function ( $row ) {
+				return $row + array( 'human' => Errors::humanize( $row['error'], '' ) );
+			}, $logger->top_errors( 7, 3 ) ),
 			'recent'       => $recent['items'] ?? array(),
 		) );
 	}
@@ -403,22 +487,55 @@ class REST_API {
 			: $this->default_test_body( $to );
 
 		$content_type = 'plain' === $format ? 'text/plain' : 'text/html';
-		$result       = wp_mail( $to, $subject, $body, array( "Content-Type: $content_type; charset=UTF-8" ) );
+		$result       = Override::sync( function () use ( $to, $subject, $body, $content_type ) {
+			return wp_mail( $to, $subject, $body, array( "Content-Type: $content_type; charset=UTF-8" ) );
+		} );
+		$outcome      = Override::last_outcome();
 
-		if ( $result ) {
+		if ( 'offline' === ( $outcome['status'] ?? '' ) ) {
 			return rest_ensure_response( array(
 				'success' => true,
-				/* translators: %s: recipient email address. */
-				'message' => sprintf( __( 'Test email sent to %s', 'mailyard' ), $to ),
+				'message' => __( 'Offline mode is on — the test was logged, not sent.', 'mailyard' ),
 			) );
 		}
 
-		global $phpmailer;
-		$error = isset( $phpmailer->ErrorInfo ) ? sanitize_text_field( $phpmailer->ErrorInfo ) : '';
+		if ( $result ) {
+			$via     = $this->provider_label( (string) ( $outcome['provider'] ?? '' ) );
+			$message = $via
+				/* translators: 1: recipient email address, 2: provider name. */
+				? sprintf( __( 'Test email sent to %1$s via %2$s.', 'mailyard' ), $to, $via )
+				/* translators: %s: recipient email address. */
+				: sprintf( __( 'Test email sent to %s.', 'mailyard' ), $to );
+
+			// Delivered by a backup: say so, and why the primary didn't.
+			$first = $outcome['failed'][0] ?? null;
+			if ( $first ) {
+				/* translators: 1: provider name, 2: error message. */
+				$message .= ' ' . sprintf( __( '%1$s failed first: %2$s', 'mailyard' ), $this->provider_label( $first['provider'] ), $first['error'] );
+			}
+
+			return rest_ensure_response( array(
+				'success'  => true,
+				'warning'  => (bool) $first,
+				'message'  => $message,
+				'provider' => (string) ( $outcome['provider'] ?? '' ),
+			) );
+		}
+
+		$error = (string) ( $outcome['error'] ?? '' );
+		if ( '' === $error ) {
+			global $phpmailer;
+			$error = isset( $phpmailer->ErrorInfo ) ? sanitize_text_field( $phpmailer->ErrorInfo ) : '';
+		}
 		return rest_ensure_response( array(
 			'success' => false,
 			'message' => $error ?: __( 'Failed to send.', 'mailyard' ),
 		) );
+	}
+
+	private function provider_label( string $slug ): string {
+		$esp = '' !== $slug ? Manager::instance()->get( $slug ) : null;
+		return $esp ? $esp->get_label() : '';
 	}
 
 	private function default_test_body( string $to ): string {
@@ -497,13 +614,189 @@ class REST_API {
 		return rest_ensure_response( array( 'success' => true ) );
 	}
 
+	// Send a sample alert by email or to the saved webhook, and say how it went.
+	public function test_alert( $request ) {
+		$input   = (array) $request->get_json_params();
+		$channel = 'webhook' === ( $input['channel'] ?? '' ) ? 'webhook' : 'email';
+		$target  = 'webhook' === $channel
+			? esc_url_raw( trim( (string) ( $input['target'] ?? '' ) ), array( 'https', 'http' ) )
+			: sanitize_email( (string) ( $input['target'] ?? '' ) );
+		$result  = ( new Alerts() )->test( $channel, $target );
+		return rest_ensure_response( array(
+			'success' => ! is_wp_error( $result ),
+			'message' => is_wp_error( $result )
+				? $result->get_error_message()
+				: ( 'webhook' === $channel ? __( 'Test alert posted.', 'mailyard' ) : __( 'Test alert sent by your server’s own mailer.', 'mailyard' ) ),
+		) );
+	}
+
+	// Encryption state, plus which credentials come from wp-config.php.
+	public function get_security() {
+		Options::connections(); // Opening them is how an unreadable secret shows up.
+		$constants = array();
+		foreach ( Manager::instance()->all() as $slug => $esp ) {
+			foreach ( array_keys( Manager::instance()->constant_fields( $slug ) ) as $key ) {
+				$constants[] = 'MAILYARD_' . strtoupper( $slug . '_' . $key );
+			}
+		}
+		return rest_ensure_response( array(
+			'available'  => Crypto::available(),
+			'enabled'    => ! empty( Options::settings()['encrypt'] ),
+			'unreadable' => Crypto::unreadable(),
+			'pinnedKey'  => defined( 'MAILYARD_ENCRYPTION_KEY' ),
+			'constants'  => $constants,
+		) );
+	}
+
+	// Turn encryption on or off: re-save every connection so its secrets are
+	// sealed (or opened) right away, not on the next edit.
+	public function save_security( $request ) {
+		$on = ! empty( $request->get_json_params()['encrypt'] );
+		if ( $on && ! Crypto::available() ) {
+			return new \WP_Error( 'no_sodium', __( 'This server’s PHP has no sodium extension, so encryption isn’t available.', 'mailyard' ), array( 'status' => 400 ) );
+		}
+		$conns    = Options::connections();
+		$settings = get_option( Options::SETTINGS, array() );
+		$settings['encrypt'] = $on;
+		update_option( Options::SETTINGS, $settings );
+		Options::flush_settings_cache();
+		Options::save_connections( $conns );
+		return $this->get_security();
+	}
+
+	// Settings and connections as one JSON backup — credentials included, so
+	// the file must be kept safe. Logs are not part of it.
+	public function export_settings() {
+		$settings = get_option( Options::SETTINGS, array() );
+		unset( $settings['imported'] );
+		return rest_ensure_response( array(
+			'plugin'      => 'mailyard',
+			'version'     => MAILYARD_VERSION,
+			'exported_at' => gmdate( 'c' ),
+			'settings'    => $settings,
+			'connections' => Options::connections(),
+		) );
+	}
+
+	// Restore a backup from export_settings(): settings go through the same
+	// whitelist as a save; connections are rebuilt field by field.
+	public function import_settings( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
+		$data = $request->get_json_params()['data'] ?? null;
+		if ( ! is_array( $data ) || 'mailyard' !== ( $data['plugin'] ?? '' ) || ! is_array( $data['settings'] ?? null ) ) {
+			return new \WP_Error( 'bad_backup', __( 'That file isn’t a Mailyard settings backup.', 'mailyard' ), array( 'status' => 400 ) );
+		}
+
+		$request_settings = new \WP_REST_Request( 'POST' );
+		$request_settings->set_body( wp_json_encode( $data['settings'] ) );
+		$request_settings->set_header( 'Content-Type', 'application/json' );
+		$this->save_settings( $request_settings );
+		Options::flush_settings_cache();
+
+		$conns = array();
+		foreach ( (array) ( $data['connections'] ?? array() ) as $i => $c ) {
+			$provider = sanitize_key( $c['provider'] ?? '' );
+			if ( ! is_array( $c ) || ! in_array( $provider, Options::providers(), true ) ) {
+				continue;
+			}
+			$conns[] = array(
+				'id'               => sanitize_text_field( $c['id'] ?? '' ) ?: wp_generate_uuid4(),
+				'provider'         => $provider,
+				'name'             => sanitize_text_field( $c['name'] ?? '' ),
+				'from_email'       => sanitize_email( $c['from_email'] ?? '' ),
+				'from_name'        => sanitize_text_field( $c['from_name'] ?? '' ),
+				'config'           => $this->sanitize_config( $c['config'] ?? array() ),
+				'from_match'       => $this->sanitize_from_match( $c['from_match'] ?? array() ),
+				'enabled'          => ! empty( $c['enabled'] ),
+				'priority'         => count( $conns ),
+				'last_test_at'     => 0,
+				'last_test_status' => '',
+				'last_test_error'  => '',
+			);
+		}
+		$this->save_connections( $conns );
+		$this->sync_active( $conns );
+
+		return rest_ensure_response( array( 'connections' => count( $conns ) ) );
+	}
+
+	public function empty_logs() {
+		return rest_ensure_response( array( 'deleted' => Logger::instance()->truncate() ) );
+	}
+
+	// On a subsite under shared settings the connections belong to the main
+	// site: refuse edits here instead of forking a silent local copy.
+	private function managed_by_network() {
+		return Options::shared_source()
+			? new \WP_Error( 'managed_by_network', __( 'Email delivery for this site is managed by the network’s main site.', 'mailyard' ), array( 'status' => 403 ) )
+			: null;
+	}
+
+	// Network sharing state, plus what this site may do about it.
+	public function get_network() {
+		return rest_ensure_response( Options::network() + array(
+			'multisite' => is_multisite(),
+			'isMain'    => is_main_site(),
+			'canManage' => is_multisite() && is_main_site() && current_user_can( 'manage_network_options' ),
+		) );
+	}
+
+	// Main site only, network admins only.
+	public function save_network( $request ) {
+		if ( ! is_multisite() || ! is_main_site() || ! current_user_can( 'manage_network_options' ) ) {
+			return new \WP_Error( 'forbidden', __( 'Only a network admin can change this, from the main site.', 'mailyard' ), array( 'status' => 403 ) );
+		}
+		$input   = (array) $request->get_json_params();
+		$current = Options::network();
+		foreach ( array_keys( $current ) as $key ) {
+			if ( array_key_exists( $key, $input ) ) {
+				$current[ $key ] = (bool) $input[ $key ];
+			}
+		}
+		update_site_option( Options::NETWORK, $current );
+		return $this->get_network();
+	}
+
+	public function get_imports() {
+		return rest_ensure_response( ( new Importer() )->detect() );
+	}
+
+	public function run_import( $request ) {
+		$locked = $this->managed_by_network();
+		if ( $locked ) {
+			return $locked;
+		}
+		$source = sanitize_key( $request->get_json_params()['source'] ?? '' );
+		if ( ! isset( Importer::SOURCES[ $source ] ) ) {
+			return new \WP_Error( 'invalid_source', __( 'Unknown plugin.', 'mailyard' ), array( 'status' => 400 ) );
+		}
+		return rest_ensure_response( ( new Importer() )->import( $source ) );
+	}
+
 	public function get_logs( $request ) {
-		return rest_ensure_response( Logger::instance()->query( array(
-			'status'   => sanitize_key( $request->get_param( 'status' ) ?? 'all' ),
-			'search'   => sanitize_text_field( $request->get_param( 'search' ) ?? '' ),
+		return rest_ensure_response( Logger::instance()->query( $this->log_filters( $request ) + array(
 			'page'     => absint( $request->get_param( 'page' ) ?? 1 ),
 			'per_page' => absint( $request->get_param( 'per_page' ) ?? 20 ),
 		) ) );
+	}
+
+	// The filtered log as CSV text; the browser turns it into a download.
+	public function export_logs( $request ) {
+		return rest_ensure_response( array(
+			'filename' => 'mailyard-log-' . gmdate( 'Y-m-d' ) . '.csv',
+			'csv'      => Logger::instance()->export_csv( $this->log_filters( $request ) ),
+		) );
+	}
+
+	private function log_filters( $request ): array {
+		return array(
+			'status'   => sanitize_key( $request->get_param( 'status' ) ?? 'all' ),
+			'provider' => sanitize_key( $request->get_param( 'provider' ) ?? 'all' ),
+			'search'   => sanitize_text_field( $request->get_param( 'search' ) ?? '' ),
+		);
 	}
 
 	/**
@@ -524,7 +817,9 @@ class REST_API {
 			? array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) $row['headers'] ) ) )
 			: array();
 
-		$ok = wp_mail( $to, (string) $row['subject'], (string) $row['body'], $headers );
+		$ok = Override::sync( function () use ( $to, $row, $headers ) {
+			return wp_mail( $to, (string) $row['subject'], (string) $row['body'], $headers );
+		} );
 
 		return rest_ensure_response( array(
 			'ok'     => (bool) $ok,
@@ -533,21 +828,17 @@ class REST_API {
 	}
 
 	private function connections(): array {
-		return get_option( Options::CONNECTIONS, array() );
+		return Options::connections();
 	}
 
-	// Connections hold provider credentials in each conn['config'] — keep this
-	// option out of the autoload set so credentials aren't loaded on every page.
 	private function save_connections( array $conns ) {
-		$existing = get_option( Options::CONNECTIONS, null );
-		if ( null === $existing ) {
-			add_option( Options::CONNECTIONS, $conns, '', false );
-		} else {
-			update_option( Options::CONNECTIONS, $conns );
-		}
+		Options::save_connections( $conns );
 	}
 
 	private function record_test_result( string $id, string $status, string $error ): void {
+		if ( Options::shared_source() ) {
+			return;
+		}
 		$conns = $this->connections();
 		foreach ( $conns as &$c ) {
 			if ( $c['id'] === $id ) {
@@ -562,31 +853,7 @@ class REST_API {
 	}
 
 	private function sync_active( array $conns ) {
-		$settings = get_option( Options::SETTINGS, array() );
-
-		$primary = null;
-		foreach ( $conns as $c ) {
-			if ( ! empty( $c['enabled'] ) ) {
-				$primary = $c;
-				break;
-			}
-		}
-
-		if ( ! $primary ) {
-			$settings['active'] = Options::DEFAULT_PROVIDER;
-			update_option( Options::SETTINGS, $settings );
-			return;
-		}
-
-		$settings['active'] = sanitize_key( $primary['provider'] );
-		if ( ! empty( $primary['from_email'] ) ) {
-			$settings['from_email'] = sanitize_email( $primary['from_email'] );
-		}
-		if ( ! empty( $primary['from_name'] ) ) {
-			$settings['from_name'] = sanitize_text_field( $primary['from_name'] );
-		}
-
-		update_option( Options::SETTINGS, $settings );
+		Options::sync_active( $conns );
 	}
 
 	private function sanitize_config( $config ): array {
@@ -595,8 +862,15 @@ class REST_API {
 		}
 		$clean = array();
 		foreach ( $config as $k => $v ) {
-			$k           = sanitize_key( $k );
-			$clean[ $k ] = is_array( $v ) ? $this->sanitize_config( $v ) : sanitize_text_field( (string) $v );
+			$k = sanitize_key( $k );
+			if ( is_array( $v ) ) {
+				$clean[ $k ] = $this->sanitize_config( $v );
+			} elseif ( 'certificate' === $k ) {
+				// A PEM block is multi-line; sanitize_text_field() would flatten it.
+				$clean[ $k ] = sanitize_textarea_field( (string) $v );
+			} else {
+				$clean[ $k ] = sanitize_text_field( (string) $v );
+			}
 		}
 		return $clean;
 	}
@@ -620,21 +894,29 @@ class REST_API {
 		return array_values( array_unique( $clean ) );
 	}
 
-	// Routing purpose — whitelist with a safe default.
-	private function sanitize_purpose( $value ): string {
-		$value = sanitize_key( (string) $value );
-		return in_array( $value, array( 'any', 'transactional', 'marketing' ), true ) ? $value : 'any';
-	}
-
 	private function sanitize_setting( string $key, $value ) {
 		switch ( $key ) {
 			case 'active':
 				return sanitize_key( $value );
 			case 'from_email':
+			case 'return_path':
+			case 'alert_to':
 				return sanitize_email( $value );
+			case 'alert_email':
+			case 'weekly_summary':
+				return (bool) $value;
+			case 'log_retention':
+				return in_array( (int) $value, array( 0, 7, 30, 90 ), true ) ? (int) $value : Plugin::LOG_RETAIN_DAYS;
+			case 'alert_webhook':
+				$url = esc_url_raw( trim( (string) $value ), array( 'https', 'http' ) );
+				return wp_http_validate_url( $url ) ? $url : '';
+			case 'disabled_emails':
+				return WP_Emails::sanitize( $value );
 			case 'from_name':
 				return sanitize_text_field( $value );
 			case 'logging':
+			case 'offline':
+			case 'background':
 				return (bool) $value;
 			default:
 				return sanitize_text_field( (string) $value );

@@ -43,6 +43,7 @@ class Plugin {
 		if ( is_admin() ) {
 			Settings::instance()->init();
 			Conflicts::instance()->init();
+			( new OAuth() )->init();
 			add_filter( 'plugin_action_links_' . MAILYARD_BASENAME, array( $this, 'plugin_action_links' ) );
 		}
 	}
@@ -75,6 +76,7 @@ class Plugin {
 
 	public function on_deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_CLEANUP );
+		wp_clear_scheduled_hook( Alerts::SUMMARY_HOOK );
 	}
 
 	public function on_init(): void {
@@ -89,13 +91,42 @@ class Plugin {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_CLEANUP );
 		}
 
+		$this->retire_marketing_purpose();
+
 		Logger::instance()->init();
 		( new Override() )->init();
+		( new WP_Emails() )->init();
+		( new Alerts() )->init();
 		( new Failure_Notice() )->init();
 	}
 
+	// One-time: connection purposes are gone (every enabled connection now
+	// carries all mail). A connection that was Marketing-only never handled
+	// transactional mail, so it's switched off rather than silently joining
+	// the chain; its credentials stay so it can be re-enabled. Idempotent: a
+	// no-op once no connection carries a `purpose` key.
+	private function retire_marketing_purpose(): void {
+		$conns = get_option( Options::CONNECTIONS, array() );
+		if ( ! is_array( $conns ) || ! array_filter( $conns, static function ( $c ) { return isset( $c['purpose'] ); } ) ) {
+			return;
+		}
+		foreach ( $conns as &$c ) {
+			if ( 'marketing' === ( $c['purpose'] ?? '' ) ) {
+				$c['enabled'] = false;
+			}
+			unset( $c['purpose'] );
+		}
+		unset( $c );
+		update_option( Options::CONNECTIONS, $conns, false );
+	}
+
+	// Settings → Delivery picks 7, 30 (default) or 90 days, or 0 to keep logs
+	// forever.
 	public function run_cleanup(): void {
-		Logger::instance()->cleanup( self::LOG_RETAIN_DAYS );
+		$days = (int) ( Options::settings()['log_retention'] ?? self::LOG_RETAIN_DAYS );
+		if ( $days > 0 ) {
+			Logger::instance()->cleanup( $days );
+		}
 	}
 
 	public function plugin_action_links( array $links ): array {
@@ -116,16 +147,34 @@ class Plugin {
 		require_once $includes . 'esp/class-postmark.php';
 		require_once $includes . 'esp/class-resend.php';
 		require_once $includes . 'esp/class-brevo.php';
+		require_once $includes . 'esp/class-mailgun.php';
+		require_once $includes . 'esp/class-sendgrid.php';
+		require_once $includes . 'esp/class-smtp2go.php';
+		require_once $includes . 'esp/class-mailjet.php';
+		require_once $includes . 'esp/class-mailersend.php';
+		require_once $includes . 'esp/class-maileroo.php';
+		require_once $includes . 'esp/class-mime.php';
+		require_once $includes . 'esp/class-gmail.php';
+		require_once $includes . 'esp/class-microsoft.php';
+		require_once $includes . 'esp/class-microsoft-app.php';
+		require_once $includes . 'esp/class-zoho.php';
 		require_once $includes . 'esp/class-smtp.php';
 
 		require_once $includes . 'class-options.php';
+		require_once $includes . 'class-crypto.php';
+		require_once $includes . 'class-oauth.php';
 		require_once $includes . 'class-manager.php';
 		require_once $includes . 'class-deliverability.php';
 		require_once $includes . 'class-errors.php';
+		require_once $includes . 'class-message.php';
 		require_once $includes . 'class-logger.php';
 		require_once $includes . 'class-override.php';
+		require_once $includes . 'class-wp-emails.php';
+		require_once $includes . 'class-alerts.php';
+		require_once $includes . 'class-checks.php';
 		require_once $includes . 'class-failure-notice.php';
 		require_once $includes . 'class-data-deleter.php';
+		require_once $includes . 'class-importer.php';
 		require_once $includes . 'class-rest-api.php';
 		require_once $includes . 'class-abilities.php';
 		require_once $includes . 'class-webhooks.php';

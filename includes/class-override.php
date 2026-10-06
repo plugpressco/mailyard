@@ -4,13 +4,26 @@ namespace Mailyard;
 defined( 'ABSPATH' ) || exit;
 
 // Intercepts wp_mail() to route emails through configured ESP connections,
-// with synchronous failover across the chain when a send fails.
+// with synchronous failover across the chain when a send fails. Also owns the
+// two delivery modes: Offline (log, never send) and Background (answer the
+// page first, send right after the response).
 class Override {
 
-	// Re-entrancy guard. The SMTP provider sends via an inner wp_mail() call, which
-	// would otherwise re-trigger our pre_wp_mail filter and recurse. While true, the
-	// interceptor passes through so the inner wp_mail() reaches real PHPMailer.
+	// Re-entrancy guard. The SMTP and PHP-mail providers send via an inner
+	// wp_mail() call, which would otherwise re-trigger our pre_wp_mail filter
+	// and recurse. While true, the interceptor passes through so the inner
+	// wp_mail() reaches real PHPMailer.
 	private static $sending = false;
+
+	// Messages deferred by Background sending, flushed on shutdown.
+	private static $queue = array();
+
+	// Set while a caller needs the real outcome (Send test, Resend), so the
+	// message is sent now instead of being queued.
+	private static $sync = false;
+
+	// Outcome of the most recent intercepted send: { status, provider, error }.
+	private static $last = array();
 
 	// True while the failover loop is sending — used by Logger to avoid double-logging
 	// SMTP sends (which fire wp_mail_succeeded/failed in addition to our own log).
@@ -18,11 +31,56 @@ class Override {
 		return self::$sending;
 	}
 
+	/**
+	 * Run $fn with Background sending bypassed, so wp_mail() inside it returns
+	 * the real result; last_outcome() then says which provider took it.
+	 *
+	 * @param callable $fn Work that sends mail.
+	 * @return mixed Whatever $fn returns.
+	 */
+	public static function sync( callable $fn ) {
+		self::$sync = true;
+		self::$last = array();
+		try {
+			return $fn();
+		} finally {
+			self::$sync = false;
+		}
+	}
+
+	/**
+	 * Run $fn with Mailyard standing aside: wp_mail() inside it goes out through
+	 * WordPress's own mailer and isn't logged. For alerts about a failing
+	 * provider, which must not travel through that provider.
+	 *
+	 * @param callable $fn Work that sends mail.
+	 * @return mixed Whatever $fn returns.
+	 */
+	public static function unrouted( callable $fn ) {
+		$was           = self::$sending;
+		self::$sending = true;
+		try {
+			return $fn();
+		} finally {
+			self::$sending = $was;
+		}
+	}
+
+	// { status, provider, error } of the last intercepted send, or empty when
+	// wp_mail() fell through to WordPress (no usable connection).
+	public static function last_outcome(): array {
+		return self::$last;
+	}
+
 	public function init() {
-		// When at least one usable connection exists, route everything (API and SMTP
-		// alike) through the interceptor so it can pick a sender-matched failover
-		// chain and honor the message's own From header.
-		if ( ! empty( Manager::instance()->enabled_connections() ) ) {
+		if ( '' !== (string) ( Options::settings()['return_path'] ?? '' ) ) {
+			add_action( 'phpmailer_init', array( $this, 'apply_return_path' ) );
+		}
+
+		// Route everything through the interceptor when at least one usable
+		// connection exists (it picks a sender-matched failover chain and honors
+		// the message's own From header), and always in Offline mode.
+		if ( ! empty( Options::settings()['offline'] ) || ! empty( Manager::instance()->enabled_connections() ) ) {
 			add_filter( 'pre_wp_mail', array( $this, 'intercept' ), 10, 2 );
 			return;
 		}
@@ -47,168 +105,179 @@ class Override {
 		}
 	}
 
-	// Replaces wp_mail, walking a sender-matched failover chain.
+	// Replaces wp_mail: offline capture, background queue, or an immediate send
+	// down the sender-matched failover chain.
 	public function intercept( $null, $atts ) {
-		// Inner wp_mail() from the SMTP provider — let it through to real PHPMailer.
+		// Inner wp_mail() from the SMTP / PHP-mail provider — let it through.
 		if ( self::$sending ) {
 			return null;
 		}
 
-		$settings    = Options::settings();
-		$headers     = $atts['headers'] ?? '';
-		$from        = $this->resolve_from( $headers, $settings );
+		$settings = Options::settings();
+		$message  = Message::from_wp_mail( $atts, $settings );
+		$log      = array(
+			'to'      => implode( ', ', $message['to'] ),
+			'subject' => $message['subject'],
+			'body'    => (string) ( $atts['message'] ?? '' ),
+			'headers' => $atts['headers'] ?? '',
+		);
 
-		// Message purpose picks the connection/stream: a campaign sender (e.g. Outbees)
-		// sets `X-Mailyard-Purpose: marketing` to reach the broadcast-capable
-		// connection (Postmark broadcast stream); everything else stays transactional.
-		$purpose = $this->resolve_purpose( $headers, $from['email'], $atts );
+		if ( ! empty( $settings['offline'] ) ) {
+			Logger::instance()->log( $log + array( 'status' => 'offline', 'provider' => '' ) );
+			self::$last = array( 'status' => 'offline', 'provider' => '', 'error' => '' );
+			return true;
+		}
 
-		$chain = Manager::instance()->chain_for( $from['email'], $purpose );
+		$chain = Manager::instance()->chain_for( $message['from_email'] );
 		if ( empty( $chain ) ) {
 			return null; // Fall through to default wp_mail.
 		}
 
-		$logger      = Logger::instance();
-		$reply_to    = $this->parse_reply_to( $headers );
-		$is_html     = $this->is_html_body( $headers );
-		$cc          = ESP\Recipients::split( $atts['cc']  ?? array() );
-		$bcc         = ESP\Recipients::split( $atts['bcc'] ?? array() );
-		$attachments = ESP\Attachment::normalize( $atts['attachments'] ?? array() );
-		$recipients  = is_array( $atts['to'] ) ? $atts['to'] : explode( ',', $atts['to'] );
-		$all_sent    = true;
+		if ( $this->should_defer( $settings ) ) {
+			$id = Logger::instance()->log( $log + array( 'status' => 'pending', 'provider' => '' ) );
+			if ( empty( self::$queue ) ) {
+				add_action( 'shutdown', array( $this, 'flush_queue' ), 100 );
+			}
+			self::$queue[] = array( $chain, $message, $log, $id );
+			return true;
+		}
+
+		return $this->deliver( $chain, $message, $log, 0 );
+	}
+
+	/**
+	 * Send every deferred message. Hand the response to the visitor first when
+	 * the server can (PHP-FPM, LiteSpeed); elsewhere the sends simply run at
+	 * the very end of the request.
+	 */
+	public function flush_queue() {
+		if ( function_exists( 'fastcgi_finish_request' ) ) {
+			fastcgi_finish_request();
+		} elseif ( function_exists( 'litespeed_finish_request' ) ) {
+			litespeed_finish_request();
+		}
+
+		$queue       = self::$queue;
+		self::$queue = array();
+		foreach ( $queue as $item ) {
+			list( $chain, $message, $log, $id ) = $item;
+			$this->deliver( $chain, $message, $log, (int) $id );
+		}
+	}
+
+	private function should_defer( array $settings ): bool {
+		return ! empty( $settings['background'] )
+			&& ! self::$sync
+			&& ! wp_doing_cron()
+			&& ! ( defined( 'WP_CLI' ) && WP_CLI )
+			&& ! doing_action( 'shutdown' );
+	}
+
+	// Validate recipients, then walk the chain: first success wins; each failed
+	// attempt before the last is logged on its own row so the log shows who
+	// failed and why. $log_id (a Background "pending" row) receives the final
+	// outcome instead of a new row.
+	private function deliver( array $chain, array $message, array $log, int $log_id ): bool {
+		$error = $this->recipient_error( $message, $chain[0]['slug'] );
+		if ( '' !== $error ) {
+			$this->record( $log, $log_id, 'failed', $chain[0]['slug'], $error );
+			do_action( 'mailyard_send_failed', $log['to'], $error );
+			return false;
+		}
+
+		$logger   = Logger::instance();
+		$last     = count( $chain ) - 1;
+		$failures = array();
 
 		self::$sending = true;
 		try {
-			foreach ( $recipients as $i => $to ) {
-				$to = trim( $to );
-				if ( empty( $to ) ) {
-					continue;
+			foreach ( $chain as $i => $link ) {
+				$result = $link['esp']->send( $message );
+
+				if ( $result->is_success() ) {
+					$this->record( $log, $log_id, 'sent', $link['slug'], '' );
+					self::$last['failed'] = $failures;
+					self::$sending        = false;
+					do_action( 'mailyard_send_succeeded', $log['to'], $link['slug'] );
+					if ( $failures ) {
+						/**
+						 * A backup delivered after earlier connections failed.
+						 *
+						 * @param string $to       Recipients.
+						 * @param string $provider The provider that delivered.
+						 * @param array  $failures [{ provider, error }] in chain order.
+						 */
+						do_action( 'mailyard_send_rescued', $log['to'], $link['slug'], $failures );
+					}
+					return true;
 				}
 
-				// cc/bcc and attachments piggy-back on the first recipient only —
-				// otherwise each To address would see duplicate Cc copies.
-				$extras = 0 === $i
-					? array( 'cc' => $cc, 'bcc' => $bcc, 'attachments' => $attachments, 'is_html' => $is_html )
-					: array( 'cc' => array(), 'bcc' => array(), 'attachments' => array(), 'is_html' => $is_html );
-
-				if ( ! $this->send_with_failover( $chain, $to, $atts, $from, $reply_to, $extras, $logger ) ) {
-					$all_sent = false;
+				$error      = $result->get_error();
+				$failures[] = array( 'provider' => $link['slug'], 'error' => $error );
+				if ( $i < $last ) {
+					$logger->log( $log + array( 'status' => 'failed', 'provider' => $link['slug'], 'error' => $error ) );
+				} else {
+					$this->record( $log, $log_id, 'failed', $link['slug'], $error );
 				}
 			}
 		} finally {
 			self::$sending = false;
 		}
 
-		return $all_sent;
-	}
-
-	// Try each connection in priority order. Return true on first success;
-	// return false only after all attempts have failed.
-	private function send_with_failover( array $chain, string $to, array $atts, array $from, string $reply_to, array $extras, Logger $logger ): bool {
-		$last_error = '';
-
-		foreach ( $chain as $i => $link ) {
-			$slug = $link['slug'];
-			$esp  = $link['esp'];
-
-			$log_base = array(
-				'to'       => $to,
-				'subject'  => $atts['subject'],
-				'body'     => $atts['message'],
-				'headers'  => $atts['headers'] ?? '',
-				'provider' => $slug,
-			);
-
-			if ( 0 === $i && ! is_email( $to ) ) {
-				$logger->log( array_merge( $log_base, array( 'status' => 'failed', 'error' => __( 'Invalid email address.', 'mailyard' ) ) ) );
-				return false;
-			}
-
-			if ( 0 === $i && ! $this->recipient_domain_ok( $to, $slug ) ) {
-				$domain = substr( $to, strrpos( $to, '@' ) + 1 );
-				$logger->log( array_merge( $log_base, array(
-					'status' => 'failed',
-					/* translators: %s: recipient email domain. */
-					'error'  => sprintf( __( 'Invalid domain: %s has no mail server.', 'mailyard' ), $domain ),
-				) ) );
-				return false;
-			}
-
-			$body    = (string) $atts['message'];
-			$is_html = $extras['is_html'];
-
-			$result = $esp->send( array(
-				'to'          => $to,
-				'cc'          => $extras['cc'],
-				'bcc'         => $extras['bcc'],
-				'subject'     => $atts['subject'],
-				'html'        => $is_html ? $body : '',
-				'text'        => $is_html ? '' : $body,
-				'from_name'   => $from['name'],
-				'from_email'  => $from['email'],
-				'reply_to'    => $reply_to,
-				'attachments' => $extras['attachments'],
-			) );
-
-			if ( $result->is_success() ) {
-				$logger->log( array_merge( $log_base, array( 'status' => 'sent' ) ) );
-				do_action( 'mailyard_send_succeeded', $to, $slug );
-				return true;
-			}
-
-			$last_error = $result->get_error();
-			$logger->log( array_merge( $log_base, array( 'status' => 'failed', 'error' => $last_error ) ) );
-		}
-
-		do_action( 'mailyard_send_failed', $to, $last_error );
+		do_action( 'mailyard_send_failed', $log['to'], $error );
 		return false;
 	}
 
-	// Read the requested send purpose from the message. Defaults to 'transactional'
-	// so every existing caller (and other plugins) route exactly as before; campaign
-	// senders opt into 'marketing' via the X-Mailyard-Purpose header. The
-	// `mailyard_purpose` filter lets integrations decide without a header.
-	private function resolve_purpose( $headers, string $from_email, array $atts ): string {
-		$purpose = 'transactional';
-
-		$parsed = $this->normalize_headers( $headers );
-		if ( isset( $parsed['x-mailyard-purpose'] ) ) {
-			$value = strtolower( trim( $parsed['x-mailyard-purpose'] ) );
-			if ( in_array( $value, array( 'marketing', 'broadcast', 'bulk' ), true ) ) {
-				$purpose = 'marketing';
-			}
+	private function record( array $log, int $log_id, string $status, string $provider, string $error ): void {
+		$fields     = array( 'status' => $status, 'provider' => $provider, 'error' => $error );
+		self::$last = $fields;
+		if ( $log_id ) {
+			Logger::instance()->update( $log_id, $fields );
+		} else {
+			Logger::instance()->log( $log + $fields );
 		}
-
-		$purpose = (string) apply_filters( 'mailyard_purpose', $purpose, $from_email, $atts );
-
-		return 'marketing' === $purpose ? 'marketing' : 'transactional';
 	}
 
-	// Determine From name+email — message headers drive routing, so they win; fall
-	// back to the configured default sender when the message sets no From.
-	private function resolve_from( $headers, array $settings ): array {
-		$from_name  = '';
-		$from_email = '';
-
-		foreach ( $this->normalize_headers( $headers ) as $name => $value ) {
-			if ( 'from' !== $name ) {
-				continue;
-			}
-			if ( preg_match( '/^(.+)<(.+)>$/', $value, $m ) ) {
-				$from_name  = trim( $m[1] );
-				$from_email = trim( $m[2] );
-			} else {
-				$from_email = trim( $value );
-			}
-			break;
+	// Reject a message no provider could deliver: no valid To address, or (for
+	// SMTP / PHP mail) a recipient domain with no mail server. API providers
+	// validate recipients themselves, and the local DNS resolver is unreliable
+	// on dev machines (localhost, VPN, firewalled).
+	private function recipient_error( array $message, string $provider ): string {
+		if ( empty( $message['to'] ) ) {
+			return __( 'Invalid email address.', 'mailyard' );
 		}
-
-		if ( empty( $from_email ) ) {
-			$from_name  = $settings['from_name']  ?? get_bloginfo( 'name' );
-			$from_email = $settings['from_email'] ?? get_option( 'admin_email' );
+		if ( in_array( $provider, Options::api_providers(), true ) || ! function_exists( 'checkdnsrr' ) || defined( 'PHP_WASM' ) ) {
+			return '';
 		}
+		foreach ( $message['to'] as $to ) {
+			$domain = substr( $to, strrpos( $to, '@' ) + 1 );
+			if ( ! @checkdnsrr( $domain, 'MX' ) && ! @checkdnsrr( $domain, 'A' ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				/* translators: %s: recipient email domain. */
+				return sprintf( __( 'Invalid domain: %s has no mail server.', 'mailyard' ), $domain );
+			}
+		}
+		return '';
+	}
 
-		return array( 'name' => $from_name, 'email' => $from_email );
+	/**
+	 * Point bounces at the Return Path address (the SMTP envelope sender), so
+	 * non-delivery reports skip the From mailbox. Only PHPMailer sends — SMTP,
+	 * PHP Mail, and WordPress itself — have an envelope to set; API providers
+	 * wrap their own and handle bounces on their side.
+	 *
+	 * @param \PHPMailer\PHPMailer\PHPMailer $phpmailer The mailer about to send.
+	 */
+	public function apply_return_path( $phpmailer ) {
+		/**
+		 * Filters the bounce address for one message.
+		 *
+		 * @param string $address   The configured Return Path.
+		 * @param object $phpmailer The message being sent.
+		 */
+		$address = (string) apply_filters( 'mailyard_return_path', (string) ( Options::settings()['return_path'] ?? '' ), $phpmailer );
+		if ( is_email( $address ) ) {
+			$phpmailer->Sender = $address;
+		}
 	}
 
 	// Detect WP's synthetic default From (wordpress@<sitename>) so the passthrough
@@ -222,68 +291,5 @@ class Override {
 			$sitename = substr( $sitename, 4 );
 		}
 		return strtolower( $email ) === 'wordpress@' . $sitename;
-	}
-
-	private function is_html_body( $headers ): bool {
-		foreach ( $this->normalize_headers( $headers ) as $name => $value ) {
-			if ( 'content-type' !== $name ) {
-				continue;
-			}
-			$type = strtolower( trim( explode( ';', $value )[0] ) );
-			return 'text/plain' !== $type;
-		}
-
-		// No Content-Type header: resolve it the way wp_mail() itself would —
-		// plain text unless a plugin opts into HTML via the filter. Defaulting
-		// to HTML here collapses \n-formatted plain-text bodies into one line.
-		$type = strtolower( trim( (string) apply_filters( 'wp_mail_content_type', 'text/plain' ) ) );
-		return 'text/plain' !== $type;
-	}
-
-	// Callers may set "Reply-To: Name <email>"; the ESP drivers expect a bare
-	// address (they run sanitize_email(), which mangles a name+brackets string
-	// into an invalid-but-plausible address). Extract the address only.
-	private function parse_reply_to( $headers ): string {
-		foreach ( $this->normalize_headers( $headers ) as $name => $value ) {
-			if ( 'reply-to' !== $name ) {
-				continue;
-			}
-			$value = trim( $value );
-			if ( preg_match( '/<([^<>]+)>/', $value, $m ) ) {
-				$value = trim( $m[1] );
-			}
-			return is_email( $value ) ? $value : '';
-		}
-		return '';
-	}
-
-	private function normalize_headers( $headers ): array {
-		if ( ! is_array( $headers ) ) {
-			$headers = array_filter( explode( "\n", str_replace( "\r\n", "\n", $headers ) ) );
-		}
-
-		$parsed = array();
-		foreach ( $headers as $header ) {
-			$parts = explode( ':', $header, 2 );
-			if ( count( $parts ) < 2 ) {
-				continue;
-			}
-			$parsed[ strtolower( trim( $parts[0] ) ) ] = trim( $parts[1] );
-		}
-		return $parsed;
-	}
-
-	// Validate that the recipient's domain has a mail server. Skipped for API
-	// providers because they perform their own validation, and the local DNS
-	// resolver is unreliable on dev machines (localhost, VPN, firewalled).
-	private function recipient_domain_ok( string $to, string $provider ): bool {
-		if ( in_array( $provider, Options::api_providers(), true ) ) {
-			return true;
-		}
-		if ( ! function_exists( 'checkdnsrr' ) || defined( 'PHP_WASM' ) ) {
-			return true;
-		}
-		$domain = substr( $to, strrpos( $to, '@' ) + 1 );
-		return @checkdnsrr( $domain, 'MX' ) || @checkdnsrr( $domain, 'A' ); // phpcs:ignore
 	}
 }

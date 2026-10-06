@@ -56,12 +56,13 @@ class Logger {
 		add_action( 'wp_mail_failed', array( $this, 'on_failure' ) );
 	}
 
-	// Called by Override for API providers that bypass wp_mail().
-	public function log( array $args ) {
+	// Called by Override for every send attempt. Returns the new row id (0 when
+	// logging is off).
+	public function log( array $args ): int {
 		if ( ! $this->is_enabled() ) {
-			return;
+			return 0;
 		}
-		$this->insert( $this->build_row(
+		return $this->insert( $this->build_row(
 			$args['to'] ?? '',
 			$args['subject'] ?? '',
 			$args['body'] ?? '',
@@ -70,6 +71,24 @@ class Logger {
 			sanitize_key( $args['status'] ?? 'sent' ),
 			$args['error'] ?? ''
 		) );
+	}
+
+	// Settle a row written earlier (a Background "pending" entry) with the
+	// send's outcome.
+	public function update( int $id, array $args ): void {
+		if ( ! $id ) {
+			return;
+		}
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			self::table(),
+			array(
+				'status'        => sanitize_key( $args['status'] ?? 'sent' ),
+				'provider'      => sanitize_key( $args['provider'] ?? '' ),
+				'error_message' => sanitize_text_field( (string) ( $args['error'] ?? '' ) ),
+			),
+			array( 'id' => $id )
+		);
 	}
 
 	public function on_success( $data ) {
@@ -120,6 +139,11 @@ class Logger {
 			$values[] = sanitize_key( $args['status'] );
 		}
 
+		if ( ! empty( $args['provider'] ) && 'all' !== $args['provider'] ) {
+			$where[]  = 'provider = %s';
+			$values[] = sanitize_key( $args['provider'] );
+		}
+
 		if ( ! empty( $args['search'] ) ) {
 			$like     = '%' . $wpdb->esc_like( sanitize_text_field( $args['search'] ) ) . '%';
 			$where[]  = '(to_email LIKE %s OR subject LIKE %s)';
@@ -164,6 +188,27 @@ class Logger {
 		);
 	}
 
+	// Failed sends in the last N seconds (for alert wording).
+	public function count_failed_since( int $seconds ): int {
+		global $wpdb;
+		$t = esc_sql( self::table() );
+		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$t} WHERE status = 'failed' AND created_at >= DATE_SUB(NOW(), INTERVAL %d SECOND)", max( 1, $seconds ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+	}
+
+	// The most common failure messages of the last N days: [{ error, count }].
+	public function top_errors( int $days = 7, int $limit = 5 ): array {
+		global $wpdb;
+		$t    = esc_sql( self::table() );
+		$rows = $wpdb->get_results( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+			"SELECT error_message AS error, COUNT(*) AS count FROM {$t} WHERE status = 'failed' AND error_message <> '' AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY) GROUP BY error_message ORDER BY count DESC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			max( 1, $days ),
+			max( 1, $limit )
+		), ARRAY_A );
+		return array_map( static function ( $r ) {
+			return array( 'error' => (string) $r['error'], 'count' => (int) $r['count'] );
+		}, (array) $rows );
+	}
+
 	// Per-day sent/failed counts for the last N days (oldest first), gaps filled
 	// with zeros. Powers the dashboard send-volume chart.
 	public function daily_stats( int $days = 14 ): array {
@@ -198,6 +243,46 @@ class Logger {
 			);
 		}
 		return $out;
+	}
+
+	/**
+	 * The filtered log as CSV — newest first, at most $limit rows, without
+	 * bodies or headers (those stay in the admin, one message at a time).
+	 *
+	 * @param array $args  Same filters as query().
+	 * @param int   $limit Row cap.
+	 */
+	public function export_csv( array $args, int $limit = 10000 ): string {
+		$out = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		fputcsv( $out, array( 'id', 'date', 'to', 'subject', 'provider', 'status', 'error' ), ',', '"', '\\' );
+		$pages = (int) ceil( $limit / 100 );
+		for ( $page = 1; $page <= $pages; $page++ ) {
+			$rows = $this->query( array_merge( $args, array( 'page' => $page, 'per_page' => 100 ) ) )['items'];
+			foreach ( $rows as $r ) {
+				// Leading = + - @ would run as a formula in a spreadsheet.
+				$cells = array_map( static function ( $v ) {
+					$v = (string) $v;
+					return preg_match( '/^[=+\-@\t\r]/', $v ) ? "'" . $v : $v;
+				}, array( $r['id'], $r['created_at'], $r['to'], $r['subject'], $r['provider'], $r['status'], $r['error'] ) );
+				fputcsv( $out, $cells, ',', '"', '\\' );
+			}
+			if ( count( $rows ) < 100 ) {
+				break;
+			}
+		}
+		rewind( $out );
+		$csv = (string) stream_get_contents( $out );
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		return $csv;
+	}
+
+	// Delete every log row. Returns how many there were.
+	public function truncate(): int {
+		global $wpdb;
+		$table = esc_sql( self::table() );
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$wpdb->query( "DELETE FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery,PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return $count;
 	}
 
 	// Delete logs older than N days.
@@ -244,6 +329,12 @@ class Logger {
 			'created_at' => $row['created_at'],
 		);
 
+		// Cc / Bcc / Reply-To as the message carried them.
+		$parsed             = Message::parse_headers( (string) $row['headers'] );
+		$shaped['cc']       = Message::addresses( $parsed['cc'] );
+		$shaped['bcc']      = Message::addresses( $parsed['bcc'] );
+		$shaped['reply_to'] = Message::addresses( $parsed['reply-to'] )[0] ?? '';
+
 		// Human-readable guidance for failures (single source: Errors::humanize).
 		if ( 'failed' === $row['status'] && '' !== (string) $row['error_message'] ) {
 			$shaped['error_human'] = Errors::humanize( (string) $row['error_message'], (string) $row['provider'] );
@@ -268,8 +359,9 @@ class Logger {
 		return $row ? $this->shape_row( $row ) : null;
 	}
 
-	private function insert( array $data ) {
+	private function insert( array $data ): int {
 		global $wpdb;
 		$wpdb->insert( self::table(), $data ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->insert_id;
 	}
 }

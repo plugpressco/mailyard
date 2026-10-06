@@ -1,16 +1,11 @@
 /*
- * Connect AI — the ONE control page for the family's Abilities API tools.
- *
- * Free Mailyard owns the page; each family plugin contributes a section of
- * tools through the `mailyard.shell.aiSections` filter (Mailyard Pro adds its
- * campaign tools). Every plugin keeps its own permissions storage and REST, so
- * each section carries its own master switch — no cross-plugin writes.
+ * Connect AI — the control page for Mailyard's Abilities API tools: a master
+ * switch plus one permission per tool.
  *
  * Mailyard ships no MCP transport: a bridge (WordPress MCP Adapter, or Saddle)
  * exposes the server; this page detects it and hands over the endpoint + guide.
  */
-import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
-import { applyFilters } from '@wordpress/hooks';
+import { useState, useEffect, useCallback } from 'react';
 import { Badge, GuideDrawer, CodeBlock, LiveIndicator, Notice, toast } from '@plugpress/ui';
 import { get, post } from '@/lib/api';
 import { Card, Button, Toggle, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
@@ -18,20 +13,17 @@ import { AlertIcon, BoltIcon } from '@/components/Icons';
 
 const ACCESS_BADGE = {
 	read: { label: 'View', variant: 'default' },
-	write: { label: 'Draft', variant: 'info' },
 	action: { label: 'Action', variant: 'warning' },
-	send: { label: 'Sends email', variant: 'danger' },
 };
 
 const GROUPS = [
 	{ label: 'View · read-only, always safe', accesses: [ 'read' ] },
-	{ label: 'Manage · create, edit, stop', accesses: [ 'write' ] },
-	{ label: 'Act · delivers a real email', accesses: [ 'action', 'send' ], danger: true },
+	{ label: 'Act · delivers a real email', accesses: [ 'action' ], danger: true },
 ];
 
 function ToolRow( { tool, disabled, onToggle } ) {
 	const badge = ACCESS_BADGE[ tool.access ] || ACCESS_BADGE.read;
-	const danger = 'action' === tool.access || 'send' === tool.access;
+	const danger = 'action' === tool.access;
 
 	return (
 		<div className="flex items-start justify-between gap-4 border-t border-ink-200 px-5 py-3.5">
@@ -62,12 +54,8 @@ function ToolRow( { tool, disabled, onToggle } ) {
 	);
 }
 
-/**
- * One product's tool list: a master switch plus its tools, grouped by access.
- * Exported so family plugins can render their own section identically —
- * import { AiSection } from the shell and feed it your catalog.
- */
-export function AiSection( { title, subtitle, enabled, tools = [], onToggleMaster, onToggleTool } ) {
+/** The tool list: a master switch plus the tools, grouped by access. */
+function AiSection( { title, subtitle, enabled, tools = [], onToggleMaster, onToggleTool } ) {
 	return (
 		<Card className="mb-4 overflow-hidden">
 			<div className="flex items-center justify-between px-5 py-4">
@@ -113,19 +101,6 @@ export default function ConnectAI() {
 	const [ data, setData ] = useState( null );
 	const [ loading, setLoading ] = useState( true );
 	const [ guideOpen, setGuideOpen ] = useState( false );
-
-	// Tool sections contributed by family plugins (Mailyard Pro adds its
-	// campaign tools). Each owns its own data + persistence.
-	// AiSection is handed to extenders through the filter's context arg: their
-	// bundle can't import ours, but both share the one React global, so a
-	// component reference crosses the boundary fine — and every product's tool
-	// list renders identically.
-	const sections = useMemo( () => {
-		const list = applyFilters( 'mailyard.shell.aiSections', [], { AiSection } );
-		return ( Array.isArray( list ) ? list : [] )
-			.filter( ( s ) => s && s.id && s.Component )
-			.sort( ( a, b ) => ( a.order ?? 50 ) - ( b.order ?? 50 ) );
-	}, [] );
 
 	const load = useCallback( () => get( 'ai' ).then( setData ).catch( () => setData( null ) ), [] );
 	useEffect( () => {
@@ -203,19 +178,13 @@ export default function ConnectAI() {
 			/>
 
 			<AiSection
-				title="Delivery tools · Mailyard"
+				title="Delivery tools"
 				subtitle="Diagnose why email isn’t arriving."
 				enabled={ enabled }
 				tools={ abilities }
 				onToggleMaster={ ( v ) => save( { enabled: v }, { enabled: v } ) }
 				onToggleTool={ toggleTool }
 			/>
-
-			{ sections.map( ( { id, Component } ) => (
-				<Suspense key={ id } fallback={ null }>
-					<Component />
-				</Suspense>
-			) ) }
 
 			<Card className="overflow-hidden">
 				<div className="px-5 pt-4 pb-1">
