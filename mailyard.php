@@ -5,7 +5,7 @@
  * Description:       WP SMTP plugin with automatic email failover. Send via Amazon SES, Postmark, Resend, Brevo or any SMTP — with an email log and deliverability fixes.
  * Version:           1.0.2
  * Requires at least: 7.0
- * Tested up to:      7.0
+ * Tested up to:      7.1
  * Requires PHP:      7.4
  * Author:            PlugPress
  * Author URI:        https://plugpress.co
