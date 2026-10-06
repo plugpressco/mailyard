@@ -6,11 +6,11 @@
 ## Last session (2026-10-06) — simple SMTP: Pro removed, Meow Mailer parity (#17, PR #18)
 
 - **Direction change (user):** Mailyard is a standalone, simple SMTP plugin — no Mailyard Pro, no marketing layer — at feature parity with [Meow Mailer](https://wordpress.org/plugins/meow-mailer/), keeping Mailyard's own edges (failover chain, sender routing, bounce webhooks, deliverability checker, MCP tools). Scope choice "option b": drop Pro hooks + Marketing purpose, keep everything SMTP.
-- **All 11 checklist items of #17 landed on `feat/17-simple-smtp` → draft PR #18** (not merged — >400 lines, touches .org-shipped code; needs your OK): Pro shell/filters + Marketing purpose removed; send pipeline rewritten (`Message` parser — **Cc/Bcc in headers were silently dropped for every provider**, now fixed; one message to all recipients); Offline mode; Background sending; PHP Mail as a real connection; log filters/paging/CSV/retention/top errors; alerts (email unrouted, Slack/Discord/Teams/JSON webhook, weekly summary); WordPress email switches; Return path; importer (WP Mail SMTP/Easy WP SMTP/FluentSMTP/Post SMTP incl. their encryption); wp-config constants + sodium encryption + settings backup; 6 API providers + 4 OAuth (Gmail, M365, M365 app-only, Zoho); multisite shared settings; dashboard setup checks.
+- **All 11 checklist items of #17 landed via PR #18, squash-merged to `main` as `c0d9d22` with `[skip actions]`, so WordPress.org was NOT synced and still shows 1.0.1: Pro shell/filters + Marketing purpose removed; send pipeline rewritten (`Message` parser — **Cc/Bcc in headers were silently dropped for every provider**, now fixed; one message to all recipients); Offline mode; Background sending; PHP Mail as a real connection; log filters/paging/CSV/retention/top errors; alerts (email unrouted, Slack/Discord/Teams/JSON webhook, weekly summary); WordPress email switches; Return path; importer (WP Mail SMTP/Easy WP SMTP/FluentSMTP/Post SMTP incl. their encryption); wp-config constants + sodium encryption + settings backup; 6 API providers + 4 OAuth (Gmail, M365, M365 app-only, Zoho); multisite shared settings; dashboard setup checks.
 - Bugs fixed on the way: two same-provider connections shared credentials in failover (Manager now clones drivers); SES MIME 7bit → base64; SMTP "None" auto-STARTTLS; Alerts settings auto-save loop (caught in Playground QA).
 - **Verification:** throwaway suites in the scratchpad against WP 7.1.2/PHP 8.5 on `wp/plug-press` (plugin left **inactive** there) — ~250 checks, all pass; multisite verified in a WP Playground multisite; visual QA of every page in a Playground (renders clean). Live OAuth consent + real provider sends NOT exercised.
 - Two provider/OAuth chunks were built by forked agents in worktrees and cherry-picked; worktrees + local agent branches removed.
-- The previously unpushed local `release: 1.0.2` commit (684f536) rides in PR #18 (direct push to main is a hard stop).
+- The previously unpushed local `release: 1.0.2` commit (684f536) went in with PR #18. `Tested up to` was bumped to 7.1 (user OK), which turned Plugin Check green. #14 was closed as moot.
 - The auto-mode permission classifier blocked branch deletion and (mislabelled "Git Destructive") several plain `cat`/`grep` reads — those files were never read: `class-failure-notice.php`, `class-conflicts.php`, `class-data-deleter.php`, `uninstall.php`, `src/lib/api.js`, `src/hooks/useLogs.js`, `src/hooks/useSettings.js`, `package.json`.
 
 ## Earlier session (2026-07-30) — banner redesign: tint + refine
@@ -78,11 +78,11 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
-- **User decisions on PR #18:** (1) bump `Tested up to` → 7.1 (only CI error; fails on main too); (2) version — changelog is written as 1.1.0, header still 1.0.2; ship 1.0.2 separately or fold in; (3) review + merge (squash).
-- **Delete Pro branches (blocked for me):** `git branch -D feat/merge-pro && git push origin --delete feat/merge-pro feat/freemius-parent feat/smtp-ux-pass feat/universal-shell`.
+- **Release 1.1.0 when ready:** set `Version:` + `MAILYARD_VERSION` + `Stable tag` to 1.1.0 (changelog already written; header still says 1.0.2), merge, then tag `v1.1.0`. That deploys the code and syncs the readme to WordPress.org. Do the live-send QA below first.
+- **Delete Pro branches on origin (blocked for me):** `git push origin --delete feat/merge-pro feat/freemius-parent feat/smtp-ux-pass feat/universal-shell`.
 - With reads unblocked: delete the now-unused `src/hooks/useLogs.js`; have `Data_Deleter`/`uninstall.php` also clear `mailyard_network` (site option), the `mailyard_alerted_*` transients and the `mailyard_weekly_summary` cron; consider folding `Conflicts` into the new `Checks`.
 - Live-test OAuth (Gmail, M365, M365 app-only, Zoho) end to end; Graph 4 MB / Gmail 5 MB attachment limits aren't chunked.
-- Close #14 (Purpose control — moot now); revisit #13 (Postmark stream field) — stream still configurable via import, not in the UI.
+- Revisit #13 (Postmark stream field): the stream can still come in via import, but there's no UI field for it.
 - `.wordpress.org` screenshots: retake for the new UI (6 captions in readme).
 
 ## Blockers / open questions
