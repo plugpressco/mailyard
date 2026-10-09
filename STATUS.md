@@ -89,6 +89,7 @@
 
 ## Next up
 - **Merge PR #21 (needs your OK):** it touches `readme.txt`, so a plain merge to `main` fires `assets.yml` and syncs the readme (unreleased 1.1.0 changelog) to WordPress.org right away. Squash with `[skip actions]` in the title, as #18 did, unless you want it live. It's also ~520 changed lines. After merge: remove the `in-progress` label from #20 and move the card to Done.
+- **#23:** add `'default' => array()` to the optional-input ability schemas. Today a plain Abilities REST call with no input 400s; MCP/Saddle are unaffected. Verified 2026-10-09: on `main` + Saddle 1.5.1 all 4 read-only tools register as `saddle/mailyard-*` and run, and live plugpress.io answers through Saddle MCP.
 - **#22:** rename the OAuth `message` return arg (e.g. `mailyard_oauth_message`) in `class-oauth.php` + `Connections.jsx`.
 - **Release 1.1.0 when ready:** set `Version:` + `MAILYARD_VERSION` + `Stable tag` to 1.1.0 (changelog already written; header still says 1.0.2), merge, then tag `v1.1.0`. That deploys the code and syncs the readme to WordPress.org. Do the live-send QA below first.
 - **Delete Pro branches on origin (blocked for me):** `git push origin --delete feat/merge-pro feat/freemius-parent feat/smtp-ux-pass feat/universal-shell`.
