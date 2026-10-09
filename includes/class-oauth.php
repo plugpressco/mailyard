@@ -141,7 +141,7 @@ class OAuth {
 		$args = is_wp_error( $result )
 			? array( 'mailyard_oauth' => 'error', 'message' => $result->get_error_message() )
 			: array( 'mailyard_oauth' => 'ok' );
-		return admin_url( 'admin.php?page=mailyard&' . http_build_query( $args, '', '&', PHP_QUERY_RFC3986 ) . '#/connections' );
+		return add_query_arg( rawurlencode_deep( $args ), admin_url( 'options-general.php?page=' . Settings::PAGE ) ) . '#/connections';
 	}
 
 	/**

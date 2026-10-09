@@ -111,9 +111,9 @@ Terms: https://www.cloudflare.com/website-terms/ — Privacy: https://developers
 == Installation ==
 
 1. Search for "Mailyard" in Plugins → Add New (or upload the zip), then activate.
-2. Open the Mailyard menu in your admin sidebar.
+2. Open Settings → SMTP.
 3. Pick a provider, enter your API key, set your sender address.
-4. Hit Send test on the Dashboard to confirm it works.
+4. Hit Send test on the Overview to confirm it works.
 
 = Adding a backup provider =
 
@@ -203,7 +203,8 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Add: Setup checks on the Dashboard — another plugin replacing wp_mail(), a From address on another domain, and Contact Form 7 / WPForms / Gravity Forms set to send "from" the visitor.
 * Update: Any logged email can be resent, not only failed ones.
 * Add: Send test names the provider that delivered it, and says so when a backup had to take over.
-* Update: Simpler admin — one sidebar (Dashboard, Connections, Email log, Deliverability, Settings), mirrored in the WordPress menu.
+* Update: Mailyard now lives under Settings → SMTP instead of its own top-level menu, with one slim top bar (Overview, Connections, Email log, Deliverability, Settings) and settings sections as tabs. Old links and bookmarks redirect.
+* Update: The "email failed to send" notice shows on the Dashboard and Plugins screens only, with a single Dismiss link.
 * Update: Connections no longer have a Marketing/Transactional purpose; every enabled connection carries all mail. A connection that was set to Marketing only is switched off on update (its settings are kept).
 * Update: An email to several recipients goes out as one message, as WordPress sends it, instead of one copy per address.
 * Fix: Cc and Bcc addresses set in email headers were dropped by every provider.

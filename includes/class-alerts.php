@@ -136,7 +136,7 @@ class Alerts {
 	 */
 	public static function webhook_payload( string $url, string $event, string $text, array $extra = array() ): array {
 		$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-		$logs = admin_url( 'admin.php?page=mailyard#/logs' );
+		$logs = Settings::url( 'logs' );
 
 		if ( preg_match( '/(^|\.)slack\.com$/', $host ) ) {
 			return array( 'text' => $text . "\n" . $logs );
@@ -183,7 +183,7 @@ class Alerts {
 
 	private function notify( string $subject, array $lines, string $event, array $extra ): void {
 		if ( ! empty( Options::settings()['alert_email'] ) ) {
-			$this->send_unrouted( $this->recipient(), $subject, implode( "\n\n", $lines ) . "\n\n" . __( 'The email log:', 'mailyard' ) . ' ' . admin_url( 'admin.php?page=mailyard#/logs' ) . $this->footer() );
+			$this->send_unrouted( $this->recipient(), $subject, implode( "\n\n", $lines ) . "\n\n" . __( 'The email log:', 'mailyard' ) . ' ' . Settings::url( 'logs' ) . $this->footer() );
 		}
 		$this->post_webhook( $event, $subject . ' — ' . implode( ' ', array_slice( $lines, 1 ) ), $extra );
 	}
@@ -232,6 +232,7 @@ class Alerts {
 	}
 
 	private function footer(): string {
-		return "\n\n— " . __( 'Sent by Mailyard. Change alerts in Mailyard → Settings → Alerts.', 'mailyard' );
+		/* translators: %s: URL of Mailyard's alert settings. */
+		return "\n\n— " . sprintf( __( 'Sent by Mailyard. Change alerts: %s', 'mailyard' ), Settings::url( 'settings/alerts' ) );
 	}
 }
