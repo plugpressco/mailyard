@@ -3,7 +3,15 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-10-09) — Settings → SMTP + declutter (#20, PR #21 — merged)
+## Last session (2026-10-09, later) — v1.1.0 RELEASED to WordPress.org (#25, PR #26)
+
+- **1.1.0 shipped** (user: "release"). PR #26 bumped `Version:`/`MAILYARD_VERSION`/`Stable tag`/`package.json` + lockfile root, dated the changelog and regenerated the POT (100 → 213 strings). Merged as `72ee3d7` and tagged `v1.1.0`. `release.yml` was green in ~4 min: the GitHub Release zip (410 KB) and the SVN deploy both landed. **wordpress.org serves 1.1.0** (API + `mailyard.1.1.0.zip` download verified). SVN `tags/1.1.0` has `build/admin.js` and no `.wordpress.org/`.
+- **Release order that worked:** `gh workflow disable assets.yml` → merge → `git tag v1.1.0 && git push origin v1.1.0` → after the deploy, `gh workflow enable assets.yml` (re-enabled ✓). This keeps trunk's readme from pointing `Stable tag` at a `tags/1.1.0` that doesn't exist yet. Don't use `[skip actions]` on a release commit: it would likely also skip the tag-triggered `release.yml`.
+- **zip.js fix:** the GitHub Release zip (1.0.1 too) shipped `.wordpress.org/` (banners, icons, their HTML sources) inside the plugin. It's now excluded and integrity-checked. SVN was always clean via `.distignore`.
+- **Pre-release smoke test** of the unzipped release build in Playground (WP 7.1.3, PHP 8.3, WP_DEBUG log): activation, Settings → SMTP, the legacy redirect, and an Offline-mode send through the intercept path (Cc kept) all passed with an empty `debug.log`. Real provider sends and live OAuth are still not exercised.
+- Earlier today, same session: the Abilities API + Saddle check passed (#23 filed).
+
+## Earlier session (2026-10-09) — Settings → SMTP + declutter (#20, PR #21 — merged)
 
 - **User ask:** remove the top-level menu, move the page to Settings → SMTP, clean up and declutter the admin UI. Filed as #20; PR #21 squash-merged to `main` as `d41d422` on the user's OK, **with `[skip actions]`**, so the readme did NOT sync to WordPress.org (it still shows the old readme).
 - **Menu:** `add_options_page()` at `options-general.php?page=mailyard`, labelled "SMTP" (page title "Mailyard SMTP"); screen id `settings_page_mailyard` (`Settings::SCREEN`). The top-level menu, its 5 submenu entries, the menu icon and the submenu click interceptor are gone. `Settings::url( $route )` is now the one way to link into the app. Old `admin.php?page=mailyard…` URLs 302 there with query args kept, and the `#/…` fragment survives.
@@ -88,10 +96,9 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
-- **Readme on WordPress.org:** `main`'s readme (Settings → SMTP install step, the 1.1.0 changelog) hasn't synced; #18 and #21 both skipped it. It goes out with the 1.1.0 release, or earlier by running `assets.yml` by hand (`gh workflow run assets.yml`). Do that only once you're happy for the unreleased changelog to show.
 - **#23:** add `'default' => array()` to the optional-input ability schemas. Today a plain Abilities REST call with no input 400s; MCP/Saddle are unaffected. Verified 2026-10-09: on `main` + Saddle 1.5.1 all 4 read-only tools register as `saddle/mailyard-*` and run, and live plugpress.io answers through Saddle MCP.
 - **#22:** rename the OAuth `message` return arg (e.g. `mailyard_oauth_message`) in `class-oauth.php` + `Connections.jsx`.
-- **Release 1.1.0 when ready:** set `Version:` + `MAILYARD_VERSION` + `Stable tag` to 1.1.0 (changelog already written; header still says 1.0.2), merge, then tag `v1.1.0`. That deploys the code and syncs the readme to WordPress.org. Do the live-send QA below first.
+- **Live-send QA on a real site** (now that 1.1.0 is public): update plugpress.io (it runs a pre-#17 build) and send a test through Resend; consider adding a backup connection there (it has none).
 - **Delete Pro branches on origin (blocked for me):** `git push origin --delete feat/merge-pro feat/freemius-parent feat/smtp-ux-pass feat/universal-shell`.
 - With reads unblocked: delete the now-unused `src/hooks/useLogs.js`; have `Data_Deleter`/`uninstall.php` also clear `mailyard_network` (site option), the `mailyard_alerted_*` transients and the `mailyard_weekly_summary` cron; consider folding `Conflicts` into the new `Checks`.
 - Live-test OAuth (Gmail, M365, M365 app-only, Zoho) end to end; Graph 4 MB / Gmail 5 MB attachment limits aren't chunked.
