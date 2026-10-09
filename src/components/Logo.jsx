@@ -2,7 +2,7 @@
  * The Mailyard mark — a filled disc with the send arrow knocked out of it.
  *
  * `currentColor` on purpose: the caller picks the ink (brand blue in the app
- * chrome, wp-admin grey in the admin menu, which is rendered from PHP).
+ * chrome).
  */
 export default function MailyardMark( { size = 26, className, title } ) {
 	return (

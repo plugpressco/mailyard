@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Notice, CodeBlock, toast } from '@plugpress/ui';
 import { get, post } from '@/lib/api';
 import ToggleRow from '@/components/ToggleRow';
-import { Card, PageHeader, SectionTitle, SettingsSkeleton } from '@/components/ui';
+import { Card, SectionIntro, SectionTitle, SettingsSkeleton } from '@/components/ui';
 
 /**
  * Security — optional encryption of stored credentials, and the wp-config.php
@@ -39,7 +39,7 @@ export default function SecuritySettings() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="Security" subtitle="Where your provider credentials live, and how they’re stored." />
+			<SectionIntro>Where your provider credentials live, and how they’re stored.</SectionIntro>
 
 			{ data.unreadable && (
 				<Notice tone="danger" className="mb-3">

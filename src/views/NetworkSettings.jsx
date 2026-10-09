@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@plugpress/ui';
 import { get, post } from '@/lib/api';
 import ToggleRow from '@/components/ToggleRow';
-import { Card, PageHeader, SettingsSkeleton } from '@/components/ui';
+import { Card, SectionIntro, SettingsSkeleton } from '@/components/ui';
 
 /**
  * Network (multisite main site, network admins only): set email up once here
@@ -31,7 +31,7 @@ export default function NetworkSettings() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="Network" subtitle="Set email up once on this main site and let every site of the network use it. Each site keeps its own log." />
+			<SectionIntro>Set email up once on this main site and let every site of the network use it. Each site keeps its own log.</SectionIntro>
 			<Card className="divide-y divide-ink-200 overflow-hidden">
 				<ToggleRow
 					title="Share this site’s connections with the network"

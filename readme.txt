@@ -172,7 +172,7 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 == Screenshots ==
 
 1. Setup — pick a provider, paste your key, set your sender address.
-2. Dashboard — sending health, the last 14 days of volume, recent activity.
+2. Overview — sending health, the last 14 days of volume, recent activity.
 3. Connections — add providers and drag to choose the primary and its backup.
 4. Deliverability — every sending domain graded A–F, with the exact DNS fix for anything that fails.
 5. Email Logs — every send, with status and the error if it failed.
@@ -199,12 +199,12 @@ Yes. Every feature you can see is yours — failover, routing, bounce tracking, 
 * Add: Optional encryption of stored credentials, with a clear warning if the site's security keys change.
 * Add: Multisite shared settings — set email up once on the main site and let every site use it; the sender and delivery options are each optional to share. Logs always stay per site.
 * Add: Settings backup — export and import settings and connections as one file; empty the log on its own.
-* Add: Dashboard panel with the week's most common failure reasons, in plain words.
-* Add: Setup checks on the Dashboard — another plugin replacing wp_mail(), a From address on another domain, and Contact Form 7 / WPForms / Gravity Forms set to send "from" the visitor.
+* Add: Overview panel with the week's most common failure reasons, in plain words.
+* Add: Setup checks on the Overview — another plugin replacing wp_mail(), a From address on another domain, and Contact Form 7 / WPForms / Gravity Forms set to send "from" the visitor.
 * Update: Any logged email can be resent, not only failed ones.
 * Add: Send test names the provider that delivered it, and says so when a backup had to take over.
 * Update: Mailyard now lives under Settings → SMTP instead of its own top-level menu, with one slim top bar (Overview, Connections, Email log, Deliverability, Settings) and settings sections as tabs. Old links and bookmarks redirect.
-* Update: The "email failed to send" notice shows on the Dashboard and Plugins screens only, with a single Dismiss link.
+* Update: The "email failed to send" notice shows on the WordPress Dashboard and Plugins screens only, with a single Dismiss link.
 * Update: Connections no longer have a Marketing/Transactional purpose; every enabled connection carries all mail. A connection that was set to Marketing only is switched off on update (its settings are kept).
 * Update: An email to several recipients goes out as one message, as WordPress sends it, instead of one copy per address.
 * Fix: Cc and Bcc addresses set in email headers were dropped by every provider.

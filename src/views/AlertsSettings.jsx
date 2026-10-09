@@ -3,7 +3,7 @@ import { toast } from '@plugpress/ui';
 import useSettings from '@/hooks/useSettings';
 import { post } from '@/lib/api';
 import ToggleRow from '@/components/ToggleRow';
-import { Card, Input, Button, PageHeader, SettingsSkeleton } from '@/components/ui';
+import { Card, Input, Button, SectionIntro, SettingsSkeleton } from '@/components/ui';
 
 /**
  * Alerts — find out email broke before a customer does. Failure and
@@ -60,7 +60,7 @@ export default function AlertsSettings() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="Alerts" subtitle="Hear about failures from Mailyard, not from a customer. At most one alert per hour, however many emails fail." />
+			<SectionIntro>Hear about failures from Mailyard, not from a customer. At most one alert per hour, however many emails fail.</SectionIntro>
 
 			<Card className="mb-3 divide-y divide-ink-200 overflow-hidden">
 				<ToggleRow

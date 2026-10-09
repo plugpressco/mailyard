@@ -198,7 +198,7 @@ export default function Dashboard( { onNavigate } ) {
 	return (
 		<div>
 			<PageHeader
-				title="Dashboard"
+				title="Overview"
 				subtitle="Your sending health, volume, and recent activity at a glance."
 				action={
 					<div className="flex items-center gap-2.5">

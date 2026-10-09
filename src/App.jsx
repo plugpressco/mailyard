@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { AppShell, Toaster } from '@plugpress/ui';
-import Sidebar from './components/Sidebar';
-import { GridIcon, RouteIcon, ShieldIcon, ListIcon, GearIcon } from './components/Icons';
+import Nav from './components/Nav';
 import {
 	DashboardSkeleton,
 	ConnectionsSkeleton,
@@ -15,24 +14,14 @@ const Deliverability = lazy( () => import( './views/Deliverability' ) );
 const Logs = lazy( () => import( './views/Logs' ) );
 const Settings = lazy( () => import( './views/Settings' ) );
 
-// The whole navigation: one list of pages, Settings pinned to the footer.
-// Keys are the hash routes; nested routes (settings/connect-ai) belong to the
-// first segment.
+// The whole navigation: one row of pages in the top bar. Routes are the hash
+// routes; nested routes (settings/connect-ai) belong to the first segment.
 const NAV = [
-	{
-		id: 'main',
-		items: [
-			{ id: 'dashboard', label: 'Dashboard', icon: GridIcon, route: 'dashboard' },
-			{ id: 'connections', label: 'Connections', icon: RouteIcon, route: 'connections' },
-			{ id: 'logs', label: 'Email log', icon: ListIcon, route: 'logs' },
-			{ id: 'deliverability', label: 'Deliverability', icon: ShieldIcon, route: 'deliverability' },
-		],
-	},
-	{
-		id: 'system',
-		footer: true,
-		items: [ { id: 'settings', label: 'Settings', icon: GearIcon, route: 'settings' } ],
-	},
+	{ label: 'Overview', route: 'dashboard' },
+	{ label: 'Connections', route: 'connections' },
+	{ label: 'Email log', route: 'logs' },
+	{ label: 'Deliverability', route: 'deliverability' },
+	{ label: 'Settings', route: 'settings' },
 ];
 
 const SKELETONS = {
@@ -71,33 +60,20 @@ export default function App() {
 		return () => window.removeEventListener( 'hashchange', handler );
 	}, [] );
 
-	// Mirror the active route onto the WP admin submenu highlight for
-	// programmatic navigation (menu CLICKS are handled by the PHP-side
-	// interceptor). The submenu mirrors NAV, one entry per page.
-	useEffect( () => {
-		const seg = route.split( '/' )[ 0 ] || 'dashboard';
-		const items = document.querySelectorAll( '#adminmenu .wp-submenu li' );
-		items.forEach( ( li ) => {
-			const href = li.querySelector( 'a' )?.getAttribute( 'href' ) || '';
-			const hit = href.includes( 'page=mailyard#/' + seg ) || ( 'dashboard' === seg && /page=mailyard$/.test( href ) );
-			li.classList.toggle( 'current', hit );
-		} );
-	}, [ route ] );
-
 	const navigate = useCallback( ( id ) => {
 		window.location.hash = '#/' + id;
 	}, [] );
 
 	const Skeleton = SKELETONS[ route.split( '/' )[ 0 ] ] || DashboardSkeleton;
 
-	// AppShell owns the sidebar frame (sticky rail, <782px icon-rail collapse)
-	// and pads the content column; the outlet only centers itself.
+	// AppShell owns the top bar (sticky under the admin bar) and pads the
+	// content column; the outlet only centers itself.
 	return (
 		<>
 			<Toaster />
 			<AppShell
-				variant="sidebar"
-				nav={ <Sidebar groups={ NAV } route={ route } onNavigate={ navigate } /> }
+				variant="topbar"
+				nav={ <Nav items={ NAV } route={ route } onNavigate={ navigate } /> }
 			>
 				<div className="mx-auto max-w-[960px]">
 					<Suspense fallback={ <Skeleton /> }>
