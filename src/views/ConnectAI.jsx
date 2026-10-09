@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Badge, GuideDrawer, CodeBlock, LiveIndicator, Notice, toast } from '@plugpress/ui';
 import { get, post } from '@/lib/api';
-import { Card, Button, Toggle, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
+import { Card, Button, Toggle, SectionTitle, SectionIntro, SettingsSkeleton } from '@/components/ui';
 import { AlertIcon, BoltIcon } from '@/components/Icons';
 
 const ACCESS_BADGE = {
@@ -165,9 +165,7 @@ export default function ConnectAI() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader
-				title="Connect AI"
-				subtitle="Let an assistant like Claude or Codex work on your email — and decide exactly what it may touch."
+			<SectionIntro
 				action={
 					<span
 						className={ `inline-flex items-center rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${ statusPill.cls }` }
@@ -175,7 +173,9 @@ export default function ConnectAI() {
 						{ statusPill.label }
 					</span>
 				}
-			/>
+			>
+				Let an assistant like Claude or Codex work on your email — and decide exactly what it may touch.
+			</SectionIntro>
 
 			<AiSection
 				title="Delivery tools"

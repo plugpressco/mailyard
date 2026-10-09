@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { Dialog, DangerZone as PPDangerZone, Notice, toast } from '@plugpress/ui';
+import { Dialog, DangerZone as PPDangerZone, Notice, Tabs, toast } from '@plugpress/ui';
 import { cn } from '@/lib/utils';
 import useSettings from '@/hooks/useSettings';
 import { get, post } from '@/lib/api';
-import { Card, Input, Select, Button, SectionTitle, PageHeader, SettingsSkeleton } from '@/components/ui';
+import { Card, Input, Select, Button, SectionTitle, SectionIntro, PageHeader, SettingsSkeleton } from '@/components/ui';
 import ToggleRow from '@/components/ToggleRow';
 
 const ConnectAI = lazy( () => import( './ConnectAI' ) );
@@ -199,7 +199,7 @@ function DataDanger() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="Data & danger" subtitle="Back up and restore your setup, clear the log, or start over." />
+			<SectionIntro>Back up and restore your setup, clear the log, or start over.</SectionIntro>
 			<BackupCard />
 			<PPDangerZone
 				eyebrow="Danger zone"
@@ -290,7 +290,7 @@ function DeliverySettings( { network } ) {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="Delivery" subtitle="How WordPress email goes out. Changes save automatically." />
+			<SectionIntro>How WordPress email goes out. Changes save automatically.</SectionIntro>
 
 			{ managed && (
 				<Notice tone="info" className="mb-3">
@@ -427,7 +427,7 @@ function WordPressEmails() {
 
 	return (
 		<div className="max-w-[840px]">
-			<PageHeader title="WordPress emails" subtitle="Switch off the notifications WordPress sends by itself. Password reset emails always go out, so nobody gets locked out." />
+			<SectionIntro>Switch off the notifications WordPress sends by itself. Password reset emails always go out, so nobody gets locked out.</SectionIntro>
 			{ WP_EMAIL_GROUPS.map( ( group ) => (
 				<Card key={ group.label } className="mb-3 overflow-hidden">
 					<div className="px-5 pt-4 pb-1">
@@ -450,26 +450,19 @@ function WordPressEmails() {
 	);
 }
 
-/** Left-nav group order + labels. */
-const SECTION_GROUPS = [
-	{ id: 'configure', label: 'Configure' },
-	{ id: 'connect', label: 'Connect' },
-	{ id: 'data', label: 'Data' },
-];
-
-/** Every settings section, in rail order. */
+/** Every settings section, in tab order. */
 const SECTIONS = [
-	{ id: 'delivery', label: 'Delivery', group: 'configure', Component: DeliverySettings },
-	{ id: 'alerts', label: 'Alerts', group: 'configure', Component: AlertsSettings },
-	{ id: 'wordpress-emails', label: 'WordPress emails', group: 'configure', Component: WordPressEmails },
-	{ id: 'connect-ai', label: 'Connect AI', group: 'connect', Component: ConnectAI },
-	{ id: 'network', label: 'Network', group: 'connect', Component: NetworkSettings, when: ( n ) => !! n?.canManage },
-	{ id: 'security', label: 'Security', group: 'data', Component: SecuritySettings },
-	{ id: 'data', label: 'Data & danger', group: 'data', Component: DataDanger },
+	{ id: 'delivery', label: 'Delivery', Component: DeliverySettings },
+	{ id: 'alerts', label: 'Alerts', Component: AlertsSettings },
+	{ id: 'wordpress-emails', label: 'WordPress emails', Component: WordPressEmails },
+	{ id: 'connect-ai', label: 'Connect AI', Component: ConnectAI },
+	{ id: 'network', label: 'Network', Component: NetworkSettings, when: ( n ) => !! n?.canManage },
+	{ id: 'security', label: 'Security', Component: SecuritySettings },
+	{ id: 'data', label: 'Data', Component: DataDanger },
 ];
 
 /**
- * Settings — ONE page, ONE left nav, grouped sections.
+ * Settings — ONE header, ONE tab row, one section at a time.
  *
  * Route space: `#/settings` = Delivery, `#/settings/<id>` = that section
  * (deeper segments belong to the section). Unknown ids redirect to Delivery.
@@ -501,49 +494,25 @@ export default function Settings( { route = 'settings', navigate } ) {
 	const Section = ( active || SECTIONS[ 0 ] ).Component;
 
 	return (
-		<div className="flex gap-8">
-			{ /* Section rail — grouped, same idiom as the app sidebar. */ }
-			<aside className="w-[200px] shrink-0">
-				<nav aria-label="Settings sections" className="sticky top-16 flex flex-col gap-0.5">
-					{ SECTION_GROUPS.map( ( group ) => {
-						const items = sections.filter( ( s ) => s.group === group.id );
-						if ( ! items.length ) {
-							return null;
-						}
-						return (
-							<div key={ group.id } className="mb-3 flex flex-col gap-0.5">
-								<div className="px-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-400">
-									{ group.label }
-								</div>
-								{ items.map( ( s ) => {
-									const isActive = active ? s.id === active.id : 'delivery' === s.id;
-									return (
-										<button
-											key={ s.id }
-											onClick={ () => go( s.id ) }
-											aria-current={ isActive ? 'page' : undefined }
-											className={ cn(
-												'cursor-pointer rounded-lg border-none bg-transparent px-3 py-2 text-left text-[13px] font-medium transition-colors',
-												isActive
-													? 'bg-surface-alt font-semibold text-ink-900'
-													: 'text-ink-500 hover:bg-ink-100 hover:text-ink-900'
-											) }
-										>
-											{ s.label }
-										</button>
-									);
-								} ) }
-							</div>
-						);
-					} ) }
-				</nav>
-			</aside>
-
-			<div className="min-w-0 flex-1">
-				<Suspense fallback={ <SettingsSkeleton /> }>
-					<Section route={ route } navigate={ navigate } network={ network } />
-				</Suspense>
-			</div>
+		<div className="max-w-[840px]">
+			<PageHeader
+				title="Settings"
+				tabs={
+					// Narrow screens scroll the row sideways (scrollbar hidden,
+					// like the top bar) instead of wrapping two-word labels.
+					<div className="overflow-x-auto [scrollbar-width:none]">
+						<Tabs
+							aria-label="Settings sections"
+							items={ sections.map( ( s ) => ( { value: s.id, label: <span className="whitespace-nowrap">{ s.label }</span> } ) ) }
+							value={ active ? active.id : 'delivery' }
+							onChange={ go }
+						/>
+					</div>
+				}
+			/>
+			<Suspense fallback={ <SettingsSkeleton /> }>
+				<Section route={ route } navigate={ navigate } network={ network } />
+			</Suspense>
 		</div>
 	);
 }

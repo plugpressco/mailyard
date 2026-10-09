@@ -42,8 +42,11 @@
   --my-r-lg: var(--pp-r-lg);
 }
 
+/* Default border color for Tailwind's bare `border` utilities. Zero
+ * specificity (:where) so any library component's own border color wins —
+ * an id selector here repainted the top bar's transparent/active underlines. */
 @layer base {
-  #mailyard-admin * {
+  :where(#mailyard-admin) * {
     border-color: var(--pp-border);
   }
 }
@@ -58,8 +61,9 @@
  * wp-admin blue.
  */
 
-/* Remove WP admin left padding on our page */
-.toplevel_page_mailyard #wpcontent {
+/* Remove WP admin left padding on our page (Settings → SMTP) so the top
+ * bar runs edge to edge. */
+.settings_page_mailyard #wpcontent {
   padding-left: 0;
 }
 
@@ -74,17 +78,6 @@
 
 .smtp-spin {
   animation: smtp-spin 1s linear infinite;
-}
-
-/*
- * Settings was moved out of the nav's footer cluster into the main menu
- * (see coreModule.jsx). Re-create the divider that the footer border used to
- * give it, above the last nav group (Settings sorts last at order 90).
- */
-#mailyard-admin .pp-nav__group:last-of-type {
-  margin-top: var(--pp-space-3);
-  border-top: 1px solid var(--pp-border);
-  padding-top: var(--pp-space-3);
 }
 
 /* wp-admin's `.wp-core-ui select { max-width: 25rem }` clamps selects to 400px,

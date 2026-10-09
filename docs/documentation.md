@@ -33,7 +33,7 @@ Amazon's Simple Email Service. Very low cost at volume ($0.10 per 1,000 emails).
 1. In AWS Console → SES → Verified identities, verify your sending domain.
 2. Create an IAM user with `ses:SendRawEmail` permission.
 3. Generate an access key and secret for that user.
-4. In Mailyard → Connections → Add → Amazon SES, paste the key, secret, and region.
+4. In Settings → SMTP → Connections → Add → Amazon SES, paste the key, secret, and region.
 
 **Required fields:** Access Key ID, Secret Access Key, AWS Region (e.g. `us-east-1`).
 
@@ -48,7 +48,7 @@ Premium transactional email. Known for the fastest delivery and best inbox place
 **Setup:**
 1. In Postmark → Sender Signatures, add and verify your sending domain.
 2. Create a Server and copy its Server API Token.
-3. In Mailyard → Connections → Add → Postmark, paste the token.
+3. In Settings → SMTP → Connections → Add → Postmark, paste the token.
 
 **Required fields:** Server API Token.
 
@@ -65,7 +65,7 @@ Modern email API with a generous free tier (3,000 emails/month free). Simple RES
 **Setup:**
 1. In Resend → Domains, add and verify your sending domain.
 2. In Resend → API Keys, create a key.
-3. In Mailyard → Connections → Add → Resend, paste the key.
+3. In Settings → SMTP → Connections → Add → Resend, paste the key.
 
 **Required fields:** API Key.
 
@@ -78,7 +78,7 @@ Free tier includes 300 emails per day with no monthly cap on contacts.
 **Setup:**
 1. In Brevo → Senders & Domains, authenticate your domain (adds DKIM and SPF records).
 2. In Brevo → SMTP & API → API Keys, create a key.
-3. In Mailyard → Connections → Add → Brevo, paste the key.
+3. In Settings → SMTP → Connections → Add → Brevo, paste the key.
 
 **Required fields:** API Key.
 
@@ -90,7 +90,7 @@ Use any SMTP server: Gmail app passwords, Microsoft 365, Mailgun SMTP, your own 
 
 **Setup:**
 1. Gather your SMTP host, port, encryption type, and credentials from your provider.
-2. In Mailyard → Connections → Add → Custom SMTP, fill in the fields.
+2. In Settings → SMTP → Connections → Add → Custom SMTP, fill in the fields.
 
 **Required fields:** SMTP Host, Port (default 587).
 
@@ -113,7 +113,7 @@ Uses WordPress's own `wp_mail()` without modification — whatever your hosting 
 
 ### Priority order
 
-Connections are attempted in priority order (1 = primary, 2 = first backup, etc.). Drag and drop in Mailyard → Connections to reorder them.
+Connections are attempted in priority order (1 = primary, 2 = first backup, etc.). Drag and drop in Settings → SMTP → Connections to reorder them.
 
 The **primary** connection handles every email under normal conditions. If it returns an error, Mailyard immediately tries the next enabled connection — still inside the same `wp_mail()` call.
 
@@ -144,7 +144,7 @@ The routing engine filters connections by purpose before selecting the chain.
 
 ## Email logging
 
-When logging is enabled (Settings → Email logging), every outgoing email is recorded to a custom database table (`wp_mailyard_logs`).
+When logging is enabled (Settings → SMTP → Settings → Delivery → Email logging), every outgoing email is recorded to a custom database table (`wp_mailyard_logs`).
 
 ### What is logged
 
@@ -161,7 +161,7 @@ When logging is enabled (Settings → Email logging), every outgoing email is re
 
 ### Viewing logs
 
-Go to Mailyard → Logs. You can:
+Go to Settings → SMTP → Email log. You can:
 - Filter by status (All / Sent / Failed)
 - Search by recipient address or subject
 - Page through results (20 per page)
@@ -170,13 +170,13 @@ Go to Mailyard → Logs. You can:
 
 Logs older than 30 days are deleted automatically via a daily WP-Cron job (`mailyard_daily_cleanup`). This keeps the database from growing unbounded.
 
-To disable logging entirely, go to Settings → Email logging and toggle it off. Existing logs are kept until they age out or you uninstall the plugin.
+To disable logging entirely, go to Settings → SMTP → Settings → Delivery and switch Email logging off. Existing logs are kept until they age out or you uninstall the plugin.
 
 ---
 
 ## Deliverability checker
 
-Mailyard → Deliverability scans your sending domain's DNS records and scores your authentication setup from 0–100.
+Settings → SMTP → Deliverability scans your sending domain's DNS records and scores your authentication setup from 0–100.
 
 ### What it checks
 
@@ -249,7 +249,7 @@ Click **Send test** to send a real email through your live routing chain. Leave 
 
 ## Connect AI (Abilities API / MCP)
 
-Mailyard registers its delivery tools on the **WordPress Abilities API** (WordPress 7.0+), so an AI assistant can diagnose email problems for you. Control everything in **Settings → Connect AI**.
+Mailyard registers its delivery tools on the **WordPress Abilities API** (WordPress 7.0+), so an AI assistant can diagnose email problems for you. Control everything in **Settings → SMTP → Settings → Connect AI**.
 
 ### The tools
 
@@ -265,14 +265,14 @@ Every tool requires the `manage_options` capability. Credentials (`config`), and
 
 ### Permissions
 
-**Settings → Connect AI** has a master switch ("AI access") and a switch per tool. Turning the master off unregisters every Mailyard ability immediately. The four read-only tools are on by default; `mailyard/send-test-email` is OFF by default because it delivers a real email — turn it on deliberately.
+**Settings → SMTP → Settings → Connect AI** has a master switch ("AI access") and a switch per tool. Turning the master off unregisters every Mailyard ability immediately. The four read-only tools are on by default; `mailyard/send-test-email` is OFF by default because it delivers a real email — turn it on deliberately.
 
 ### Connecting a client
 
 Mailyard exposes abilities but ships **no MCP server** — install a bridge, e.g. the free [WordPress MCP Adapter](https://github.com/wordpress/mcp-adapter). Then:
 
 1. Create an Application Password (**Users → Profile → Application Passwords**).
-2. Copy the endpoint from Settings → Connect AI (the "How to connect" guide has copy buttons).
+2. Copy the endpoint from Settings → SMTP → Settings → Connect AI (the "How to connect" guide has copy buttons).
 3. Add it to your client, e.g. Claude Code:
 
 ```bash

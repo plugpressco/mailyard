@@ -191,8 +191,19 @@ export function SegmentedControl( { options, value, onChange, label, hint, requi
 	);
 }
 
-export function PageHeader( { title, subtitle, action, className } ) {
-	return <PPPageHeader title={ title } description={ subtitle } actions={ action } className={ className } />;
+export function PageHeader( { title, subtitle, action, tabs, className } ) {
+	return <PPPageHeader title={ title } description={ subtitle } actions={ action } tabs={ tabs } className={ className } />;
+}
+
+// A Settings section's opening line, under the Settings tabs: what the section
+// does, plus an optional status on the right. The tab already names it.
+export function SectionIntro( { children, action } ) {
+	return (
+		<div className="mb-4 flex items-start justify-between gap-4">
+			<p className="m-0 text-[13px] leading-relaxed text-ink-500">{ children }</p>
+			{ action && <div className="shrink-0">{ action }</div> }
+		</div>
+	);
 }
 
 export function TagInput( { label, hint, required, values = [], onChange, placeholder, id } ) {

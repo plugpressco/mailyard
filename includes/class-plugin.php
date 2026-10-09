@@ -130,7 +130,7 @@ class Plugin {
 	}
 
 	public function plugin_action_links( array $links ): array {
-		$url   = admin_url( 'admin.php?page=mailyard' );
+		$url   = Settings::url();
 		$label = __( 'Settings', 'mailyard' );
 		array_unshift( $links, '<a href="' . esc_url( $url ) . '">' . $label . '</a>' );
 		return $links;

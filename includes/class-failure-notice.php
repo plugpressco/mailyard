@@ -4,8 +4,8 @@ namespace Mailyard;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Surfaces email send failures as a dismissible admin notice with a link to the
- * log. Records the latest failure (fed by the `mailyard_send_failed` action) and
+ * Surfaces email send failures as a dismissible admin notice (Dashboard and
+ * Plugins screens) with a link to the log. Records the latest failure (fed by the `mailyard_send_failed` action) and
  * auto-clears it when a later send succeeds or the connection config changes, so
  * a fixed setup dismisses the warning on its own — it isn't nagware.
  */
@@ -82,9 +82,10 @@ class Failure_Notice {
 			return;
 		}
 
-		// The log is already on the Mailyard admin page — don't double up there.
+		// Only where an admin lands — the Dashboard and Plugins screens — not
+		// on every admin page. Mailyard's own page shows it in its overview.
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( $screen && false !== strpos( (string) $screen->id, 'page_mailyard' ) ) {
+		if ( ! $screen || ! in_array( $screen->id, array( 'dashboard', 'plugins' ), true ) ) {
 			return;
 		}
 
@@ -98,7 +99,7 @@ class Failure_Notice {
 		$title    = isset( $failure['title'] ) ? $failure['title'] : __( 'Email could not be sent', 'mailyard' );
 		$guidance = isset( $failure['guidance'] ) ? $failure['guidance'] : '';
 
-		$log_url = admin_url( 'admin.php?page=mailyard#/logs?status=failed' );
+		$log_url = Settings::url( 'logs?status=failed' );
 		$dismiss_url = wp_nonce_url(
 			add_query_arg( 'mailyard_dismiss_failure', '1' ),
 			'mailyard_dismiss_failure'
@@ -109,11 +110,12 @@ class Failure_Notice {
 			? sprintf( _n( 'Mailyard: %d email failed to send', 'Mailyard: %d emails failed to send recently', $count, 'mailyard' ), $count )
 			: __( 'Mailyard: an email failed to send', 'mailyard' );
 
+		// One dismiss path: the link (per user, until the next failure). No
+		// `is-dismissible` × — it only hides the notice until the next page load.
 		printf(
-			'<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> — %s %s</p><p><a href="%s" class="button button-secondary">%s</a> <a href="%s" style="margin-left:8px">%s</a></p></div>',
+			'<div class="notice notice-warning"><p><strong>%s</strong> — %s</p><p><a href="%s" class="button button-secondary">%s</a> <a href="%s" style="margin-left:8px">%s</a></p></div>',
 			esc_html( $heading . ( $title ? ': ' . $title : '' ) ),
 			esc_html( $guidance ),
-			'',
 			esc_url( $log_url ),
 			esc_html__( 'View email log', 'mailyard' ),
 			esc_url( $dismiss_url ),

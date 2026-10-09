@@ -3,7 +3,17 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-10-06) — simple SMTP: Pro removed, Meow Mailer parity (#17, PR #18)
+## Last session (2026-10-09) — Settings → SMTP + declutter (#20, PR #21 — awaiting your merge)
+
+- **User ask:** remove the top-level menu, move the page to Settings → SMTP, clean up and declutter the admin UI. Filed as #20; PR #21 is ready, **CI green, NOT merged** (two hard stops below).
+- **Menu:** `add_options_page()` at `options-general.php?page=mailyard`, labelled "SMTP" (page title "Mailyard SMTP"); screen id `settings_page_mailyard` (`Settings::SCREEN`). The top-level menu, its 5 submenu entries, the menu icon and the submenu click interceptor are gone. `Settings::url( $route )` is now the one way to link into the app. Old `admin.php?page=mailyard…` URLs 302 there with query args kept, and the `#/…` fragment survives.
+- **UI:** the app sidebar became the design system's **topbar** shell (Overview · Connections · Email log · Deliverability · Settings · Help, no icons). Settings' grouped rail became one header + `Tabs` row, with a `SectionIntro` line per section. Dashboard is labelled **Overview**; "Data & danger" is now "Data".
+- **Notices:** the send-failure notice shows on the WP Dashboard + Plugins screens only, with one dismiss path (the non-persistent × is gone).
+- **CSS gotcha fixed:** `#mailyard-admin * { border-color }` had id specificity and silently overrode every authored `border-*`/`divide-*` colour plus library component borders. It's now `:where(#mailyard-admin) *`, so authored colours (e.g. the blue selected preset chip) show for the first time.
+- **QA:** WP Playground via `npx @wp-playground/cli` (needs **node@22**: `PATH=/opt/homebrew/opt/node@22/bin:$PATH`; Node 26 has no fs-ext prebuild) with a scratchpad auto-login mu-plugin. All views + tabs, the legacy redirect, the OAuth-style return, the action link, notice screens + Dismiss, 600/380px widths. The local Studio site (`plugpess.wp.local`) wasn't running. Note: on that site use `studio wp …`, not bare `wp`.
+- **Found + filed:** #22, the OAuth error reason never reaches the toast (core's canonical-URL script strips the `message` query arg). This was already happening before #20.
+
+## Earlier session (2026-10-06) — simple SMTP: Pro removed, Meow Mailer parity (#17, PR #18)
 
 - **Direction change (user):** Mailyard is a standalone, simple SMTP plugin — no Mailyard Pro, no marketing layer — at feature parity with [Meow Mailer](https://wordpress.org/plugins/meow-mailer/), keeping Mailyard's own edges (failover chain, sender routing, bounce webhooks, deliverability checker, MCP tools). Scope choice "option b": drop Pro hooks + Marketing purpose, keep everything SMTP.
 - **All 11 checklist items of #17 landed via PR #18, squash-merged to `main` as `c0d9d22` with `[skip actions]`, so WordPress.org was NOT synced and still shows 1.0.1: Pro shell/filters + Marketing purpose removed; send pipeline rewritten (`Message` parser — **Cc/Bcc in headers were silently dropped for every provider**, now fixed; one message to all recipients); Offline mode; Background sending; PHP Mail as a real connection; log filters/paging/CSV/retention/top errors; alerts (email unrouted, Slack/Discord/Teams/JSON webhook, weekly summary); WordPress email switches; Return path; importer (WP Mail SMTP/Easy WP SMTP/FluentSMTP/Post SMTP incl. their encryption); wp-config constants + sodium encryption + settings backup; 6 API providers + 4 OAuth (Gmail, M365, M365 app-only, Zoho); multisite shared settings; dashboard setup checks.
@@ -78,6 +88,9 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
+- **Merge PR #21 (needs your OK):** it touches `readme.txt`, so a plain merge to `main` fires `assets.yml` and syncs the readme (unreleased 1.1.0 changelog) to WordPress.org right away. Squash with `[skip actions]` in the title, as #18 did, unless you want it live. It's also ~520 changed lines. After merge: remove the `in-progress` label from #20 and move the card to Done.
+- **#23:** add `'default' => array()` to the optional-input ability schemas. Today a plain Abilities REST call with no input 400s; MCP/Saddle are unaffected. Verified 2026-10-09: on `main` + Saddle 1.5.1 all 4 read-only tools register as `saddle/mailyard-*` and run, and live plugpress.io answers through Saddle MCP.
+- **#22:** rename the OAuth `message` return arg (e.g. `mailyard_oauth_message`) in `class-oauth.php` + `Connections.jsx`.
 - **Release 1.1.0 when ready:** set `Version:` + `MAILYARD_VERSION` + `Stable tag` to 1.1.0 (changelog already written; header still says 1.0.2), merge, then tag `v1.1.0`. That deploys the code and syncs the readme to WordPress.org. Do the live-send QA below first.
 - **Delete Pro branches on origin (blocked for me):** `git push origin --delete feat/merge-pro feat/freemius-parent feat/smtp-ux-pass feat/universal-shell`.
 - With reads unblocked: delete the now-unused `src/hooks/useLogs.js`; have `Data_Deleter`/`uninstall.php` also clear `mailyard_network` (site option), the `mailyard_alerted_*` transients and the `mailyard_weekly_summary` cron; consider folding `Conflicts` into the new `Checks`.
