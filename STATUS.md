@@ -3,9 +3,9 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-10-09) — Settings → SMTP + declutter (#20, PR #21 — awaiting your merge)
+## Last session (2026-10-09) — Settings → SMTP + declutter (#20, PR #21 — merged)
 
-- **User ask:** remove the top-level menu, move the page to Settings → SMTP, clean up and declutter the admin UI. Filed as #20; PR #21 is ready, **CI green, NOT merged** (two hard stops below).
+- **User ask:** remove the top-level menu, move the page to Settings → SMTP, clean up and declutter the admin UI. Filed as #20; PR #21 squash-merged to `main` as `d41d422` on the user's OK, **with `[skip actions]`**, so the readme did NOT sync to WordPress.org (it still shows the old readme).
 - **Menu:** `add_options_page()` at `options-general.php?page=mailyard`, labelled "SMTP" (page title "Mailyard SMTP"); screen id `settings_page_mailyard` (`Settings::SCREEN`). The top-level menu, its 5 submenu entries, the menu icon and the submenu click interceptor are gone. `Settings::url( $route )` is now the one way to link into the app. Old `admin.php?page=mailyard…` URLs 302 there with query args kept, and the `#/…` fragment survives.
 - **UI:** the app sidebar became the design system's **topbar** shell (Overview · Connections · Email log · Deliverability · Settings · Help, no icons). Settings' grouped rail became one header + `Tabs` row, with a `SectionIntro` line per section. Dashboard is labelled **Overview**; "Data & danger" is now "Data".
 - **Notices:** the send-failure notice shows on the WP Dashboard + Plugins screens only, with one dismiss path (the non-persistent × is gone).
@@ -88,7 +88,7 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
-- **Merge PR #21 (needs your OK):** it touches `readme.txt`, so a plain merge to `main` fires `assets.yml` and syncs the readme (unreleased 1.1.0 changelog) to WordPress.org right away. Squash with `[skip actions]` in the title, as #18 did, unless you want it live. It's also ~520 changed lines. After merge: remove the `in-progress` label from #20 and move the card to Done.
+- **Readme on WordPress.org:** `main`'s readme (Settings → SMTP install step, the 1.1.0 changelog) hasn't synced; #18 and #21 both skipped it. It goes out with the 1.1.0 release, or earlier by running `assets.yml` by hand (`gh workflow run assets.yml`). Do that only once you're happy for the unreleased changelog to show.
 - **#23:** add `'default' => array()` to the optional-input ability schemas. Today a plain Abilities REST call with no input 400s; MCP/Saddle are unaffected. Verified 2026-10-09: on `main` + Saddle 1.5.1 all 4 read-only tools register as `saddle/mailyard-*` and run, and live plugpress.io answers through Saddle MCP.
 - **#22:** rename the OAuth `message` return arg (e.g. `mailyard_oauth_message`) in `class-oauth.php` + `Connections.jsx`.
 - **Release 1.1.0 when ready:** set `Version:` + `MAILYARD_VERSION` + `Stable tag` to 1.1.0 (changelog already written; header still says 1.0.2), merge, then tag `v1.1.0`. That deploys the code and syncs the readme to WordPress.org. Do the live-send QA below first.
