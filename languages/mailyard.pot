@@ -2,34 +2,32 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Mailyard 1.0.0\n"
+"Project-Id-Version: Mailyard 1.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/mailyard\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-13T09:19:48+00:00\n"
+"POT-Creation-Date: 2026-10-09T14:18:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: mailyard\n"
 
 #. Plugin Name of the plugin
 #: mailyard.php
-#: includes/class-abilities.php:154
-#: includes/class-settings.php:42
-#: includes/class-settings.php:43
+#: includes/class-abilities.php:182
 msgid "Mailyard"
 msgstr ""
 
 #. Plugin URI of the plugin
 #: mailyard.php
-msgid "https://mailyard.co"
+msgid "https://plugpress.co/mailyard"
 msgstr ""
 
 #. Description of the plugin
 #: mailyard.php
-msgid "Reliable email delivery for WordPress. Route emails through Amazon SES, Postmark, Resend, or any SMTP server with smart failover."
+msgid "WP SMTP plugin with automatic email failover. Send via Amazon SES, Postmark, Resend, Brevo or any SMTP — with an email log and deliverability fixes."
 msgstr ""
 
 #. Author of the plugin
@@ -42,131 +40,257 @@ msgstr ""
 msgid "https://plugpress.co"
 msgstr ""
 
-#: includes/class-abilities.php:91
-#: includes/class-abilities.php:180
+#: includes/class-abilities.php:83
+#: includes/class-abilities.php:208
 msgid "Delivery status"
 msgstr ""
 
-#: includes/class-abilities.php:92
+#: includes/class-abilities.php:84
 msgid "See the active provider, the fallback chain, and how many emails sent or failed this week."
 msgstr ""
 
-#: includes/class-abilities.php:97
-#: includes/class-abilities.php:207
+#: includes/class-abilities.php:89
+#: includes/class-abilities.php:235
 msgid "Check deliverability"
 msgstr ""
 
-#: includes/class-abilities.php:98
+#: includes/class-abilities.php:90
 msgid "Score SPF, DKIM, DMARC, and MX for your sending domains — with the exact DNS records to add."
 msgstr ""
 
-#: includes/class-abilities.php:103
-#: includes/class-abilities.php:235
+#: includes/class-abilities.php:95
+#: includes/class-abilities.php:263
 msgid "Read the email log"
 msgstr ""
 
-#: includes/class-abilities.php:104
+#: includes/class-abilities.php:96
 msgid "List recent emails with their status and error — the fastest way to find what failed."
 msgstr ""
 
-#: includes/class-abilities.php:109
-#: includes/class-abilities.php:273
+#: includes/class-abilities.php:101
+#: includes/class-abilities.php:301
 msgid "Open one logged email"
 msgstr ""
 
-#: includes/class-abilities.php:110
+#: includes/class-abilities.php:102
 msgid "Read a single logged email in full, including its body, to debug why it failed."
 msgstr ""
 
-#: includes/class-abilities.php:112
+#: includes/class-abilities.php:104
 msgid "Returns the message content of the email you ask for."
 msgstr ""
 
-#: includes/class-abilities.php:116
-#: includes/class-abilities.php:296
+#: includes/class-abilities.php:108
+#: includes/class-abilities.php:324
 msgid "Send a test email"
 msgstr ""
 
-#: includes/class-abilities.php:117
+#: includes/class-abilities.php:109
 msgid "Send a test through the live provider chain to confirm delivery works."
 msgstr ""
 
-#: includes/class-abilities.php:119
+#: includes/class-abilities.php:111
 msgid "Sends one real email to the address the assistant specifies."
 msgstr ""
 
-#: includes/class-abilities.php:155
-msgid "Email delivery, broadcast campaigns, and contacts."
+#: includes/class-abilities.php:183
+msgid "Email delivery: providers, the email log, and deliverability."
 msgstr ""
 
-#: includes/class-abilities.php:181
+#: includes/class-abilities.php:209
 msgid "Report how WordPress email is being delivered: the active provider, the ordered fallback chain (with each connection's last test result), overall health, and the count of emails sent and failed in the last 7 days. Start here when email is not arriving."
 msgstr ""
 
-#: includes/class-abilities.php:208
+#: includes/class-abilities.php:236
 msgid "Check the DNS records that decide whether email reaches the inbox — SPF, DKIM, DMARC, and MX — for every domain Mailyard sends from. Returns a 0-100 score and letter grade per domain, plus, for each failing check, the exact DNS record to add. Use this when mail sends successfully but lands in spam."
 msgstr ""
 
-#: includes/class-abilities.php:217
+#: includes/class-abilities.php:245
 msgid "Bypass the 1-hour cache and re-query DNS live. Default false."
 msgstr ""
 
-#: includes/class-abilities.php:236
+#: includes/class-abilities.php:264
 msgid "List recently sent emails with recipient, subject, provider, status, and the error message when a send failed. Filter to failures only to find what is broken. Message bodies are not included — use mailyard/get-log for one specific email."
 msgstr ""
 
-#: includes/class-abilities.php:246
+#: includes/class-abilities.php:274
 msgid "Filter by status. Default: all."
 msgstr ""
 
-#: includes/class-abilities.php:250
+#: includes/class-abilities.php:278
 msgid "Match against recipient or subject."
 msgstr ""
 
-#: includes/class-abilities.php:254
+#: includes/class-abilities.php:282
 msgid "Max rows to return (1-100, default 20)."
 msgstr ""
 
-#: includes/class-abilities.php:274
+#: includes/class-abilities.php:302
 msgid "Read one logged email in full, including its message body and headers, to debug exactly why it failed. Get the id from mailyard/list-logs."
 msgstr ""
 
-#: includes/class-abilities.php:283
+#: includes/class-abilities.php:311
 msgid "The log row id."
 msgstr ""
 
-#: includes/class-abilities.php:297
+#: includes/class-abilities.php:325
 msgid "Send a test email through the live provider chain (with failover) to confirm delivery works end to end. Delivers a real email to the address given; defaults to the current user. Use after fixing a connection or DNS record."
 msgstr ""
 
-#: includes/class-abilities.php:306
+#: includes/class-abilities.php:334
 msgid "Recipient. Defaults to the current user's email."
 msgstr ""
 
-#: includes/class-abilities.php:392
+#: includes/class-abilities.php:422
 msgid "No email provider is connected — WordPress is falling back to the host mail server, which usually lands in spam."
 msgstr ""
 
 #. translators: 1: provider label, 2: number of backups, 3: failed count.
-#: includes/class-abilities.php:395
+#: includes/class-abilities.php:425
 #, php-format
 msgid "Sending through %1$s with %2$d backup provider(s). %3$d failure(s) in the last 7 days."
 msgstr ""
 
-#: includes/class-abilities.php:396
+#: includes/class-abilities.php:426
 msgid "the default mailer"
 msgstr ""
 
-#: includes/class-abilities.php:453
+#: includes/class-abilities.php:483
 msgid "A log id is required."
 msgstr ""
 
-#: includes/class-abilities.php:462
+#: includes/class-abilities.php:492
 msgid "Log entry not found."
 msgstr ""
 
-#: includes/class-abilities.php:488
+#: includes/class-abilities.php:518
 msgid "A valid email address is required."
+msgstr ""
+
+#. translators: %d: number of emails that failed in the last hour.
+#: includes/class-alerts.php:36
+#, php-format
+msgid "%d email failed to send in the last hour."
+msgid_plural "%d emails failed to send in the last hour."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: site name.
+#: includes/class-alerts.php:41
+#, php-format
+msgid "[%s] Email is failing to send"
+msgstr ""
+
+#. translators: %s: site name.
+#: includes/class-alerts.php:44
+#, php-format
+msgid "Emails from %s are not being delivered."
+msgstr ""
+
+#. translators: %s: the provider's error message.
+#: includes/class-alerts.php:47
+#, php-format
+msgid "Last error: %s"
+msgstr ""
+
+#. translators: %s: site name.
+#: includes/class-alerts.php:65
+#, php-format
+msgid "[%s] Your main email provider is failing"
+msgstr ""
+
+#. translators: %s: site name.
+#: includes/class-alerts.php:68
+#, php-format
+msgid "The main email provider on %s refused to send, and a backup delivered in its place."
+msgstr ""
+
+#: includes/class-alerts.php:69
+msgid "Your email is still going out. It is worth a look anyway — the backup is there for a bad moment, not to carry the site."
+msgstr ""
+
+#. translators: %s: the provider's error message.
+#: includes/class-alerts.php:71
+#, php-format
+msgid "What the provider said: %s"
+msgstr ""
+
+#. translators: 1: emails sent, 2: emails failed.
+#: includes/class-alerts.php:95
+#, php-format
+msgid "Last 7 days: %1$d sent, %2$d failed."
+msgstr ""
+
+#. translators: 1: how many times, 2: error message.
+#: includes/class-alerts.php:98
+#, php-format
+msgid "%1$d× %2$s"
+msgstr ""
+
+#. translators: %s: site name.
+#: includes/class-alerts.php:101
+#, php-format
+msgid "[%s] Your weekly email summary"
+msgstr ""
+
+#. translators: %s: site name.
+#: includes/class-alerts.php:119
+#, php-format
+msgid "[%s] Mailyard test alert — this is what a failure alert looks like."
+msgstr ""
+
+#: includes/class-alerts.php:124
+msgid "Your server could not send the test alert."
+msgstr ""
+
+#: includes/class-alerts.php:186
+msgid "The email log:"
+msgstr ""
+
+#: includes/class-alerts.php:206
+msgid "Add a webhook URL first."
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: includes/class-alerts.php:222
+#, php-format
+msgid "The webhook answered with HTTP %d."
+msgstr ""
+
+#. translators: %s: URL of Mailyard's alert settings.
+#: includes/class-alerts.php:236
+#, php-format
+msgid "Sent by Mailyard. Change alerts: %s"
+msgstr ""
+
+#: includes/class-checks.php:36
+msgid "Another plugin has taken over WordPress email"
+msgstr ""
+
+#. translators: %s: plugin folder or file that defines wp_mail().
+#: includes/class-checks.php:38
+#, php-format
+msgid "\"%s\" replaces wp_mail() itself, so emails skip Mailyard entirely — no routing, logging or backup. Deactivate it, or its mail feature."
+msgstr ""
+
+#: includes/class-checks.php:58
+msgid "Your From address is on another domain"
+msgstr ""
+
+#. translators: 1: sender domain, 2: site domain.
+#: includes/class-checks.php:60
+#, php-format
+msgid "Mail is sent from %1$s while the site is %2$s. That works only if %1$s is verified with your provider and its SPF/DKIM records are in place — check Deliverability."
+msgstr ""
+
+#: includes/class-checks.php:119
+msgid "A form sends “from” the visitor’s address"
+msgstr ""
+
+#. translators: %s: comma-separated form names.
+#: includes/class-checks.php:121
+#, php-format
+msgid "In: %s. Providers reject a From address you don’t own, or the mail fails DMARC and lands in spam. Set the form’s From to your own address and put the visitor’s email in Reply-To."
 msgstr ""
 
 #. translators: %s = comma-separated list of conflicting plugin names (wrapped in <strong>)
@@ -176,6 +300,7 @@ msgid "Mailyard detected another SMTP / mail-routing plugin: %s. Running multipl
 msgstr ""
 
 #: includes/class-conflicts.php:77
+#: includes/class-failure-notice.php:122
 msgid "Dismiss"
 msgstr ""
 
@@ -273,136 +398,517 @@ msgstr ""
 msgid "Add MX records (or use your provider/host's) so the domain can receive mail."
 msgstr ""
 
-#: includes/class-override.php:123
-#: includes/class-rest-api.php:274
-#: includes/class-rest-api.php:380
+#: includes/class-errors.php:25
+#: includes/class-errors.php:32
+msgid "Sender address or domain not verified"
+msgstr ""
+
+#: includes/class-errors.php:26
+#: includes/class-errors.php:33
+msgid "Your email provider hasn't verified this From address or its domain. Verify the sender identity (and its DNS records) in your provider's dashboard, then try again."
+msgstr ""
+
+#: includes/class-errors.php:38
+msgid "Your provider account is in test mode"
+msgstr ""
+
+#: includes/class-errors.php:39
+msgid "Test (sandbox) accounts only deliver to pre-approved addresses. Add your own sending domain or upgrade the account in your provider's dashboard."
+msgstr ""
+
+#: includes/class-errors.php:43
+msgid "The provider rejected the message"
+msgstr ""
+
+#: includes/class-errors.php:44
+msgid "Usually the From address or domain isn't verified yet, or your account is still in sandbox mode. Verify your sender and request production access in the provider dashboard."
+msgstr ""
+
+#: includes/class-errors.php:48
+msgid "Authentication failed"
+msgstr ""
+
+#: includes/class-errors.php:49
+msgid "The username, password, or API key was rejected. Double-check the credentials — for Gmail/Microsoft use an app-specific password (with 2-factor enabled), not your normal login."
+msgstr ""
+
+#: includes/class-errors.php:53
+msgid "Secure connection (TLS/SSL) problem"
+msgstr ""
+
+#: includes/class-errors.php:54
+msgid "The encrypted connection failed. Try port 587 with TLS (or 465 with SSL). If your host blocks these ports, ask them to open outbound SMTP."
+msgstr ""
+
+#: includes/class-errors.php:58
+msgid "Could not reach the mail server"
+msgstr ""
+
+#: includes/class-errors.php:59
+msgid "Check the SMTP host and port are correct and that your web host allows outbound connections on that port (many block port 25 — use 587 or 465)."
+msgstr ""
+
+#: includes/class-errors.php:63
+msgid "Sending limit reached"
+msgstr ""
+
+#: includes/class-errors.php:64
+msgid "Your provider is rate-limiting or you've hit a daily quota. Wait and retry, or raise your sending limit in the provider dashboard. Mailyard will fail over to a backup connection if you've configured one."
+msgstr ""
+
+#: includes/class-errors.php:68
+msgid "The recipient address was rejected"
+msgstr ""
+
+#: includes/class-errors.php:69
+msgid "The destination mailbox was refused as invalid, unknown, or suppressed. Confirm the recipient address is correct and not on a suppression list."
+msgstr ""
+
+#: includes/class-errors.php:73
+msgid "No email connection configured"
+msgstr ""
+
+#: includes/class-errors.php:74
+msgid "Add and activate an email provider under Connections so Mailyard has somewhere to send through."
+msgstr ""
+
+#: includes/class-errors.php:78
+msgid "Invalid email address"
+msgstr ""
+
+#: includes/class-errors.php:79
+msgid "The From or To address isn't a valid email. Fix the address and try again."
+msgstr ""
+
+#: includes/class-errors.php:108
+#: includes/class-failure-notice.php:99
+msgid "Email could not be sent"
+msgstr ""
+
+#: includes/class-errors.php:108
+msgid "Unknown error"
+msgstr ""
+
+#: includes/class-errors.php:109
+msgid "The provider returned an error. Check the technical details below, verify your connection settings, and send a test email."
+msgstr ""
+
+#. translators: %d: number of recent failures.
+#: includes/class-failure-notice.php:110
+#, php-format
+msgid "Mailyard: %d email failed to send"
+msgid_plural "Mailyard: %d emails failed to send recently"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-failure-notice.php:111
+msgid "Mailyard: an email failed to send"
+msgstr ""
+
+#: includes/class-failure-notice.php:120
+msgid "View email log"
+msgstr ""
+
+#: includes/class-importer.php:70
+msgid "Nothing importable was found for this plugin."
+msgstr ""
+
+#. translators: 1: provider name, 2: plugin the settings came from.
+#: includes/class-importer.php:144
+#, php-format
+msgid "%1$s (from %2$s)"
+msgstr ""
+
+#: includes/class-oauth.php:87
+msgid "This provider doesn’t sign in with an account."
+msgstr ""
+
+#: includes/class-oauth.php:90
+msgid "Save the Client ID and Client Secret first."
+msgstr ""
+
+#: includes/class-oauth.php:125
+msgid "You are not allowed to connect email accounts."
+msgstr ""
+
+#: includes/class-oauth.php:161
+msgid "This sign-in expired or wasn’t started from this site. Click Connect account again."
+msgstr ""
+
+#: includes/class-oauth.php:183
+msgid "The provider signed you in but returned no refresh token, so the connection couldn’t last. Remove the app’s access from your account settings, then click Connect account again."
+msgstr ""
+
+#: includes/class-oauth.php:214
+msgid "This account isn’t connected yet — open the connection and click Connect account."
+msgstr ""
+
+#. translators: %s: the provider's reason.
+#: includes/class-oauth.php:234
+#, php-format
+msgid "Couldn’t refresh the sign-in (%s). Open the connection and click Connect account again."
+msgstr ""
+
+#: includes/class-oauth.php:237
+msgid "Couldn’t refresh the sign-in. Open the connection and click Connect account again."
+msgstr ""
+
+#: includes/class-oauth.php:270
+msgid "Couldn’t read the Zoho Mail account. Make sure the account you signed in with has a mailbox."
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: includes/class-oauth.php:367
+#, php-format
+msgid "The provider answered with HTTP %d."
+msgstr ""
+
+#: includes/class-override.php:247
+#: includes/class-rest-api.php:360
+#: includes/class-rest-api.php:478
 msgid "Invalid email address."
 msgstr ""
 
 #. translators: %s: recipient email domain.
-#: includes/class-override.php:132
+#: includes/class-override.php:256
 #, php-format
 msgid "Invalid domain: %s has no mail server."
 msgstr ""
 
-#: includes/class-plugin.php:102
-#: includes/class-settings.php:73
+#: includes/class-plugin.php:134
 msgid "Settings"
 msgstr ""
 
-#: includes/class-rest-api.php:161
-#: includes/class-rest-api.php:424
-msgid "Unknown provider."
-msgstr ""
-
-#: includes/class-rest-api.php:227
-#: includes/class-rest-api.php:286
+#: includes/class-rest-api.php:220
+#: includes/class-rest-api.php:305
+#: includes/class-rest-api.php:372
 msgid "Connection not found."
 msgstr ""
 
-#: includes/class-rest-api.php:291
+#: includes/class-rest-api.php:232
+msgid "Unknown provider."
+msgstr ""
+
+#: includes/class-rest-api.php:380
+msgid "Connect the account first — open this connection and click Connect account."
+msgstr ""
+
+#: includes/class-rest-api.php:381
 msgid "Connection could not be initialized — check credentials."
 msgstr ""
 
-#: includes/class-rest-api.php:292
-msgid "Connection could not be initialized."
-msgstr ""
-
-#: includes/class-rest-api.php:298
+#: includes/class-rest-api.php:389
 msgid "Mailyard — Connection Test"
 msgstr ""
 
 #. translators: %s: recipient email address.
-#: includes/class-rest-api.php:314
-#: includes/class-rest-api.php:398
+#: includes/class-rest-api.php:405
 #, php-format
 msgid "Test email sent to %s"
 msgstr ""
 
-#: includes/class-rest-api.php:385
+#: includes/class-rest-api.php:483
 msgid "Mailyard — Test Email"
 msgstr ""
 
-#: includes/class-rest-api.php:406
+#: includes/class-rest-api.php:498
+msgid "Offline mode is on — the test was logged, not sent."
+msgstr ""
+
+#. translators: 1: recipient email address, 2: provider name.
+#: includes/class-rest-api.php:506
+#, php-format
+msgid "Test email sent to %1$s via %2$s."
+msgstr ""
+
+#. translators: %s: recipient email address.
+#: includes/class-rest-api.php:508
+#, php-format
+msgid "Test email sent to %s."
+msgstr ""
+
+#. translators: 1: provider name, 2: error message.
+#: includes/class-rest-api.php:514
+#, php-format
+msgid "%1$s failed first: %2$s"
+msgstr ""
+
+#: includes/class-rest-api.php:532
 msgid "Failed to send."
 msgstr ""
 
-#: includes/class-rest-api.php:516
+#: includes/class-rest-api.php:607
 msgid "Confirmation required. Type DELETE to erase all data."
 msgstr ""
 
-#: includes/class-settings.php:57
-msgid "Dashboard"
+#: includes/class-rest-api.php:629
+msgid "Test alert posted."
 msgstr ""
 
-#: includes/class-settings.php:61
-msgid "Connections"
+#: includes/class-rest-api.php:629
+msgid "Test alert sent by your server’s own mailer."
 msgstr ""
 
-#: includes/class-settings.php:65
-msgid "Deliverability"
+#: includes/class-rest-api.php:656
+msgid "This server’s PHP has no sodium extension, so encryption isn’t available."
 msgstr ""
 
-#: includes/class-settings.php:69
-msgid "Logs"
+#: includes/class-rest-api.php:690
+msgid "That file isn’t a Mailyard settings backup."
+msgstr ""
+
+#: includes/class-rest-api.php:734
+msgid "Email delivery for this site is managed by the network’s main site."
+msgstr ""
+
+#: includes/class-rest-api.php:750
+msgid "Only a network admin can change this, from the main site."
+msgstr ""
+
+#: includes/class-rest-api.php:774
+msgid "Unknown plugin."
+msgstr ""
+
+#: includes/class-rest-api.php:812
+msgid "That log entry no longer exists."
+msgstr ""
+
+#: includes/class-settings.php:54
+msgid "Mailyard SMTP"
+msgstr ""
+
+#: includes/class-settings.php:55
+msgid "SMTP"
 msgstr ""
 
 #: includes/esp/class-brevo.php:40
+#: includes/esp/class-maileroo.php:27
+#: includes/esp/class-mailersend.php:24
+#: includes/esp/class-mailgun.php:28
+#: includes/esp/class-mailjet.php:26
 #: includes/esp/class-postmark.php:36
 #: includes/esp/class-resend.php:34
+#: includes/esp/class-sendgrid.php:24
 #: includes/esp/class-ses.php:30
+#: includes/esp/class-smtp2go.php:24
 msgid "Empty email body."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by the Brevo API.
-#: includes/esp/class-brevo.php:83
+#: includes/esp/class-brevo.php:86
 #, php-format
 msgid "Brevo error (HTTP %d)"
 msgstr ""
 
-#: includes/esp/class-brevo.php:91
+#: includes/esp/class-brevo.php:94
 msgid "Brevo"
 msgstr ""
 
-#: includes/esp/class-brevo.php:95
-#: includes/esp/class-resend.php:88
+#: includes/esp/class-brevo.php:98
+#: includes/esp/class-mailgun.php:104
+#: includes/esp/class-mailjet.php:114
+#: includes/esp/class-resend.php:91
+#: includes/esp/class-sendgrid.php:109
+#: includes/esp/class-smtp2go.php:107
 msgid "API Key"
 msgstr ""
 
-#: includes/esp/class-default.php:40
+#: includes/esp/class-default.php:74
 msgid "wp_mail() failed."
 msgstr ""
 
-#: includes/esp/class-default.php:47
-msgid "Default (PHP)"
+#: includes/esp/class-default.php:78
+msgid "PHP Mail"
 msgstr ""
 
-#: includes/esp/class-postmark.php:77
+#: includes/esp/class-gmail.php:50
+msgid "Gmail"
+msgstr ""
+
+#: includes/esp/class-gmail.php:54
+#: includes/esp/class-zoho.php:132
+msgid "Client ID"
+msgstr ""
+
+#: includes/esp/class-gmail.php:55
+#: includes/esp/class-microsoft-app.php:158
+#: includes/esp/class-microsoft.php:94
+#: includes/esp/class-zoho.php:133
+msgid "Client Secret"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the Maileroo API.
+#: includes/esp/class-maileroo.php:100
+#, php-format
+msgid "Maileroo error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-maileroo.php:105
+msgid "Maileroo"
+msgstr ""
+
+#: includes/esp/class-maileroo.php:109
+msgid "Sending Key"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the MailerSend API.
+#: includes/esp/class-mailersend.php:102
+#, php-format
+msgid "MailerSend error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-mailersend.php:111
+msgid "MailerSend"
+msgstr ""
+
+#: includes/esp/class-mailersend.php:115
+msgid "API Token"
+msgstr ""
+
+#. translators: 1: HTTP status code, 2: Mailgun's short error text.
+#: includes/esp/class-mailgun.php:88
+#, php-format
+msgid "Mailgun error (HTTP %1$d): %2$s"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the Mailgun API.
+#: includes/esp/class-mailgun.php:91
+#, php-format
+msgid "Mailgun error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-mailgun.php:100
+msgid "Mailgun"
+msgstr ""
+
+#: includes/esp/class-mailgun.php:105
+msgid "Sending Domain"
+msgstr ""
+
+#: includes/esp/class-mailgun.php:106
+#: includes/esp/class-ses.php:172
+msgid "Region"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the Mailjet API.
+#: includes/esp/class-mailjet.php:105
+#, php-format
+msgid "Mailjet error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-mailjet.php:110
+msgid "Mailjet"
+msgstr ""
+
+#: includes/esp/class-mailjet.php:115
+msgid "Secret Key"
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:43
+msgid "Check that the app has the Mail.Send application permission (not delegated) with admin consent, and that no Application Access Policy excludes this mailbox."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:46
+msgid "Check that this mailbox exists in the tenant — a shared mailbox works too."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:91
+msgid "Microsoft didn’t return an access token."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:108
+msgid "Signing in with a certificate needs PHP’s OpenSSL extension. Use a client secret instead, or ask your host to enable it."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:111
+msgid "The certificate is missing. Paste the certificate and its private key together, both PEM."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:114
+msgid "The private key has a password. Export it without one (openssl’s -nodes option)."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:117
+msgid "The private key is missing. Paste the certificate and its private key together, both PEM."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:123
+msgid "The certificate or its private key couldn’t be read."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:126
+msgid "The private key doesn’t belong to this certificate."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:145
+msgid "Signing with the private key failed."
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:151
+msgid "Microsoft 365 (app-only)"
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:155
+msgid "Directory (tenant) ID"
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:156
+#: includes/esp/class-microsoft.php:93
+msgid "Application (client) ID"
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:157
+msgid "Send from mailbox"
+msgstr ""
+
+#: includes/esp/class-microsoft-app.php:159
+msgid "Certificate + private key (PEM)"
+msgstr ""
+
+#: includes/esp/class-microsoft.php:89
+msgid "Microsoft 365"
+msgstr ""
+
+#: includes/esp/class-microsoft.php:95
+msgid "Tenant"
+msgstr ""
+
+#: includes/esp/class-postmark.php:83
 msgid "Invalid response from Postmark."
 msgstr ""
 
-#: includes/esp/class-postmark.php:81
+#: includes/esp/class-postmark.php:87
 msgid "Unknown Postmark error."
 msgstr ""
 
-#: includes/esp/class-postmark.php:88
+#: includes/esp/class-postmark.php:94
 msgid "Postmark"
 msgstr ""
 
-#: includes/esp/class-postmark.php:94
+#: includes/esp/class-postmark.php:99
 msgid "Server Token"
 msgstr ""
 
-#: includes/esp/class-resend.php:73
+#: includes/esp/class-resend.php:76
 msgid "Invalid response from Resend."
 msgstr ""
 
-#: includes/esp/class-resend.php:77
+#: includes/esp/class-resend.php:80
 msgid "Unknown Resend error."
 msgstr ""
 
-#: includes/esp/class-resend.php:84
+#: includes/esp/class-resend.php:87
 msgid "Resend"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the SendGrid API.
+#: includes/esp/class-sendgrid.php:97
+#, php-format
+msgid "SendGrid error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-sendgrid.php:105
+msgid "SendGrid"
 msgstr ""
 
 #. translators: %d: HTTP status code returned by the Amazon SES API.
@@ -411,46 +917,66 @@ msgstr ""
 msgid "SES error (HTTP %d)"
 msgstr ""
 
-#: includes/esp/class-ses.php:160
+#: includes/esp/class-ses.php:166
 msgid "Amazon SES"
 msgstr ""
 
-#: includes/esp/class-ses.php:164
+#: includes/esp/class-ses.php:170
 msgid "Access Key ID"
 msgstr ""
 
-#: includes/esp/class-ses.php:165
+#: includes/esp/class-ses.php:171
 msgid "Secret Access Key"
 msgstr ""
 
-#: includes/esp/class-ses.php:166
-msgid "Region"
-msgstr ""
-
-#: includes/esp/class-smtp.php:83
+#: includes/esp/class-smtp.php:42
 msgid "SMTP send failed."
 msgstr ""
 
-#: includes/esp/class-smtp.php:90
+#: includes/esp/class-smtp.php:46
 msgid "Custom SMTP"
 msgstr ""
 
-#: includes/esp/class-smtp.php:94
+#: includes/esp/class-smtp.php:50
 msgid "SMTP Host"
 msgstr ""
 
-#: includes/esp/class-smtp.php:95
+#: includes/esp/class-smtp.php:51
 msgid "Port"
 msgstr ""
 
-#: includes/esp/class-smtp.php:96
+#: includes/esp/class-smtp.php:52
 msgid "Encryption"
 msgstr ""
 
-#: includes/esp/class-smtp.php:97
+#: includes/esp/class-smtp.php:53
 msgid "Username"
 msgstr ""
 
-#: includes/esp/class-smtp.php:98
+#: includes/esp/class-smtp.php:54
 msgid "Password"
+msgstr ""
+
+#. translators: %d: HTTP status code returned by the SMTP2GO API.
+#: includes/esp/class-smtp2go.php:97
+#, php-format
+msgid "SMTP2GO error (HTTP %d)"
+msgstr ""
+
+#: includes/esp/class-smtp2go.php:103
+msgid "SMTP2GO"
+msgstr ""
+
+#. translators: %s: attachment file name.
+#: includes/esp/class-zoho.php:118
+#, php-format
+msgid "Zoho didn’t accept the attachment “%s”."
+msgstr ""
+
+#: includes/esp/class-zoho.php:128
+msgid "Zoho Mail"
+msgstr ""
+
+#: includes/esp/class-zoho.php:134
+msgid "Data center"
 msgstr ""
