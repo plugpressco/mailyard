@@ -35,6 +35,10 @@ const exclude = [
 	'postcss.config.js',
 	'docs/*',
 	'docs',
+	// WordPress.org listing assets (banners, icons, their HTML sources) go to
+	// SVN assets/, never into the plugin itself — same as .distignore.
+	'.wordpress.org/*',
+	'.wordpress.org',
 	'*.webp',
 	'*.md',
 	'.gitignore',
@@ -79,7 +83,7 @@ const mustContain = [
 	`${ folder }/mailyard.php`,
 	`${ folder }/build/admin.js`,
 ];
-const mustNotContain = [ `${ folder }/vendor/`, 'freemius/wordpress-sdk' ];
+const mustNotContain = [ `${ folder }/vendor/`, 'freemius/wordpress-sdk', `${ folder }/.wordpress.org/` ];
 const missing = mustContain.filter( ( f ) => ! listing.includes( f ) );
 const leaked = mustNotContain.filter( ( f ) => listing.includes( f ) );
 if ( missing.length || leaked.length ) {
