@@ -1,4 +1,4 @@
-=== Mailyard ===
+=== Mailyard - Free SMTP with a Backup Provider ===
 Contributors: badhonrocks
 Tags: smtp, email log, mailer, email, deliverability
 Requires at least: 7.0
@@ -8,175 +8,139 @@ Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Sends your WordPress email through Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, or any SMTP — and switches to a backup when a send fails.
+Send WordPress email through Amazon SES, Postmark, Resend, Brevo or any SMTP. If a send fails, your backup provider sends it.
 
 == Description ==
 
-WordPress hands your email to your web host, and most hosts are bad at email. Messages get blocked, land in spam, or disappear without a trace. So every site I've run ended up with an SMTP plugin — and every SMTP plugin I tried did the same thing when the provider failed. It wrote a log entry and gave up. The password reset, the order receipt, the form reply: gone.
+Most web hosts are bad at sending email. Password resets, order receipts and form replies get blocked, land in spam, or never arrive.
 
-That felt wrong.
+Mailyard sends your WordPress email through a real email service. Add a second one as a backup: if the first one fails, the backup sends the same email straight away.
 
-So I built Mailyard. It sends your email through a real service — Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, or any SMTP server — and if that service fails, it retries the same email through your backup, on the same send. Not in a retry queue. Not tomorrow. The email still goes out.
+Everything is free. No Pro version, no locked features, no upgrade nags. More at [plugpress.co/mailyard](https://plugpress.co/mailyard).
 
-That is Mailyard, and all of it is free. No locked buttons, no upgrade nags. Plugin site: [plugpress.co/mailyard](https://plugpress.co/mailyard).
+= Features =
 
-= What it does =
+* **Backup provider.** If a send fails, your backup sends the same email.
+* **Email log.** Every email, with the provider's exact error when one fails. Search, resend, export to CSV.
+* **Failure alerts.** By email, Slack, Discord or Teams, plus an optional weekly summary.
+* **Deliverability check.** Grades your SPF, DKIM, DMARC and MX records A–F and gives you the DNS record to add.
+* **Sender routing.** Send each From address through its own provider.
+* **Bounce tracking.** For Amazon SES, Postmark, Resend and Brevo.
+* **One-click import.** Bring your settings over from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP.
+* **Fewer WordPress emails.** Turn off new-user, comment and update notices. Password resets always go out.
+* **Background sending.** Pages don't wait for the mail server.
+* **Offline mode.** Log every email and send none. Made for staging sites.
+* **Safe credentials.** Keep keys in wp-config.php, or encrypt them in the database.
+* **Multisite.** Set it up once for the whole network.
+* **AI tools.** Let Claude, Cursor or Codex check your setup and read the log. Each tool has its own switch.
 
-* **A backup that takes over.** The moment a send fails, your backup provider tries the same email.
-* **Sixteen ways to send.** Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, Gmail, Microsoft 365 (signed in or app-only), Zoho Mail, custom SMTP, or plain PHP mail.
-* **A log of every email.** Every send and every failure, with the provider's exact error in plain words. Search, filter, resend, export to CSV. Kept 30 days by default — or 7, 90, or forever.
-* **Alerts before a customer tells you.** An email when sending fails or a backup had to take over (sent by your server, so it arrives even when the provider is what broke), on Slack, Discord or Teams too, plus an optional weekly summary.
-* **A deliverability checker.** Your SPF, DKIM, DMARC, and MX records, graded A–F, with the exact DNS record to add.
-* **Sender routing.** Receipts through Postmark, newsletters through Brevo — the right provider per sender, automatically.
-* **Bounce tracking.** Amazon SES, Postmark, Resend, and Brevo webhooks, normalized into one `mailyard_bounce` hook.
-* **Control WordPress's own emails.** Switch off new-user, password-change, comment and auto-update notifications. Password resets always go out.
-* **Background sending and Offline mode.** Pages don't wait on the mail server; staging sites log everything and send nothing.
-* **Multisite.** Set email up once on the main site for the whole network, or let each site do its own.
-* **Credentials kept your way.** In wp-config.php, encrypted in the database, or plain — and a one-file settings backup.
-* **AI tools.** Claude, Cursor, or Codex can check your setup and read the log — every tool has its own off switch, and nothing is exposed until you set it up.
+= Providers =
 
-Setup takes a minute: pick a provider, paste a key, send a test. Coming from WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP? Mailyard finds your setup and imports it in one click. If another plugin is fighting you, Mailyard says so.
+Amazon SES, Postmark, Resend, Brevo, Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo, Gmail / Google Workspace, Microsoft 365 / Outlook, Zoho Mail, any SMTP server, or your host's PHP mail.
 
-= Which provider? =
+Not sure which to pick?
 
-* **Resend** — easiest to start with
-* **Brevo** — has a free tier, 300 emails a day
-* **Postmark** — best inbox placement, made for stores
-* **Amazon SES** — cheapest at high volume
-* **Mailgun, SendGrid, SMTP2GO, Mailjet, MailerSend, Maileroo** — already have an account with one? Use it
-* **Gmail, Microsoft 365, Zoho Mail** — send from the mailbox you already have, signed in with OAuth (no password stored)
-* **Custom SMTP** — any SMTP server
-* **PHP mail** — your host's server; no setup, but don't count on it
-
-= Source code =
-
-The admin screens are React, built with `@wordpress/scripts`. The unminified source lives at https://github.com/plugpressco/mailyard under `src/` — `npm install`, then `npm run build`.
+* **Resend:** easiest to set up
+* **Brevo:** free for 300 emails a day
+* **Postmark:** best inbox placement, great for stores
+* **Amazon SES:** cheapest at high volume
+* **Gmail, Microsoft 365, Zoho:** send from the mailbox you already have
 
 = Privacy =
 
-Mailyard only talks to the email service you set up. It doesn't phone home and it doesn't track you. The deliverability checker reads your domain's DNS records via your server's resolver, falling back to Cloudflare's public DNS only if that fails (it sees the domain name and nothing more). If email logging is on (it is by default), each email's recipient, subject, and body are saved to your database — turn it off in Settings whenever you want.
+Mailyard only connects to the services you set up (see External services). No tracking, no phoning home. The email log saves each email's recipient, subject and body in your database. You can turn logging off in Settings.
 
-== External services ==
+= Source code =
 
-Mailyard sends your WordPress email through a third-party email service that you choose and set up with your own account and API key. Nothing is sent anywhere until you pick a provider and enter its credentials, and then it only goes to that one provider (plus its fallback, if you added one).
-
-What gets sent is the email your site is already trying to send: the recipient address(es), the sender, the subject, the body, and any attachments. It's sent at the moment WordPress sends that email — a password reset, a WooCommerce order, a contact-form reply, and so on.
-
-Resend — email delivery API, used if you pick Resend. Each email goes to `https://api.resend.com/emails`.
-Terms: https://resend.com/legal/terms-of-service — Privacy: https://resend.com/legal/privacy-policy
-
-Brevo (formerly Sendinblue) — email delivery API, used if you pick Brevo. Each email goes to `https://api.brevo.com/v3/smtp/email`.
-Terms: https://www.brevo.com/legal/termsofuse/ — Privacy: https://www.brevo.com/legal/privacypolicy/
-
-Postmark — email delivery API, used if you pick Postmark. Each email goes to `https://api.postmarkapp.com/email`.
-Terms: https://postmarkapp.com/terms-of-service — Privacy: https://postmarkapp.com/privacy-policy
-
-Amazon SES (Simple Email Service) — Amazon's email delivery API, used if you pick Amazon SES. Each email goes to `https://email.{your-region}.amazonaws.com/v2/email/outbound-emails`. If you turn on bounce/complaint webhooks for SES, Mailyard also confirms the Amazon SNS subscription with a one-time request to the AWS-hosted `SubscribeURL` (it checks the host is on `amazonaws.com` first).
-Terms: https://aws.amazon.com/service-terms/ — Privacy: https://aws.amazon.com/privacy/
-
-Mailgun — email delivery API, used if you pick Mailgun. Each email goes to `https://api.mailgun.net/v3/{your-domain}/messages` (or `api.eu.mailgun.net` for the EU region).
-Terms: https://www.mailgun.com/legal/terms/ — Privacy: https://www.mailgun.com/legal/privacy-policy/
-
-SendGrid (Twilio) — email delivery API, used if you pick SendGrid. Each email goes to `https://api.sendgrid.com/v3/mail/send`.
-Terms: https://www.twilio.com/en-us/legal/tos — Privacy: https://www.twilio.com/en-us/legal/privacy
-
-SMTP2GO — email delivery API, used if you pick SMTP2GO. Each email goes to `https://api.smtp2go.com/v3/email/send`.
-Terms: https://www.smtp2go.com/terms/ — Privacy: https://www.smtp2go.com/privacy/
-
-Mailjet — email delivery API, used if you pick Mailjet. Each email goes to `https://api.mailjet.com/v3.1/send`.
-Terms: https://www.mailjet.com/legal/terms/ — Privacy: https://www.mailjet.com/legal/privacy-policy/
-
-MailerSend — email delivery API, used if you pick MailerSend. Each email goes to `https://api.mailersend.com/v1/email`.
-Terms and Privacy: https://www.mailersend.com/legal
-
-Maileroo — email delivery API, used if you pick Maileroo. Each email goes to `https://smtp.maileroo.com/api/v2/emails`.
-Terms: https://maileroo.com/terms-conditions — Privacy: https://maileroo.com/privacy-policy
-
-Google (Gmail API and Google sign-in) — used if you pick Gmail. When you click Connect account, your browser signs in at `https://accounts.google.com`, and Mailyard exchanges and refreshes the sign-in at `https://oauth2.googleapis.com/token`. Each email goes to `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`. No password is stored.
-Terms: https://policies.google.com/terms — Privacy: https://policies.google.com/privacy
-
-Microsoft (Microsoft Graph and the Microsoft identity platform) — used if you pick Microsoft 365. Signing in (or, for app-only, the app's own credentials) goes to `https://login.microsoftonline.com`; each email goes to `https://graph.microsoft.com/v1.0/me/sendMail` (or `/users/{mailbox}/sendMail` for app-only). No password is stored.
-Terms: https://www.microsoft.com/servicesagreement — Privacy: https://privacy.microsoft.com/privacystatement
-
-Zoho (Zoho Mail API and Zoho accounts) — used if you pick Zoho Mail. Signing in and token refresh go to `https://accounts.{your data center}` (for example accounts.zoho.com); Mailyard reads your mailbox's account ID and verified addresses from, and sends each email (and its attachments) to, `https://mail.{your data center}/api/accounts`. No password is stored.
-Terms: https://www.zoho.com/terms.html — Privacy: https://www.zoho.com/privacy.html
-
-Custom SMTP — if you pick the Custom SMTP option, email goes to the SMTP host and port you enter. That's whatever SMTP service or server you choose, so check its own terms and privacy policy.
-
-Chat webhook — only if you add a webhook URL in Settings → Alerts (Slack, Discord, Microsoft Teams, or any address you choose). Mailyard posts the alert to that URL: your site name and address, how many emails failed, and the provider's error message. Email contents and recipients are never posted. The service behind the URL is one you picked, so its own terms and privacy policy apply.
-
-Cloudflare DNS over HTTPS — only used by the deliverability checker, and only as a fallback when your server's own DNS lookup fails. It sends just your domain name (to read SPF/DKIM/DMARC/MX records) to `https://cloudflare-dns.com/dns-query`. No email content is involved.
-Terms: https://www.cloudflare.com/website-terms/ — Privacy: https://developers.cloudflare.com/1.1.1.1/privacy/public-dns-resolver/
+The admin screens are built with React. The source is at https://github.com/plugpressco/mailyard in `src/`. Build it with `npm install`, then `npm run build`.
 
 == Installation ==
 
-1. Search for "Mailyard" in Plugins → Add New (or upload the zip), then activate.
-2. Open Settings → SMTP.
-3. Pick a provider, enter your API key, set your sender address.
-4. Hit Send test on the Overview to confirm it works.
+1. Install and activate Mailyard.
+2. Go to Settings → SMTP.
+3. Pick a provider, paste your API key and set your From address.
+4. Click Send test on the Overview.
 
-= Adding a backup provider =
+**Add a backup:** in Connections, add a second provider and drag it below the first.
 
-In the Connections tab, click Add, set up a second provider, enable it, and drag it below your main one. If the main provider fails, the backup takes over automatically.
+**Switching from another SMTP plugin?** Open Connections and Mailyard offers to import your settings. Then deactivate the old plugin.
 
-= Coming from another SMTP plugin =
+== External services ==
 
-Open Connections: if WP Mail SMTP, Easy WP SMTP, FluentSMTP or Post SMTP is set up on the site, Mailyard offers to import it — provider, credentials and sender, without retyping a key. Then deactivate the old plugin; two mailers at once conflict, and Mailyard will warn you if it spots one.
+Mailyard sends nothing anywhere until you pick a provider and enter its credentials. After that, each email your site sends (recipients, sender, subject, body and attachments) goes to the provider you set up when WordPress sends it, and to your backup if the first one fails.
+
+Each provider below is only used if you pick it:
+
+* **Resend:** `https://api.resend.com/emails`. [Terms](https://resend.com/legal/terms-of-service), [Privacy](https://resend.com/legal/privacy-policy)
+* **Brevo:** `https://api.brevo.com/v3/smtp/email`. [Terms](https://www.brevo.com/legal/termsofuse/), [Privacy](https://www.brevo.com/legal/privacypolicy/)
+* **Postmark:** `https://api.postmarkapp.com/email`. [Terms](https://postmarkapp.com/terms-of-service), [Privacy](https://postmarkapp.com/privacy-policy)
+* **Amazon SES:** `https://email.{your-region}.amazonaws.com/v2/email/outbound-emails`. If you turn on SES bounce webhooks, Mailyard also makes one request to the Amazon SNS `SubscribeURL` (only on `amazonaws.com`) to confirm the subscription. [Terms](https://aws.amazon.com/service-terms/), [Privacy](https://aws.amazon.com/privacy/)
+* **Mailgun:** `https://api.mailgun.net/v3/{your-domain}/messages` (or `api.eu.mailgun.net` for the EU region). [Terms](https://www.mailgun.com/legal/terms/), [Privacy](https://www.mailgun.com/legal/privacy-policy/)
+* **SendGrid (Twilio):** `https://api.sendgrid.com/v3/mail/send`. [Terms](https://www.twilio.com/en-us/legal/tos), [Privacy](https://www.twilio.com/en-us/legal/privacy)
+* **SMTP2GO:** `https://api.smtp2go.com/v3/email/send`. [Terms](https://www.smtp2go.com/terms/), [Privacy](https://www.smtp2go.com/privacy/)
+* **Mailjet:** `https://api.mailjet.com/v3.1/send`. [Terms](https://www.mailjet.com/legal/terms/), [Privacy](https://www.mailjet.com/legal/privacy-policy/)
+* **MailerSend:** `https://api.mailersend.com/v1/email`. [Terms and Privacy](https://www.mailersend.com/legal)
+* **Maileroo:** `https://smtp.maileroo.com/api/v2/emails`. [Terms](https://maileroo.com/terms-conditions), [Privacy](https://maileroo.com/privacy-policy)
+* **Gmail (Google):** you sign in at `https://accounts.google.com`, sign-in tokens are exchanged and refreshed at `https://oauth2.googleapis.com/token`, and email goes to `https://gmail.googleapis.com/gmail/v1/users/me/messages/send`. No password is stored. [Terms](https://policies.google.com/terms), [Privacy](https://policies.google.com/privacy)
+* **Microsoft 365:** sign-in (or the app's own credentials, for app-only) goes to `https://login.microsoftonline.com`, and email goes to `https://graph.microsoft.com/v1.0/me/sendMail` (or `/users/{mailbox}/sendMail` for app-only). No password is stored. [Terms](https://www.microsoft.com/servicesagreement), [Privacy](https://privacy.microsoft.com/privacystatement)
+* **Zoho Mail:** sign-in and token refresh go to `https://accounts.{your data center}` (for example accounts.zoho.com). Your mailbox's account ID and verified addresses are read from, and email and attachments are sent to, `https://mail.{your data center}/api/accounts`. No password is stored. [Terms](https://www.zoho.com/terms.html), [Privacy](https://www.zoho.com/privacy.html)
+* **Custom SMTP:** email goes to the SMTP host and port you enter. Check that service's own terms and privacy policy.
+
+Two more services, used only in these cases:
+
+* **Chat webhook:** only if you add a webhook URL in Settings → Alerts (Slack, Discord, Microsoft Teams or any address you choose). Mailyard posts your site name and address, how many emails failed, and the provider's error. Email contents and recipients are never posted. The terms and privacy policy of the service you picked apply.
+* **Cloudflare DNS over HTTPS:** only used by the deliverability checker, and only when your server's own DNS lookup fails. It sends just your domain name to `https://cloudflare-dns.com/dns-query` to read its SPF, DKIM, DMARC and MX records. [Terms](https://www.cloudflare.com/website-terms/), [Privacy](https://developers.cloudflare.com/1.1.1.1/privacy/public-dns-resolver/)
 
 == Frequently Asked Questions ==
 
 = Why is WordPress not sending emails? =
 
-By default WordPress hands `wp_mail()` to your web host's own mail server, and web hosts aren't email providers: no proper SPF/DKIM authentication, shared IPs with bad reputations, silent failures. Gmail and Outlook treat that mail as suspicious, so it gets blocked or lands in spam. The fix is routing email through a real provider over SMTP or an API — which is exactly what Mailyard does.
+By default, WordPress sends email through your web host, and hosts aren't built for it: no SPF or DKIM, and shared IPs with poor reputations. Gmail and Outlook block that mail or send it to spam. Mailyard fixes this by sending through a real email service.
 
-= Is Mailyard an alternative to WP Mail SMTP, FluentSMTP, or Post SMTP? =
+= Is Mailyard an alternative to WP Mail SMTP, FluentSMTP or Post SMTP? =
 
-Yes — it does the same core job and adds the things most of them don't have: automatic failover on the same send, sender routing across multiple providers, bounce and complaint tracking, and a deliverability checker, all free. Deactivate the other SMTP plugin first; two mailers at once conflict.
+Yes. It does the same job and adds a backup provider, sender routing, bounce tracking and a deliverability check, all free. It can import your settings from those plugins. Deactivate the old one afterwards, because two mailers conflict.
 
-= Does it work with WooCommerce, Contact Form 7, Gravity Forms? =
+= Does it work with WooCommerce, Contact Form 7 or Gravity Forms? =
 
-Yes. Anything that sends mail the normal WordPress way goes through Mailyard automatically — no per-plugin setup.
+Yes. Any plugin that sends mail the normal WordPress way goes through Mailyard automatically.
 
-= Which provider should I pick? =
+= What happens if my provider goes down? =
 
-Just starting out: Resend — one key and you're sending in five minutes. Running a store: Postmark — best sending reputation for transactional mail. Want a free tier: Brevo gives you 300 emails a day. High volume: Amazon SES, about $0.10 per 1,000 emails. Already have an account somewhere? Just use that.
+If you've added a backup, it sends the same email right away. With only one provider, the email fails as it normally would and the log shows why.
 
-= What if my provider goes down? =
+= Can I send from Gmail or Microsoft 365? =
 
-If you've added a backup in Connections, Mailyard retries on the same send and nothing is lost. With only one provider, the email fails like it normally would — so add a backup.
-
-= Can an AI assistant use Mailyard? =
-
-Yes — that's what Settings → Connect AI is for. Mailyard registers five tools on the WordPress 7.0 Abilities API: delivery status, deliverability check, read the email log, open one logged email, and send a test. Install an MCP bridge (the free WordPress MCP Adapter plugin), create an Application Password, and paste the endpoint into Claude Code, Claude Desktop, Cursor, Codex, or Windsurf — the in-plugin guide gives you the exact command. Every tool has its own on/off switch.
+Yes, with no password stored. Create an OAuth app in Google Cloud or Microsoft Entra ID, paste its Client ID and Secret, and click Connect account. For client sites, Microsoft 365 app-only sends without anyone signing in. Zoho Mail works the same way.
 
 = Where are my API keys stored? =
 
-In your WordPress database, like any SMTP plugin's settings. They're only ever sent to the provider they belong to — never to us, never anywhere else.
+In your WordPress database, and they're only ever sent to the provider they belong to. You can encrypt them, or keep them in wp-config.php instead (for example `MAILYARD_SMTP_PASSWORD`).
 
-= Gmail or Microsoft 365? =
+= How long are email logs kept? =
 
-Both work, with no password stored. Pick Gmail (personal Gmail or Google Workspace) or Microsoft 365 (including Outlook.com), create an OAuth app in Google Cloud or Entra ID, paste its Client ID and Secret, and click Connect account — the in-plugin steps show the redirect URI to allow. Building a site for a client? Microsoft 365 app-only sends from a mailbox through an Entra app registration (certificate or client secret), so nobody has to sign in. Zoho Mail works the same way.
-
-= How long do you keep email logs? =
-
-30 days by default, then they're deleted automatically. Pick 7, 30 or 90 days, or forever, in Settings → Delivery — or turn logging off entirely.
+30 days by default. Choose 7, 30 or 90 days, or forever, in Settings → Delivery, or turn logging off.
 
 = Does uninstalling delete my data? =
 
-No. Uninstalling leaves your logs and settings alone, so you can reinstall without losing anything. The only thing that wipes your data is the Delete all data button in Settings, and it never runs on its own.
+No. Your logs and settings stay, so you can reinstall without losing anything. Only the Delete all data button in Settings removes them.
+
+= Can an AI assistant use Mailyard? =
+
+Yes. Mailyard adds five tools to the WordPress Abilities API: delivery status, deliverability check, read the log, open one email, and send a test. Connect Claude, Cursor or Codex through an MCP bridge. Settings → Connect AI shows the steps, and each tool has its own switch.
 
 = Is it really free? =
 
-Yes. Every feature you can see is yours — failover, routing, bounce tracking, the deliverability checker, the email log. Nothing is locked, metered, or held back for an upgrade.
+Yes. Every feature is free. Nothing is locked, metered or held back for an upgrade.
 
 == Screenshots ==
 
-1. Setup — pick a provider, paste your key, set your sender address.
-2. Overview — sending health, the last 14 days of volume, recent activity.
-3. Connections — add providers and drag to choose the primary and its backup.
-4. Deliverability — every sending domain graded A–F, with the exact DNS fix for anything that fails.
-5. Email Logs — every send, with status and the error if it failed.
-6. Settings → Connect AI — the master switch and per-tool permissions for AI agents.
+1. Setup: pick a provider, paste your key, set your sender.
+2. Overview: sending health, 14 days of volume and recent activity.
+3. Connections: add providers and drag them to set the order.
+4. Deliverability: each sending domain graded A–F, with the DNS fix.
+5. Email log: every email, its status, and the error if it failed.
+6. Connect AI: the master switch and per-tool permissions.
 
 == Changelog ==
 
