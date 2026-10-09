@@ -3,7 +3,13 @@
 **Tier:** build
 **Board:** [PlugPress HQ](https://github.com/orgs/plugpressco/projects/3)
 
-## Last session (2026-10-09, later) — v1.1.0 RELEASED to WordPress.org (#25, PR #26)
+## Last session (2026-10-09, latest) — readme simplified (#28, PR #29 — awaiting OK to merge)
+
+- **Readme rewrite** (user: "make simple and make title simple", using Meow Mailer's page as the reference). The directory title is now **Mailyard – Free SMTP with a Backup Provider**. WP.org takes the title from the readme's `=== … ===` line; the plugin header `Plugin Name` is unchanged. Short description is 125 characters, the Description is a 3-paragraph intro plus 13 one-line features, and FAQ answers are 1–3 sentences. External services is the same disclosure in a compact list, with every endpoint and terms/privacy URL kept. Words above the changelog went from about 2,220 to 1,370. Changelog, version and Stable tag are untouched.
+- **Not merged:** `assets.yml` publishes `readme.txt` to SVN trunk **and `tags/1.1.0`** on merge, so the live page changes right away. Waiting for the user's OK under the merge policy (anything that ships to WordPress.org).
+- **Filed #30:** the readme's build steps (`npm install`) fail for outsiders because `@plugpress/ui` is a private repo, and its bundled code has no public source (guideline 4 risk). Needs a decision.
+
+## Earlier session (2026-10-09, later) — v1.1.0 RELEASED to WordPress.org (#25, PR #26)
 
 - **1.1.0 shipped** (user: "release"). PR #26 bumped `Version:`/`MAILYARD_VERSION`/`Stable tag`/`package.json` + lockfile root, dated the changelog and regenerated the POT (100 → 213 strings). Merged as `72ee3d7` and tagged `v1.1.0`. `release.yml` was green in ~4 min: the GitHub Release zip (410 KB) and the SVN deploy both landed. **wordpress.org serves 1.1.0** (API + `mailyard.1.1.0.zip` download verified). SVN `tags/1.1.0` has `build/admin.js` and no `.wordpress.org/`.
 - **Release order that worked:** `gh workflow disable assets.yml` → merge → `git tag v1.1.0 && git push origin v1.1.0` → after the deploy, `gh workflow enable assets.yml` (re-enabled ✓). This keeps trunk's readme from pointing `Stable tag` at a `tags/1.1.0` that doesn't exist yet. Don't use `[skip actions]` on a release commit: it would likely also skip the tag-triggered `release.yml`.
@@ -96,6 +102,8 @@
 - Regenerated `languages/mailyard.pot`; earlier full audit: 0 blockers (hardening backlog: mask connection secrets on read, webhook signature verification, React i18n — file as board issues).
 
 ## Next up
+- **PR #29:** merge on the user's OK (`gh pr merge 29 --squash --delete-branch`). This makes the new readme and title live. Then check https://wordpress.org/plugins/mailyard/ shows the new title.
+- **#30:** decide how to make the admin UI source public (open-source `plugpress-ui`, publish it to npm, or vendor it).
 - **#23:** add `'default' => array()` to the optional-input ability schemas. Today a plain Abilities REST call with no input 400s; MCP/Saddle are unaffected. Verified 2026-10-09: on `main` + Saddle 1.5.1 all 4 read-only tools register as `saddle/mailyard-*` and run, and live plugpress.io answers through Saddle MCP.
 - **#22:** rename the OAuth `message` return arg (e.g. `mailyard_oauth_message`) in `class-oauth.php` + `Connections.jsx`.
 - **Live-send QA on a real site** (now that 1.1.0 is public): update plugpress.io (it runs a pre-#17 build) and send a test through Resend; consider adding a backup connection there (it has none).
@@ -106,4 +114,4 @@
 - `.wordpress.org` screenshots: retake for the new UI (6 captions in readme).
 
 ## Blockers / open questions
-- None.
+- PR #29 is waiting for the user's OK because it publishes to WordPress.org.
